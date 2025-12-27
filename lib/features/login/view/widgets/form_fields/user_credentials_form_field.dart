@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:paperless_mobile/core/database/hive/hive_extensions.dart';
@@ -33,6 +34,7 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
     with AutomaticKeepAliveClientMixin {
   final _usernameFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
+  final _mfaFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +91,7 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
                   LoginFormCredentials(password: password),
             ),
             onFieldSubmitted: (_) {
-              widget.onFieldsSubmitted?.call();
+              _mfaFocusNode.requestFocus();
             },
             validator: (value) {
               if (value?.trim().isEmpty ?? true) {
@@ -97,6 +99,24 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
               }
               return null;
             },
+          ),
+          TextFormField(
+            key: const ValueKey('login-mfa-code'),
+            focusNode: _mfaFocusNode,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            autofillHints: const [AutofillHints.oneTimeCode],
+            onChanged: (code) => field.didChange(
+              field.value?.copyWith(mfaCode: code) ??
+                  LoginFormCredentials(mfaCode: code),
+            ),
+            onFieldSubmitted: (_) {
+              widget.onFieldsSubmitted?.call();
+            },
+            decoration: InputDecoration(
+              label: Text(S.of(context)!.mfaCodeOptional),
+            ),
           ),
         ].map((child) => child.padded()).toList(),
       ),

@@ -6,8 +6,12 @@ import 'package:paperless_api/src/extensions/dio_exception_extension.dart';
 
 class PaperlessTasksApiImpl implements PaperlessTasksApi {
   final Dio _client;
+  final int apiVersion;
 
-  PaperlessTasksApiImpl(this._client);
+  PaperlessTasksApiImpl(this._client, {this.apiVersion = 2});
+
+  String get _acknowledgeEndpoint =>
+      apiVersion >= 6 ? "/api/tasks/acknowledge/" : "/api/acknowledge_tasks/";
 
   @override
   Future<Task?> find({int? id, String? taskId}) async {
@@ -83,7 +87,7 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
   Future<Iterable<Task>> acknowledgeTasks(Iterable<Task> tasks) async {
     try {
       final response = await _client.post(
-        "/api/acknowledge_tasks/",
+        _acknowledgeEndpoint,
         data: {
           'tasks': tasks.map((e) => e.id).toList(),
         },

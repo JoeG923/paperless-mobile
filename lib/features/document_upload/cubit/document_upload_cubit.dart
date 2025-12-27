@@ -5,23 +5,24 @@ import 'package:flutter/foundation.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/bloc/transient_error.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
+import 'package:paperless_mobile/core/service/document_upload_service.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
 
 part 'document_upload_state.dart';
 
 class DocumentUploadCubit extends Cubit<DocumentUploadState> {
-  final PaperlessDocumentsApi _documentApi;
-  final PendingTasksNotifier _tasksNotifier;
   final LabelRepository _labelRepository;
   final ConnectivityStatusService _connectivityStatusService;
+  final DocumentUploadService _uploadService;
 
   DocumentUploadCubit(
     this._labelRepository,
-    this._documentApi,
+    PaperlessDocumentsApi documentApi,
     this._connectivityStatusService,
-    this._tasksNotifier,
-  ) : super(const DocumentUploadState());
+    PendingTasksNotifier tasksNotifier,
+  )   : _uploadService = DocumentUploadService(documentApi, tasksNotifier),
+        super(const DocumentUploadState());
 
   Future<String?> upload(
     Uint8List bytes, {
@@ -30,17 +31,19 @@ class DocumentUploadCubit extends Cubit<DocumentUploadState> {
     required String userId,
     int? documentType,
     int? correspondent,
+    int? storagePath,
     Iterable<int> tags = const [],
     DateTime? createdAt,
     int? asn,
   }) async {
     try {
-      final taskId = await _documentApi.create(
+      final taskId = await _uploadService.upload(
         bytes,
         filename: filename,
         title: title,
         correspondent: correspondent,
         documentType: documentType,
+        storagePath: storagePath,
         tags: tags,
         createdAt: createdAt,
         asn: asn,
@@ -50,9 +53,6 @@ class DocumentUploadCubit extends Cubit<DocumentUploadState> {
           }
         },
       );
-      if (taskId != null) {
-        _tasksNotifier.listenToTaskChanges(taskId);
-      }
       return taskId;
     } on PaperlessApiException catch (error) {
       addError(TransientPaperlessApiError(

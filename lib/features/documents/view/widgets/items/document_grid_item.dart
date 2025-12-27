@@ -75,7 +75,8 @@ class DocumentGridItem extends DocumentItem {
                                   if (currentUser.canViewTags)
                                     TagsWidget.sliver(
                                       tags: document.tags
-                                          .map((e) => labelRepository.tags[e]!)
+                                          .map((e) => labelRepository.tags[e])
+                                          .whereType<Tag>()
                                           .toList(),
                                       onTagSelected: onTagSelected,
                                     ),

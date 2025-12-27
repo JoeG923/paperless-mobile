@@ -17,6 +17,11 @@ class ChangelogDialog extends StatelessWidget {
       content: FutureBuilder<String>(
         future: _loadChangelog(context),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text(
+              S.of(context)!.changelogUnavailable,
+            ).padded(24);
+          }
           if (!snapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -47,10 +52,16 @@ class ChangelogDialog extends StatelessWidget {
       'de' => 'de-DE',
       _ => 'en-US',
     };
-    'en-US';
-    String changelog = await rootBundle.loadString(
-      'assets/changelogs/changelogs_$locale.md',
-    );
+    String changelog;
+    try {
+      changelog = await rootBundle.loadString(
+        'assets/changelogs/changelogs_$locale.md',
+      );
+    } on FlutterError {
+      changelog = await rootBundle.loadString(
+        'assets/changelogs/changelogs_en-US.md',
+      );
+    }
     for (var versionNumber in _versionNumbers.keys) {
       changelog = changelog.replaceFirst(
         RegExp('# $versionNumber'),
@@ -62,6 +73,8 @@ class ChangelogDialog extends StatelessWidget {
 }
 
 const _versionNumbers = {
+  "4073": "4.0.0",
+  "4063": "3.3.0",
   "4053": "3.2.1",
   "4043": "3.2.0",
   "4033": "3.1.8",

@@ -41,19 +41,15 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
   }
 
   Future<void> initialize() async {
-    debugPrint("Initialize called");
     emit(const DocumentDetailsState(status: LoadingStatus.loading));
     try {
       final (document, metaData) = await Future.wait([
-        _api.find(id),
+        _api.find(id, fullPermissions: true),
         _api.getMetaData(id),
       ]).then((value) => (
             value[0] as DocumentModel,
             value[1] as DocumentMetaData,
           ));
-      // final document = await _api.find(id);
-      // final metaData = await _api.getMetaData(id);
-      debugPrint("Document data loaded for $id");
       emit(DocumentDetailsState(
         status: LoadingStatus.loaded,
         document: document,

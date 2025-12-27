@@ -54,12 +54,14 @@ class LoginPage extends StatelessWidget {
     String password,
     String serverUrl,
     ClientCertificate? clientCertificate,
+    String? mfaCode,
   ) async {
     try {
       await context.read<AuthenticationCubit>().login(
             credentials: LoginFormCredentials(
               username: username,
               password: password,
+              mfaCode: mfaCode,
             ),
             serverUrl: serverUrl,
             clientCertificate: clientCertificate,

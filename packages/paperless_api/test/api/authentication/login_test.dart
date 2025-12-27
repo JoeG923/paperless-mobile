@@ -8,6 +8,7 @@ void main() {
     late PaperlessAuthenticationApi authenticationApi;
     late DioAdapter mockAdapter;
     const token = "abcde";
+    const mfaToken = "mfa-token";
     const invalidCredentialsServerMessage =
         "Unable to log in with provided credentials.";
 
@@ -23,6 +24,16 @@ void main() {
           "password": "password",
         },
         (server) => server.reply(200, {"token": token}),
+      );
+      // MFA credentials
+      mockAdapter.onPost(
+        "/api/token/",
+        data: {
+          "username": "mfaUser",
+          "password": "password",
+          "code": "123456",
+        },
+        (server) => server.reply(200, {"token": mfaToken}),
       );
       // Invalid credentials
       mockAdapter.onPost(
@@ -65,6 +76,20 @@ void main() {
             "non-field specific error message",
             equals(invalidCredentialsServerMessage),
           )),
+        );
+      },
+    );
+
+    test(
+      'should include MFA code when provided',
+      () {
+        expect(
+          authenticationApi.login(
+            username: "mfaUser",
+            password: "password",
+            code: "123456",
+          ),
+          completion(mfaToken),
         );
       },
     );

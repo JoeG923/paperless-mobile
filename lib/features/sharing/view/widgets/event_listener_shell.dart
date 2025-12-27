@@ -14,6 +14,7 @@ import 'package:paperless_mobile/core/database/hive/hive_extensions.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
+import 'package:paperless_mobile/core/service/document_upload_service.dart';
 import 'package:paperless_mobile/features/document_upload/view/document_upload_preparation_page.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/features/notifications/services/local_notification_service.dart';
@@ -181,22 +182,22 @@ Future<void> consumeLocalFile(
   }
   if (!context.mounted) return;
   final consumptionNotifier = context.read<ConsumptionChangeNotifier>();
-  final taskNotifier = context.read<PendingTasksNotifier>();
+  final uploadService = DocumentUploadService(
+    context.read(),
+    context.read(),
+  );
 
   final bytes = file.readAsBytes();
   final shouldDirectlyUpload =
       Hive.globalSettingsBox.getValue()!.skipDocumentPreprarationOnUpload;
   if (shouldDirectlyUpload) {
     try {
-      final taskId = await context.read<PaperlessDocumentsApi>().create(
-            await bytes,
-            filename: filename,
-            title: p.basenameWithoutExtension(file.path),
-          );
+      await uploadService.upload(
+        await bytes,
+        filename: filename,
+        title: p.basenameWithoutExtension(file.path),
+      );
       consumptionNotifier.discardFile(file, userId: userId);
-      if (taskId != null) {
-        taskNotifier.listenToTaskChanges(taskId);
-      }
     } catch (error) {
       if (!context.mounted) return;
       await Fluttertoast.showToast(

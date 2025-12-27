@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    CFPropertyList (3.0.6)
+    CFPropertyList (3.0.7)
       rexml
     addressable (2.8.4)
       public_suffix (>= 2.0.2, < 6.0)
@@ -157,7 +157,7 @@ GEM
     mini_mime (1.1.2)
     multi_json (1.15.0)
     multipart-post (2.0.0)
-    nanaimo (0.3.0)
+    nanaimo (0.4.0)
     naturally (2.2.1)
     optparse (0.1.1)
     os (1.1.4)
@@ -169,7 +169,7 @@ GEM
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
     retriable (3.1.2)
-    rexml (3.2.5)
+    rexml (3.4.4)
     rouge (2.0.7)
     ruby2_keywords (0.0.5)
     rubyzip (2.3.2)
@@ -196,15 +196,15 @@ GEM
     unf_ext (0.0.8.2)
     unf_ext (0.0.8.2-x86-mingw32)
     unicode-display_width (1.8.0)
-    webrick (1.8.1)
+    webrick (1.8.2)
     word_wrap (1.0.0)
-    xcodeproj (1.22.0)
+    xcodeproj (1.26.0)
       CFPropertyList (>= 2.3.3, < 4.0)
       atomos (~> 0.1.3)
       claide (>= 1.0.2, < 2.0)
       colored2 (~> 3.1)
-      nanaimo (~> 0.3.0)
-      rexml (~> 3.2.4)
+      nanaimo (~> 0.4.0)
+      rexml (>= 3.3.6, < 4.0)
     xcpretty (0.3.0)
       rouge (~> 2.0.7)
     xcpretty-travis-formatter (1.0.1)
@@ -217,6 +217,8 @@ PLATFORMS
 DEPENDENCIES
   fastlane
   fastlane-plugin-flutter_version (~> 1.1, >= 1.1.15)
+  rexml (>= 3.4.4)
+  webrick (>= 1.8.2)
 
 BUNDLED WITH
    2.1.4

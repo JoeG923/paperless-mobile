@@ -11,11 +11,8 @@ class LocalAuthenticationService {
     if (await localAuthentication.isDeviceSupported()) {
       return await localAuthentication.authenticate(
         localizedReason: localizedReason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-          useErrorDialogs: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
     }
     return false;

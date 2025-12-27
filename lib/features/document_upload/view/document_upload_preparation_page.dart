@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
@@ -22,6 +21,7 @@ import 'package:paperless_mobile/features/logging/data/logger.dart';
 import 'package:paperless_mobile/features/sharing/view/widgets/file_thumbnail.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
+import 'package:paperless_mobile/helpers/upload_preset_helper.dart';
 import 'package:paperless_mobile/routing/routes/labels_route.dart';
 
 class DocumentUploadResult {
@@ -53,7 +53,6 @@ class DocumentUploadPreparationPage extends StatefulWidget {
 class _DocumentUploadPreparationPageState
     extends State<DocumentUploadPreparationPage> {
   static const fkFileName = "filename";
-  static final fileNameDateFormat = DateFormat("yyyy_MM_ddTHH_mm_ss");
 
   final GlobalKey<FormBuilderState> _formKey = GlobalKey();
   Map<String, String> _errors = {};
@@ -69,6 +68,24 @@ class _DocumentUploadPreparationPageState
   @override
   Widget build(BuildContext context) {
     final labelRepository = context.watch<LabelRepository>();
+    final settings =
+        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    final preset = UploadPreset.fromSettings(settings);
+    final defaultTitle = widget.title ??
+        (preset.enabled ? preset.buildTitle(_now) : defaultScanTitle(_now));
+    final defaultFileName =
+        widget.filename ?? formatFilename(defaultTitle);
+    final initialCreatedDate =
+        preset.enabled && preset.useCurrentDate ? _now : null;
+    final initialTags = preset.enabled && preset.tagIds.isNotEmpty
+        ? IdsTagsQuery(include: preset.tagIds)
+        : null;
+    final initialCorrespondent =
+        preset.enabled ? _buildIdParam(preset.correspondentId) : null;
+    final initialDocumentType =
+        preset.enabled ? _buildIdParam(preset.documentTypeId) : null;
+    final initialStoragePath =
+        preset.enabled ? _buildIdParam(preset.storagePathId) : null;
     return BlocBuilder<DocumentUploadCubit, DocumentUploadState>(
       builder: (context, state) {
         return Scaffold(
@@ -141,8 +158,7 @@ class _DocumentUploadPreparationPageState
                             FormBuilderTextField(
                               autovalidateMode: AutovalidateMode.always,
                               name: DocumentModel.titleKey,
-                              initialValue: widget.title ??
-                                  "scan_${fileNameDateFormat.format(_now)}",
+                              initialValue: defaultTitle,
                               validator: (value) {
                                 if (value?.trim().isEmpty ?? true) {
                                   return S.of(context)!.thisFieldIsRequired;
@@ -191,7 +207,7 @@ class _DocumentUploadPreparationPageState
                                 ),
                               ),
                               initialValue: widget.filename ??
-                                  "scan_${fileNameDateFormat.format(_now)}",
+                                  defaultFileName,
                             ),
                             // Synchronize title and filename
                             SwitchListTile(
@@ -224,6 +240,7 @@ class _DocumentUploadPreparationPageState
                               locale: Localizations.localeOf(context),
                               labelText: "${S.of(context)!.createdAt} *",
                               allowUnset: true,
+                              initialValue: initialCreatedDate,
                             ),
                             // Correspondent
                             if (context
@@ -247,6 +264,7 @@ class _DocumentUploadPreparationPageState
                                     .watch<LocalUserAccount>()
                                     .paperlessUser
                                     .canCreateCorrespondents,
+                                initialValue: initialCorrespondent,
                               ),
                             // Document type
                             if (context
@@ -271,6 +289,30 @@ class _DocumentUploadPreparationPageState
                                     .watch<LocalUserAccount>()
                                     .paperlessUser
                                     .canCreateDocumentTypes,
+                                initialValue: initialDocumentType,
+                              ),
+                            if (context
+                                .watch<LocalUserAccount>()
+                                .paperlessUser
+                                .canViewStoragePaths)
+                              LabelFormField<StoragePath>(
+                                showAnyAssignedOption: false,
+                                showNotAssignedOption: false,
+                                onAddLabel: (initialName) => CreateLabelRoute(
+                                  LabelType.storagePath,
+                                  name: initialName,
+                                ).push<StoragePath>(context),
+                                addLabelText: S.of(context)!.addStoragePath,
+                                labelText: "${S.of(context)!.storagePath} *",
+                                name: DocumentModel.storagePathKey,
+                                options: labelRepository.storagePaths,
+                                prefixIcon: const Icon(Icons.folder_open),
+                                allowSelectUnassigned: true,
+                                canCreateNewLabel: context
+                                    .watch<LocalUserAccount>()
+                                    .paperlessUser
+                                    .canCreateStoragePaths,
+                                initialValue: initialStoragePath,
                               ),
                             if (context
                                 .watch<LocalUserAccount>()
@@ -282,6 +324,7 @@ class _DocumentUploadPreparationPageState
                                 allowExclude: false,
                                 allowOnlySelection: true,
                                 options: labelRepository.tags,
+                                initialValue: initialTags,
                               ),
                             Text(
                               "* ${S.of(context)!.uploadInferValuesHint}",
@@ -313,6 +356,8 @@ class _DocumentUploadPreparationPageState
             formValues[DocumentModel.correspondentKey] as IdQueryParameter?;
         final docTypeParam =
             formValues[DocumentModel.documentTypeKey] as IdQueryParameter?;
+        final storagePathParam =
+            formValues[DocumentModel.storagePathKey] as IdQueryParameter?;
         final tagsParam = formValues[DocumentModel.tagsKey] as TagsQuery?;
         final createdAt = formValues[DocumentModel.createdKey] as FormDateTime?;
         final title = formValues[DocumentModel.titleKey] as String;
@@ -321,6 +366,10 @@ class _DocumentUploadPreparationPageState
           _ => null,
         };
         final docType = switch (docTypeParam) {
+          SetIdQueryParameter(id: var id) => id,
+          _ => null,
+        };
+        final storagePath = switch (storagePathParam) {
           SetIdQueryParameter(id: var id) => id,
           _ => null,
         };
@@ -342,6 +391,7 @@ class _DocumentUploadPreparationPageState
           title: title,
           documentType: docType,
           correspondent: correspondent,
+          storagePath: storagePath,
           tags: tags,
           createdAt: createdAt?.toDateTime(),
           asn: asn,
@@ -380,7 +430,11 @@ class _DocumentUploadPreparationPageState
   }
 
   String _formatFilename(String source) {
-    return source.replaceAll(RegExp(r"[\W_]"), "_").toLowerCase();
+    return formatFilename(source);
+  }
+
+  IdQueryParameter? _buildIdParam(int? id) {
+    return id != null ? SetIdQueryParameter(id: id) : null;
   }
 
   // Future<Color> _computeAverageColor() async {

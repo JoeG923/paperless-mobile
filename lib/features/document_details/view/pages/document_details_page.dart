@@ -63,8 +63,6 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final disableAnimations = MediaQuery.disableAnimationsOf(context);
-    debugPrint(disableAnimations.toString());
     final hasMultiUserSupport =
         context.watch<LocalUserAccount>().hasMultiUserSupport;
     final tabLength = 5 + (hasMultiUserSupport ? 1 : 0);
@@ -263,14 +261,13 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                     .sliverOverlapAbsorberHandleFor(context),
                               ),
                               switch (state.status) {
-                                LoadingStatus.loaded => DocumentOverviewWidget(
-                                    document: state.document!,
-                                    itemSpacing: _itemSpacing,
-                                    queryString:
-                                        widget.titleAndContentQueryString,
-                                  ).paddedSymmetrically(
-                                    vertical: 16,
-                                    sliver: true,
+                                LoadingStatus.loaded => _sliverBoxPadding(
+                                    DocumentOverviewWidget(
+                                      document: state.document!,
+                                      itemSpacing: _itemSpacing,
+                                      queryString:
+                                          widget.titleAndContentQueryString,
+                                    ),
                                   ),
                                 LoadingStatus.error => _buildErrorState(),
                                 _ => _buildLoadingState(),
@@ -284,13 +281,12 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                     .sliverOverlapAbsorberHandleFor(context),
                               ),
                               switch (state.status) {
-                                LoadingStatus.loaded => DocumentContentWidget(
-                                    document: state.document!,
-                                    queryString:
-                                        widget.titleAndContentQueryString,
-                                  ).paddedSymmetrically(
-                                    vertical: 16,
-                                    sliver: true,
+                                LoadingStatus.loaded => _sliverPadding(
+                                    DocumentContentWidget(
+                                      document: state.document!,
+                                      queryString:
+                                          widget.titleAndContentQueryString,
+                                    ),
                                   ),
                                 LoadingStatus.error => _buildErrorState(),
                                 _ => _buildLoadingState(),
@@ -304,13 +300,12 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                     .sliverOverlapAbsorberHandleFor(context),
                               ),
                               switch (state.status) {
-                                LoadingStatus.loaded => DocumentMetaDataWidget(
-                                    document: state.document!,
-                                    itemSpacing: _itemSpacing,
-                                    metaData: state.metaData!,
-                                  ).paddedSymmetrically(
-                                    vertical: 16,
-                                    sliver: true,
+                                LoadingStatus.loaded => _sliverPadding(
+                                    DocumentMetaDataWidget(
+                                      document: state.document!,
+                                      itemSpacing: _itemSpacing,
+                                      metaData: state.metaData!,
+                                    ),
                                   ),
                                 LoadingStatus.error => _buildErrorState(),
                                 _ => _buildLoadingState(),
@@ -324,11 +319,11 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                 handle: NestedScrollView
                                     .sliverOverlapAbsorberHandleFor(context),
                               ),
-                              SimilarDocumentsView(
-                                pagingScrollController: _pagingScrollController,
-                              ).paddedSymmetrically(
-                                vertical: 16,
-                                sliver: true,
+                              _sliverPadding(
+                                SimilarDocumentsView(
+                                  pagingScrollController:
+                                      _pagingScrollController,
+                                ),
                               ),
                             ],
                           ),
@@ -339,11 +334,10 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                     .sliverOverlapAbsorberHandleFor(context),
                               ),
                               switch (state.status) {
-                                LoadingStatus.loaded => DocumentNotesWidget(
-                                    document: state.document!,
-                                  ).paddedSymmetrically(
-                                    vertical: 16,
-                                    sliver: true,
+                                LoadingStatus.loaded => _sliverPadding(
+                                    DocumentNotesWidget(
+                                      document: state.document!,
+                                    ),
                                   ),
                                 LoadingStatus.error => _buildErrorState(),
                                 _ => _buildLoadingState(),
@@ -359,12 +353,10 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
                                       .sliverOverlapAbsorberHandleFor(context),
                                 ),
                                 switch (state.status) {
-                                  LoadingStatus.loaded =>
-                                    DocumentPermissionsWidget(
-                                      document: state.document!,
-                                    ).paddedSymmetrically(
-                                      vertical: 16,
-                                      sliver: true,
+                                  LoadingStatus.loaded => _sliverPadding(
+                                      DocumentPermissionsWidget(
+                                        document: state.document!,
+                                      ),
                                     ),
                                   LoadingStatus.error => _buildErrorState(),
                                   _ => _buildLoadingState(),
@@ -424,6 +416,20 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
       child: Center(
         child: CircularProgressIndicator(),
       ),
+    );
+  }
+
+  SliverPadding _sliverPadding(Widget sliver) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      sliver: sliver,
+    );
+  }
+
+  SliverPadding _sliverBoxPadding(Widget child) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      sliver: SliverToBoxAdapter(child: child),
     );
   }
 

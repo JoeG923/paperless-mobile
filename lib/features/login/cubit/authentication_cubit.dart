@@ -473,6 +473,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     final token = await authApi.login(
       username: credentials.username!,
       password: credentials.password!,
+      code: credentials.mfaCode,
     );
 
     logger.fd(

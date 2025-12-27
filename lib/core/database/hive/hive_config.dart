@@ -4,6 +4,7 @@ import 'package:paperless_mobile/core/database/hive/custom_adapters/theme_mode_a
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_app_state.dart';
 import 'package:paperless_mobile/core/database/tables/user_credentials.dart';
+import 'package:paperless_mobile/core/security/trusted_certificate_pin.dart';
 import 'package:paperless_mobile/features/login/model/authentication_information.dart';
 import 'package:paperless_mobile/features/login/model/client_certificate.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
@@ -44,6 +45,7 @@ class HiveTypeIds {
   static const viewType = 9;
   static const fileDownloadType = 10;
   static const localUserAppState = 8;
+  static const trustedCertificatePin = 11;
 }
 
 void registerHiveAdapters() {
@@ -59,6 +61,7 @@ void registerHiveAdapters() {
   Hive.registerAdapter(LocalUserAppStateAdapter());
   Hive.registerAdapter(ViewTypeAdapter());
   Hive.registerAdapter(FileDownloadTypeAdapter());
+  Hive.registerAdapter(TrustedCertificatePinAdapter());
 }
 
 extension HiveSingleValueBox<T> on Box<T> {

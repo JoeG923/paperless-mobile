@@ -19,6 +19,9 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
     final subtitleStyle =
         Theme.of(context).textTheme.labelMedium?.apply(color: Colors.grey);
     final labelRepository = context.watch<LabelRepository>();
+    final documentType = document.documentType == null
+        ? null
+        : labelRepository.documentTypes[document.documentType];
     return RichText(
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -26,7 +29,7 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
         text: DateFormat.yMMMMd(Localizations.localeOf(context).toString())
             .format(document.created),
         style: subtitleStyle,
-        children: document.documentType != null
+        children: documentType != null
             ? [
                 const TextSpan(text: '\u30FB'),
                 WidgetSpan(
@@ -38,8 +41,7 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
                           ? () => onDocumentTypeSelected!(document.documentType)
                           : null,
                       child: Text(
-                        labelRepository
-                            .documentTypes[document.documentType]!.name,
+                        documentType.name,
                         style: subtitleStyle,
                       ),
                     ),

@@ -58,10 +58,15 @@ Paperless Mobile brings <a href="https://github.com/paperless-ngx/paperless-ngx"
 :heavy_check_mark: **Upload existing documents** from other apps via Paperless Mobile<br>
 :heavy_check_mark: Easily process and manage new documents in the dedicated **inbox**<br>
 :heavy_check_mark: **Search** for documents using a wide range of filter criteria<br>
+:heavy_check_mark: **Bulk edit** documents (reprocess, merge, rotate, split, delete pages)<br>
+:heavy_check_mark: **Track background tasks** from uploads and processing<br>
+:heavy_check_mark: **Upload presets** for fast scan uploads (saved automatically)<br>
 :heavy_check_mark: **Secure** your data with a **biometric factor**<br>
 :heavy_check_mark: Support for **TLS mutual authentication** (client certificates)<br>
 :heavy_check_mark: **Modern, intuitive UI** built according to the Material Design 3 specification<br>
 :heavy_check_mark: Available in English, German, Polish, French, Catalan, Czech and Turkish language with more to come<br>
+
+**Self-signed server certificates**: the app validates TLS by default. If your Paperless server uses a self-signed certificate, you'll see a warning with the certificate fingerprint and can choose to trust that specific certificate. Trusted certificates can be managed from the Settings screen.
 
 
 ### Built With
@@ -125,4 +130,6 @@ Want to contribute? Have a look at [the contributing guidelines and how to get s
 #### Suggestions are not selectable in any of the label form fields
 This is a known issue in ealier versions (<3.x.x) and it has to do with accessibility features of Android. Password managers such as Bitwarden often caused this issue. Luckily, this can be resolved by turning off the accessibility features in these apps. This could also be observed with apps that are allowed to display over other apps, such as emulations of the dynamic island on android.
 #### I cannot log in since the update to paperless-ngx 1.14.0 (and above).
-The app has to somehow get information about its user from the paperless API. Therefore, the `Users -> View` and the `UISettings -> View` permissions are required for each user trying to log into the app. Otherwise, the app has no way of obtaining your user id and other information required for the usage of most features.
+Paperless Mobile needs access to `/api/ui_settings/` to identify the current user and permissions. Ensure the account has the `UISettings -> View` permission. Users no longer need the `Users -> View` permission with current builds; update the app if you are still seeing that requirement.
+#### The Permissions tab is empty in document details.
+Paperless-ngx only returns detailed document permissions when the API call includes `full_perms=true`. The permissions tab shows explicit object-level permissions (owner + view/change users/groups). Many documents have no explicit permissions set, so empty lists are normal; access is then governed by global permissions or workflows.

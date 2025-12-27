@@ -15,7 +15,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 3.2.1+405
+version: 4.0.0+407
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
@@ -33,18 +33,14 @@ dependencies:
     sdk: flutter
   permission_handler: ^12.0.1
   pdf: ^3.10.2
-  edge_detection:
-    git:
-      url: https://github.com/sawankumarbundelkhandi/edge_detection
-      ref: master
+  google_mlkit_document_scanner: ^0.4.0
   path_provider: ^2.0.10
-  image: ^4.0.17
+  image: ^4.5.4
   photo_view: ^0.15.0
   intl: ^0.20.0
   flutter_svg: ^2.0.7
   url_launcher: ^6.1.2
   file_picker: ^10.3.3
-  web_socket_channel: ^3.0.3
   http: ^1.1.2
   flutter_cache_manager: ^3.3.0
   cached_network_image: ^3.2.1
@@ -53,9 +49,9 @@ dependencies:
   equatable: ^2.0.5
   flutter_form_builder: ^10.2.0
   package_info_plus: ^9.0.0
-  local_auth: ^2.1.2
+  local_auth: ^3.0.0
   connectivity_plus: ^7.0.0
-  flutter_native_splash: ^2.2.11
+  crypto: ^3.0.3
   share_plus: ^12.0.0
   introduction_screen: ^4.0.0
   receive_sharing_intent:
@@ -63,13 +59,11 @@ dependencies:
       url: https://github.com/KasemJaffer/receive_sharing_intent
       ref: 2cea396843cd3ab1b5ec4334be4233864637874e
   uuid: ^4.1.0
-  flutter_typeahead: ^5.0.1
   fluttertoast: ^9.0.0
   paperless_api:
     path: packages/paperless_api
   hive_ce: ^2.13.2
   rxdart: ^0.28.0
-  badges: ^3.1.2
   flutter_colorpicker: ^1.0.3
   provider: ^6.0.5
   dio: ^5.0.0
@@ -79,21 +73,18 @@ dependencies:
   collection: ^1.17.0
   device_info_plus: ^12.1.0
   flutter_local_notifications: ^19.4.2
-  responsive_builder: ^0.7.0
   open_filex: ^4.3.2
-  flutter_displaymode: ^0.6.0
+  flutter_displaymode: ^0.7.0
   dynamic_color: ^1.5.4
   flutter_html: ^3.0.0-alpha.6
   freezed_annotation: ^3.1.0
   animations: ^2.0.7
   hive_ce_flutter: ^2.3.2
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.0.0
   sliver_tools: ^0.2.10
-  webview_flutter: ^4.2.1
   printing: ^5.11.1
-  go_router: ^16.2.4
+  go_router: ^17.0.1
   fl_chart: ^1.1.1
-  palette_generator_master: ^1.0.1
   defer_pointer: ^0.0.2
   transparent_image: ^2.0.1
   flutter_animate: ^4.2.0+1
@@ -101,7 +92,6 @@ dependencies:
   flutter_markdown_community: ^0.7.7+2
   logger: ^2.0.2+1
   synchronized: ^3.1.0
-  extended_masked_text: ^3.0.1
   font_awesome_flutter: ^10.6.0
   # camerawesome: ^2.0.0-dev.1
   pdfx: ^2.9.2
@@ -123,16 +113,17 @@ dev_dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
-  build_runner: ^2.6.0
-  bloc_test: ^10.0.0
+  patrol: ^4.0.1
+  build_runner: ^2.10.4
   dependency_validator: ^5.0.2
   flutter_lints: ^6.0.0
   json_serializable: ^6.11.1
   freezed: ^3.2.3
   hive_ce_generator: ^1.9.3
+  flutter_native_splash: ^2.2.11
   mock_server:
     path: packages/mock_server
-  go_router_builder: ^4.1.0
+  go_router_builder: ^4.1.3
   flutter_gen_runner: ^5.3.2
   mockito: ^5.5.0
 # For information on the generic Dart part of this file, see the
@@ -146,6 +137,11 @@ flutter_gen:
   # Optional
   integrations:
     flutter_svg: true
+
+patrol:
+  app_name: Paperless Mobile
+  android:
+    package_name: de.astubenbord.paperless_mobile
 
 flutter:
   generate: true

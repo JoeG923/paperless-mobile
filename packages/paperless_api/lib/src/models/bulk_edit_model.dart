@@ -79,3 +79,114 @@ class BulkModifyLabelAction extends BulkAction {
     };
   }
 }
+
+class BulkReprocessAction extends BulkAction {
+  BulkReprocessAction(super.documents);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'documents': documentIds.toList(),
+      'method': 'reprocess',
+      'parameters': const {},
+    };
+  }
+}
+
+class BulkRotateAction extends BulkAction {
+  final int degrees;
+
+  BulkRotateAction(
+    super.documents, {
+    required this.degrees,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'documents': documentIds.toList(),
+      'method': 'rotate',
+      'parameters': {
+        'degrees': degrees,
+      }
+    };
+  }
+}
+
+class BulkSplitAction extends BulkAction {
+  final String pages;
+  final bool? deleteOriginals;
+
+  BulkSplitAction(
+    super.documents, {
+    required this.pages,
+    this.deleteOriginals,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final parameters = <String, dynamic>{
+      'pages': pages,
+    };
+    if (deleteOriginals != null) {
+      parameters['delete_originals'] = deleteOriginals;
+    }
+    return {
+      'documents': documentIds.toList(),
+      'method': 'split',
+      'parameters': parameters,
+    };
+  }
+}
+
+class BulkDeletePagesAction extends BulkAction {
+  final Iterable<int> pages;
+
+  BulkDeletePagesAction(
+    super.documents, {
+    required this.pages,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'documents': documentIds.toList(),
+      'method': 'delete_pages',
+      'parameters': {
+        'pages': pages.toList(),
+      }
+    };
+  }
+}
+
+class BulkMergeAction extends BulkAction {
+  final bool? deleteOriginals;
+  final int? metadataDocumentId;
+  final bool? archiveFallback;
+
+  BulkMergeAction(
+    super.documents, {
+    this.deleteOriginals,
+    this.metadataDocumentId,
+    this.archiveFallback,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final parameters = <String, dynamic>{};
+    if (deleteOriginals != null) {
+      parameters['delete_originals'] = deleteOriginals;
+    }
+    if (metadataDocumentId != null) {
+      parameters['metadata_document_id'] = metadataDocumentId;
+    }
+    if (archiveFallback != null) {
+      parameters['archive_fallback'] = archiveFallback;
+    }
+    return {
+      'documents': documentIds.toList(),
+      'method': 'merge',
+      'parameters': parameters,
+    };
+  }
+}

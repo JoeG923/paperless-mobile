@@ -5,6 +5,17 @@ class LocalDateTimeJsonConverter extends JsonConverter<DateTime, String> {
 
   @override
   DateTime fromJson(String json) {
+    final trimmed = json.trim();
+    final isDateOnly =
+        RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(trimmed);
+    if (isDateOnly) {
+      final parts = trimmed.split('-');
+      return DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+      );
+    }
     return DateTime.parse(json).toLocal();
   }
 

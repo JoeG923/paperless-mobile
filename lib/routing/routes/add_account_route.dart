@@ -29,13 +29,14 @@ class AddAccountRoute extends GoRouteData with $AddAccountRoute {
     return NoTransitionPage(
       child: AddAccountPage(
         titleText: S.of(context)!.addAccount,
-        onSubmit:
-            (context, username, password, serverUrl, clientCertificate) async {
+        onSubmit: (context, username, password, serverUrl, clientCertificate,
+            mfaCode) async {
           try {
             final userId = await context.read<AuthenticationCubit>().addAccount(
                   credentials: LoginFormCredentials(
                     username: username,
                     password: password,
+                    mfaCode: mfaCode,
                   ),
                   clientCertificate: clientCertificate,
                   serverUrl: serverUrl,

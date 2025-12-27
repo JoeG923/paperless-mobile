@@ -514,6 +514,8 @@
   "@connect": {},
   "password": "Passwort",
   "@password": {},
+  "mfaCodeOptional": "MFA-Code (falls aktiviert)",
+  "@mfaCodeOptional": {},
   "passwordMustNotBeEmpty": "Passwort darf nicht leer sein.",
   "@passwordMustNotBeEmpty": {},
   "connectionTimedOut": "Zeitüberschreitung der Verbindung.",
@@ -857,7 +859,7 @@
   "@convertSinglePageScanToPdf": {
     "description": "description of the upload scans as pdf setting"
   },
-  "loginRequiredPermissionsHint": "Die Verwendung von Paperless Mobile erfordert seit paperless-ngx 1.14.0 und höher ein Mindestmaß an Benutzerberechtigungen. Stelle deshalb bitte sicher, dass der anzumeldende Benutzer die Berechtigung hat, andere Benutzer (User → View) und die Einstellungen (UISettings → View) einzusehen. Falls du nicht über diese Berechtigungen verfügst, wende dich bitte an einen Administrator deines paperless-ngx Servers.",
+  "loginRequiredPermissionsHint": "Using Paperless Mobile requires the user to have permission to view the settings (UISettings → View). If you do not have this permission, please contact an administrator of your paperless-ngx server.",
   "@loginRequiredPermissionsHint": {
     "description": "Hint shown on the login page informing the user of the required permissions to use the app."
   },
@@ -1043,6 +1045,73 @@
     }
   },
   "permissions": "Berechtigungen",
+  "documentOwnerUnassigned": "Unassigned",
+  "permissionsNoneMessage": "No explicit permissions set. Access is determined by global permissions or workflows.",
+  "documentOwner": "Owner",
+  "permissionViewUsers": "View users",
+  "permissionViewGroups": "View groups",
+  "permissionChangeUsers": "Change users",
+  "permissionChangeGroups": "Change groups",
+  "permissionsUnavailable": "Permissions are unavailable for this document.",
+  "permissionsUserLookupFailed": "Some user names could not be loaded.",
   "newNote": "Neue Notiz",
-  "notesMarkdownSyntaxSupportHint": "Paperless Mobile unterstützt Markdown-Syntax zur Darstellung und Formatierung von Notizen. Probiere es aus!"
+  "notesMarkdownSyntaxSupportHint": "Paperless Mobile unterstützt Markdown-Syntax zur Darstellung und Formatierung von Notizen. Probiere es aus!",
+  "scannerFlash": "Flash",
+  "@scannerFlash": {
+    "description": "Label for the scanner flash toggle."
+  },
+  "scannerFlashDescription": "Turn the scanner flash on by default.",
+  "@scannerFlashDescription": {
+    "description": "Description for the scanner flash toggle."
+  },
+  "untrustedCertificateTitle": "Untrusted TLS certificate",
+  "@untrustedCertificateTitle": {},
+  "untrustedCertificateDescription": "The server's certificate could not be verified. It may be self-signed or misconfigured. Only trust it if you control the server.",
+  "@untrustedCertificateDescription": {},
+  "untrustedCertificateWarning": "The server's TLS certificate could not be verified. You can trust it to proceed, but this is risky.",
+  "@untrustedCertificateWarning": {},
+  "trustServerCertificate": "Trust server certificate",
+  "@trustServerCertificate": {},
+  "uploadPresets": "Upload presets",
+  "uploadPresetsSubtitle": "Configure default metadata for scan uploads.",
+  "uploadPresetEnableTitle": "Enable scan upload preset",
+  "uploadPresetEnableSubtitle": "Use preset metadata for quick scan uploads.",
+  "uploadPresetTitleTemplate": "Title template",
+  "uploadPresetTitleTemplateHelper": "Use {date}, {datetime}, {time}",
+  "uploadPresetTitleExample": "Example: {title}",
+  "uploadPresetUseCurrentDateSubtitle": "Set created date to today when uploading.",
+  "quickUpload": "Quick upload",
+  "changelogUnavailable": "Changelog unavailable.",
+  "@uploadPresetTitleExample": {
+    "description": "Preview label for the upload preset title template.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "trustedCertificates": "Trusted certificates",
+  "trustedCertificatesSubtitle": "Manage trusted TLS certificates.",
+  "noTrustedCertificates": "No trusted certificates yet.",
+  "certificateDetailsTitle": "Certificate details",
+  "certificateHost": "Host",
+  "certificateFingerprint": "SHA-256 fingerprint",
+  "certificateSubject": "Subject",
+  "certificateIssuer": "Issuer",
+  "certificateValidFrom": "Valid from",
+  "certificateValidUntil": "Valid until",
+  "certificateAddedOn": "Trusted on",
+  "certificateDetailsUnavailable": "Certificate details unavailable.",
+  "removeTrustedCertificate": "Remove trust",
+  "removeTrustedCertificateConfirm": "Remove trusted certificate for {host}?",
+  "@removeTrustedCertificateConfirm": {
+    "description": "Confirmation message when removing a trusted certificate.",
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
+  "certificatePreviousFingerprint": "Previous fingerprint"
 }

@@ -97,3 +97,13 @@
 //     );
 //   });
 // }
+
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test(
+    'DocumentsCubit tests are disabled',
+    () {},
+    skip: 'Test implementation is commented out.',
+  );
+}

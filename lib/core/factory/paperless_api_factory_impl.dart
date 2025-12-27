@@ -32,7 +32,7 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
 
   @override
   PaperlessTasksApi createTasksApi(Dio dio, {required int apiVersion}) {
-    return PaperlessTasksApiImpl(dio);
+    return PaperlessTasksApiImpl(dio, apiVersion: apiVersion);
   }
 
   @override
@@ -42,11 +42,9 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
 
   @override
   PaperlessUserApi createUserApi(Dio dio, {required int apiVersion}) {
-    if (apiVersion == 3) {
+    if (apiVersion >= 3) {
       return PaperlessUserApiV3Impl(dio);
-    } else if (apiVersion < 3) {
-      return PaperlessUserApiV2Impl(dio);
     }
-    throw Exception("API $apiVersion not supported.");
+    return PaperlessUserApiV2Impl(dio);
   }
 }

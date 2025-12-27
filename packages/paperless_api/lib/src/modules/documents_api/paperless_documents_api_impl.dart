@@ -20,6 +20,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     DateTime? createdAt,
     int? documentType,
     int? correspondent,
+    int? storagePath,
     Iterable<int> tags = const [],
     int? asn,
     void Function(double progress)? onProgressChanged,
@@ -43,6 +44,9 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     }
     if (documentType != null) {
       formData.fields.add(MapEntry('document_type', jsonEncode(documentType)));
+    }
+    if (storagePath != null) {
+      formData.fields.add(MapEntry('storage_path', jsonEncode(storagePath)));
     }
     if (asn != null) {
       formData.fields.add(MapEntry('archive_serial_number', jsonEncode(asn)));
@@ -303,11 +307,14 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
   }
 
   @override
-  Future<DocumentModel> find(int id) async {
+  Future<DocumentModel> find(int id, {bool fullPermissions = false}) async {
     debugPrint("Fetching data from /api/documents/$id/...");
     try {
       final response = await client.get(
         "/api/documents/$id/",
+        queryParameters: {
+          if (fullPermissions) 'full_perms': true,
+        },
         options: Options(
           validateStatus: (status) => status == 200,
           sendTimeout: Duration(seconds: 10),

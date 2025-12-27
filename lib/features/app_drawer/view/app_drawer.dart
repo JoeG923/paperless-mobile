@@ -8,11 +8,13 @@ import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/features/documents/cubit/documents_cubit.dart';
 import 'package:paperless_mobile/features/saved_view/cubit/saved_view_cubit.dart';
 import 'package:paperless_mobile/features/sharing/cubit/receive_share_cubit.dart';
+import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
 import 'package:paperless_mobile/generated/assets.gen.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/routing/routes/documents_route.dart';
 import 'package:paperless_mobile/routing/routes/saved_views_route.dart';
 import 'package:paperless_mobile/routing/routes/settings_route.dart';
+import 'package:paperless_mobile/routing/routes/tasks_route.dart';
 import 'package:paperless_mobile/routing/routes/upload_queue_route.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -168,6 +170,25 @@ class AppDrawer extends StatelessWidget {
                       autoPlay: !MediaQuery.disableAnimationsOf(context),
                     )
                     .fade(duration: 1.seconds, begin: 1, end: 0.3);
+              },
+            ),
+            Consumer<PendingTasksNotifier>(
+              builder: (context, notifier, child) {
+                final count = notifier.value.length;
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.task_alt_outlined),
+                  title: const Text('Tasks'), // TODO: INTL
+                  trailing: count > 0
+                      ? Text(
+                          '$count',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        )
+                      : null,
+                  onTap: () {
+                    TasksRoute().push(context);
+                  },
+                );
               },
             ),
             ListTile(

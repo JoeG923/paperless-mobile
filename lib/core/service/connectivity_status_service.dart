@@ -99,12 +99,19 @@ class ConnectivityStatusServiceImpl implements ConnectivityStatusService {
           error.error is ReachabilityStatus) {
         return error.error as ReachabilityStatus;
       }
+      final innerError = error.error;
+      if (innerError is HandshakeException || innerError is TlsException) {
+        return ReachabilityStatus.untrustedCertificate;
+      }
+    } on HandshakeException catch (_) {
+      return ReachabilityStatus.untrustedCertificate;
     } on TlsException catch (error) {
       final code = error.osError?.errorCode;
       if (code == OsErrorCodes.invalidClientCertConfig.code) {
         // Missing client cert passphrase
         return ReachabilityStatus.invalidClientCertificateConfiguration;
       }
+      return ReachabilityStatus.untrustedCertificate;
     }
     return ReachabilityStatus.notReachable;
   }

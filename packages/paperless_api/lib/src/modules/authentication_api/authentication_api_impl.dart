@@ -11,14 +11,17 @@ class PaperlessAuthenticationApiImpl implements PaperlessAuthenticationApi {
   Future<String> login({
     required String username,
     required String password,
+    String? code,
   }) async {
     try {
+      final payload = {
+        "username": username,
+        "password": password,
+        if (code != null && code.trim().isNotEmpty) "code": code.trim(),
+      };
       final response = await client.post(
         "/api/token/",
-        data: {
-          "username": username,
-          "password": password,
-        },
+        data: payload,
         options: Options(
           sendTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 5),

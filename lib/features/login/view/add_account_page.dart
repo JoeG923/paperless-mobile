@@ -9,6 +9,8 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/constants.dart';
 import 'package:paperless_mobile/core/exception/server_message_exception.dart';
 import 'package:paperless_mobile/core/model/info_message_exception.dart';
+import 'package:paperless_mobile/core/security/trusted_certificate_pin.dart';
+import 'package:paperless_mobile/core/security/trusted_certificate_store.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/features/login/model/client_certificate.dart';
@@ -29,6 +31,7 @@ class AddAccountPage extends StatefulWidget {
     String password,
     String serverUrl,
     ClientCertificate? clientCertificate,
+    String? mfaCode,
   ) onSubmit;
 
   final String? initialServerUrl;
@@ -64,6 +67,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
   bool _isCheckingConnection = false;
   ReachabilityStatus _reachabilityStatus = ReachabilityStatus.unknown;
   bool _isFormSubmitted = false;
+  bool _certificateChanged = false;
 
   final _pageController = PageController();
   @override
@@ -73,9 +77,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
       appBar: AppBar(
         title: Text(widget.titleText),
       ),
-      body: FormBuilder(
-        key: _formKey,
-        child: AutofillGroup(
+      body: SafeArea(
+        top: false,
+        child: FormBuilder(
+          key: _formKey,
+          child: AutofillGroup(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -101,6 +107,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                           onChanged: (value) {
                             setState(() {
                               _reachabilityStatus = ReachabilityStatus.unknown;
+                              _certificateChanged = false;
                             });
                           },
                         ).paddedSymmetrically(
@@ -130,6 +137,29 @@ class _AddAccountPageState extends State<AddAccountPage> {
                             FilledButton.icon(
                               onPressed: () async {
                                 final status = await _updateReachability();
+                                if (!mounted) return;
+                                if (status ==
+                                    ReachabilityStatus.untrustedCertificate) {
+                                  final shouldTrust =
+                                      await _showUntrustedCertificateDialog();
+                                  if (!mounted) return;
+                                  if (shouldTrust) {
+                                    await _trustCurrentServer();
+                                    final recheck =
+                                        await _updateReachability();
+                                    if (!mounted) return;
+                                    if (recheck ==
+                                        ReachabilityStatus.reachable) {
+                                      Future.delayed(1.seconds, () {
+                                        _pageController.nextPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      });
+                                    }
+                                  }
+                                  return;
+                                }
                                 if (status == ReachabilityStatus.reachable) {
                                   Future.delayed(1.seconds, () {
                                     _pageController.nextPage(
@@ -226,6 +256,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
               ).padded(),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -247,9 +278,19 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   .getRawValue(ServerAddressFormField.fkServerAddress),
           selectedCertificate,
         );
+    final uri = _currentServerUri();
+    final lastPin =
+        uri == null ? null : TrustedCertificateStore.getLastUntrustedPinForUri(uri);
+    final trustedPin =
+        uri == null ? null : TrustedCertificateStore.getTrustedPinForUri(uri);
+    final certificateChanged = lastPin != null &&
+        trustedPin != null &&
+        lastPin.fingerprintSha256 != trustedPin.fingerprintSha256;
     setState(() {
       _isCheckingConnection = false;
       _reachabilityStatus = status;
+      _certificateChanged =
+          status == ReachabilityStatus.untrustedCertificate && certificateChanged;
     });
     return status;
   }
@@ -304,9 +345,146 @@ class _AddAccountPageState extends State<AddAccountPage> {
           S.of(context)!.connectionTimedOut,
           errorColor,
         );
+      case ReachabilityStatus.untrustedCertificate:
+        return buildIconText(
+          Icons.warning_amber,
+          _certificateChanged
+              ? S.of(context)!.certificateChangedWarning
+              : S.of(context)!.untrustedCertificateWarning,
+          Theme.of(context).colorScheme.tertiary,
+        );
       default:
         return const ListTile();
     }
+  }
+
+  Future<void> _trustCurrentServer() async {
+    final uri = _currentServerUri();
+    if (uri == null) {
+      return;
+    }
+    final trusted = await TrustedCertificateStore.trustLastUntrustedForUri(uri);
+    if (!trusted && mounted) {
+      showSnackBar(
+        context,
+        S.of(context)!.certificateDetailsUnavailable,
+      );
+    }
+  }
+
+  Future<bool> _showUntrustedCertificateDialog() async {
+    final uri = _currentServerUri();
+    final pin = uri == null
+        ? null
+        : TrustedCertificateStore.getLastUntrustedPinForUri(uri);
+    final trustedPin =
+        uri == null ? null : TrustedCertificateStore.getTrustedPinForUri(uri);
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            final details = pin == null
+                ? Text(S.of(context)!.certificateDetailsUnavailable)
+                : _buildCertificateDetails(context, pin, trustedPin);
+            return AlertDialog(
+              title: Text(S.of(context)!.untrustedCertificateTitle),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(S.of(context)!.untrustedCertificateDescription),
+                    const SizedBox(height: 16),
+                    details,
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(S.of(context)!.cancel),
+                ),
+                FilledButton(
+                  onPressed:
+                      pin == null ? null : () => Navigator.of(context).pop(true),
+                  child: Text(S.of(context)!.trustServerCertificate),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Uri? _currentServerUri() {
+    final serverAddress = _formKey.currentState
+        ?.getRawValue(ServerAddressFormField.fkServerAddress);
+    if (serverAddress == null) {
+      return null;
+    }
+    final uri = Uri.tryParse(serverAddress);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return null;
+    }
+    return uri;
+  }
+
+  Widget _buildCertificateDetails(
+    BuildContext context,
+    TrustedCertificatePin pin,
+    TrustedCertificatePin? trustedPin,
+  ) {
+    final theme = Theme.of(context).textTheme;
+    final labelStyle = theme.labelSmall;
+    final valueStyle = theme.bodySmall;
+    final dateFormatter = MaterialLocalizations.of(context);
+    String formatDate(DateTime date) {
+      return dateFormatter.formatMediumDate(date);
+    }
+
+    Widget detailRow(String label, String value, {bool selectable = false}) {
+      final valueWidget = selectable
+          ? SelectableText(value, style: valueStyle)
+          : Text(value, style: valueStyle);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: labelStyle),
+            valueWidget,
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (trustedPin != null &&
+            trustedPin.fingerprintSha256 != pin.fingerprintSha256)
+          detailRow(
+            S.of(context)!.certificatePreviousFingerprint,
+            trustedPin.fingerprintSha256,
+            selectable: true,
+          ),
+        detailRow(S.of(context)!.certificateHost, pin.hostPort),
+        detailRow(
+          S.of(context)!.certificateFingerprint,
+          pin.fingerprintSha256,
+          selectable: true,
+        ),
+        detailRow(S.of(context)!.certificateSubject, pin.subject),
+        detailRow(S.of(context)!.certificateIssuer, pin.issuer),
+        detailRow(
+          S.of(context)!.certificateValidFrom,
+          formatDate(pin.startValidity),
+        ),
+        detailRow(
+          S.of(context)!.certificateValidUntil,
+          formatDate(pin.endValidity),
+        ),
+      ],
+    );
   }
 
   Future<void> _onSubmit() async {
@@ -329,6 +507,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
           credentials.password!,
           form[ServerAddressFormField.fkServerAddress],
           clientCertFormModel,
+          credentials.mfaCode,
         );
       } on PaperlessApiException catch (error) {
         if (mounted) showErrorMessage(context, error);

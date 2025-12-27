@@ -65,6 +65,71 @@ class DocumentsCubit extends Cubit<DocumentsState>
     await reload();
   }
 
+  Future<void> bulkReprocess(List<DocumentModel> documents) async {
+    await api.bulkAction(
+      BulkReprocessAction(documents.map((doc) => doc.id)),
+    );
+    await reload();
+  }
+
+  Future<void> bulkMerge(
+    List<DocumentModel> documents, {
+    bool? deleteOriginals,
+    int? metadataDocumentId,
+    bool? archiveFallback,
+  }) async {
+    await api.bulkAction(
+      BulkMergeAction(
+        documents.map((doc) => doc.id),
+        deleteOriginals: deleteOriginals,
+        metadataDocumentId: metadataDocumentId,
+        archiveFallback: archiveFallback,
+      ),
+    );
+    await reload();
+  }
+
+  Future<void> bulkRotate(
+    List<DocumentModel> documents, {
+    required int degrees,
+  }) async {
+    await api.bulkAction(
+      BulkRotateAction(
+        documents.map((doc) => doc.id),
+        degrees: degrees,
+      ),
+    );
+    await reload();
+  }
+
+  Future<void> bulkSplit(
+    DocumentModel document, {
+    required String pages,
+    bool? deleteOriginals,
+  }) async {
+    await api.bulkAction(
+      BulkSplitAction(
+        [document.id],
+        pages: pages,
+        deleteOriginals: deleteOriginals,
+      ),
+    );
+    await reload();
+  }
+
+  Future<void> bulkDeletePages(
+    DocumentModel document, {
+    required Iterable<int> pages,
+  }) async {
+    await api.bulkAction(
+      BulkDeletePagesAction(
+        [document.id],
+        pages: pages,
+      ),
+    );
+    await reload();
+  }
+
   void toggleDocumentSelection(DocumentModel model) {
     if (state.selectedIds.contains(model.id)) {
       emit(

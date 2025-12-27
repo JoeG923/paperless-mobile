@@ -23,6 +23,8 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
   final DocumentChangedNotifier notifier;
 
   final LocalUserAppState _userAppState;
+  int _suggestionRequestId = 0;
+  static const int _minSuggestionLength = 2;
   DocumentSearchCubit(
     this.api,
     this.notifier,
@@ -87,6 +89,25 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
   Future<void> suggest(String query) async {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) {
+      emit(
+        state.copyWith(
+          suggestions: [],
+          isLoading: false,
+          view: SearchView.suggestions,
+          hasLoaded: false,
+        ),
+      );
+      return;
+    }
+    if (normalizedQuery.length < _minSuggestionLength) {
+      emit(
+        state.copyWith(
+          suggestions: [],
+          isLoading: false,
+          view: SearchView.suggestions,
+          hasLoaded: false,
+        ),
+      );
       return;
     }
     emit(
@@ -95,14 +116,41 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
         view: SearchView.suggestions,
       ),
     );
-    final suggestions = await api.autocomplete(query);
-    print("Suggestions found: $suggestions");
-    emit(
-      state.copyWith(
-        suggestions: suggestions,
-        isLoading: false,
-      ),
-    );
+    final requestId = ++_suggestionRequestId;
+    try {
+      final hasConnection =
+          await connectivityStatusService.isConnectedToInternet();
+      if (!hasConnection || requestId != _suggestionRequestId) {
+        if (requestId == _suggestionRequestId) {
+          emit(
+            state.copyWith(
+              suggestions: [],
+              isLoading: false,
+              hasLoaded: true,
+            ),
+          );
+        }
+        return;
+      }
+      final suggestions = await api.autocomplete(normalizedQuery);
+      if (requestId != _suggestionRequestId) return;
+      emit(
+        state.copyWith(
+          suggestions: suggestions,
+          isLoading: false,
+          hasLoaded: true,
+        ),
+      );
+    } catch (_) {
+      if (requestId != _suggestionRequestId) return;
+      emit(
+        state.copyWith(
+          suggestions: [],
+          isLoading: false,
+          hasLoaded: true,
+        ),
+      );
+    }
   }
 
   void reset() {

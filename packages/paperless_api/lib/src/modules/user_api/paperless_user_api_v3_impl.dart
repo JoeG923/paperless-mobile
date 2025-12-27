@@ -87,6 +87,55 @@ class PaperlessUserApiV3Impl implements PaperlessUserApi, PaperlessUserApiV3 {
   @override
   Future<UserModel> findCurrentUser() async {
     final id = await findCurrentUserId();
-    return find(id);
+    try {
+      final response = await dio.get(
+        "/api/users/$id/",
+        options: Options(validateStatus: (status) => status == 200),
+      );
+      return UserModelV3.fromJson(response.data);
+    } on DioException catch (exception) {
+      if (exception.response?.statusCode == 403) {
+        return _findCurrentUserFromUiSettings();
+      }
+      throw exception.unravel(
+        orElse: const PaperlessApiException(ErrorCode.userNotFound),
+      );
+    }
+  }
+
+  Future<UserModelV3> _findCurrentUserFromUiSettings() async {
+    final response = await dio.get(
+      "/api/ui_settings/",
+      options: Options(validateStatus: (status) => status == 200),
+    );
+    final data = response.data as Map<String, dynamic>;
+    final user = Map<String, dynamic>.from(
+      data['user'] as Map<dynamic, dynamic>,
+    );
+    final permissions = (data['permissions'] as List<dynamic>?)
+            ?.map((permission) => permission.toString())
+            .toList() ??
+        const <String>[];
+    final groups = (user['groups'] as List<dynamic>?)
+            ?.map((group) => group as int)
+            .toList() ??
+        const <int>[];
+
+    return UserModelV3(
+      id: user['id'] as int,
+      username: user['username'] as String,
+      email: user['email'] as String?,
+      firstName: user['first_name'] as String?,
+      lastName: user['last_name'] as String?,
+      dateJoined: user['date_joined'] == null
+          ? null
+          : DateTime.tryParse(user['date_joined'] as String),
+      isStaff: user['is_staff'] as bool? ?? false,
+      isActive: user['is_active'] as bool? ?? true,
+      isSuperuser: user['is_superuser'] as bool? ?? false,
+      groups: groups,
+      userPermissions: permissions,
+      inheritedPermissions: const <String>[],
+    );
   }
 }

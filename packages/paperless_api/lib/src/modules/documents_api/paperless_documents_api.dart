@@ -12,6 +12,7 @@ abstract class PaperlessDocumentsApi {
     DateTime? createdAt,
     int? documentType,
     int? correspondent,
+    int? storagePath,
     Iterable<int> tags = const [],
     int? asn,
     void Function(double progress)? onProgressChanged,
@@ -19,7 +20,7 @@ abstract class PaperlessDocumentsApi {
   Future<DocumentModel> update(DocumentModel doc);
   Future<int> findNextAsn();
   Future<PagedSearchResult<DocumentModel>> findAll(DocumentFilter filter);
-  Future<DocumentModel> find(int id);
+  Future<DocumentModel> find(int id, {bool fullPermissions = false});
   Future<int> delete(DocumentModel doc);
   Future<DocumentMetaData> getMetaData(int id);
   Future<DocumentModel> deleteNote(DocumentModel document, int noteId);
