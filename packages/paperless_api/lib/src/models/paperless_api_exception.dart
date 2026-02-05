@@ -16,11 +16,11 @@ class PaperlessApiException implements Exception {
     StackTrace? stackTrace,
     int? httpStatusCode,
   }) : this(
-          ErrorCode.unknown,
-          details: details,
-          stackTrace: stackTrace,
-          httpStatusCode: httpStatusCode,
-        );
+         ErrorCode.unknown,
+         details: details,
+         stackTrace: stackTrace,
+         httpStatusCode: httpStatusCode,
+       );
 
   @override
   String toString() {
@@ -60,6 +60,7 @@ enum ErrorCode {
   createSavedViewError,
   deleteSavedViewError,
   requestTimedOut,
+  requestCancelled,
   unsupportedFileFormat,
   missingClientCertificate,
   acknowledgeTasksError,
@@ -82,5 +83,5 @@ enum ErrorCode {
   customFieldLoadFailed,
   customFieldDeleteFailed,
   deleteNoteFailed,
-  addNoteFailed;
+  addNoteFailed,
 }

@@ -1,6 +1,5 @@
 import 'dart:developer' as dev;
 import 'dart:io';
-import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -21,10 +20,12 @@ import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/service/document_upload_service.dart';
 import 'package:paperless_mobile/features/app_drawer/view/app_drawer.dart';
 import 'package:paperless_mobile/features/document_scan/cubit/document_scanner_cubit.dart';
+import 'package:paperless_mobile/features/document_scan/view/widgets/scanner_grid.dart';
+import 'package:paperless_mobile/features/document_scan/scan_pdf_assembler.dart';
 import 'package:paperless_mobile/features/document_scan/view/widgets/export_scans_dialog.dart';
 import 'package:paperless_mobile/features/document_scan/view/widgets/scanned_image_item.dart';
 import 'package:paperless_mobile/features/document_search/view/sliver_search_bar.dart';
-import 'package:paperless_mobile/features/document_upload/view/document_upload_preparation_page.dart';
+import 'package:paperless_mobile/features/document_upload/model/document_upload_result.dart';
 import 'package:paperless_mobile/features/documents/view/pages/document_view.dart';
 import 'package:paperless_mobile/features/settings/view/widgets/global_settings_builder.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
@@ -34,8 +35,6 @@ import 'package:paperless_mobile/helpers/permission_helpers.dart';
 import 'package:paperless_mobile/helpers/upload_preset_helper.dart';
 import 'package:paperless_mobile/routing/routes/scanner_route.dart';
 import 'package:path/path.dart' as p;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -54,6 +53,7 @@ class _ScannerPageState extends State<ScannerPage>
       SliverOverlapAbsorberHandle();
 
   final _scrollController = ScrollController();
+  bool _isQuickUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,20 @@ class _ScannerPageState extends State<ScannerPage>
               return switch (state.status) {
                 LoadingStatus.initial => _buildEmptyState(),
                 LoadingStatus.loading => Center(child: Text("Restoring...")),
-                LoadingStatus.loaded => _buildImageGrid(state.scans),
+                LoadingStatus.loaded => ScannerGrid(
+                    scans: state.scans,
+                    searchBarHandle: searchBarHandle,
+                    actionsHandle: actionsHandle,
+                    onDelete: (file) async {
+                      try {
+                        context.read<DocumentScannerCubit>().removeScan(file);
+                      } on PaperlessApiException catch (error, stackTrace) {
+                        showErrorMessage(context, error, stackTrace);
+                      } on InfoMessageException catch (error, stackTrace) {
+                        showInfoMessage(context, error, stackTrace);
+                      }
+                    },
+                  ),
                 LoadingStatus.error => Placeholder(),
               };
             },
@@ -152,7 +165,7 @@ class _ScannerPageState extends State<ScannerPage>
                             icon: const Icon(Icons.upload_outlined),
                           );
                         },
-                        disabled: state.scans.isEmpty,
+                        disabled: state.scans.isEmpty || _isQuickUploading,
                         child: TextButton.icon(
                           label: Text(S.of(context)!.quickUpload),
                           style: TextButton.styleFrom(
@@ -160,7 +173,15 @@ class _ScannerPageState extends State<ScannerPage>
                           ),
                           onPressed: () =>
                               _onQuickUpload(context, state.scans, settings),
-                          icon: const Icon(Icons.upload_outlined),
+                          icon: _isQuickUploading
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.upload_outlined),
                         ),
                       );
                     },
@@ -338,7 +359,7 @@ class _ScannerPageState extends State<ScannerPage>
       if (!context.mounted) return;
       showGenericError(context, error);
     } finally {
-      scanner.close();
+      await scanner.close();
     }
   }
 
@@ -347,6 +368,9 @@ class _ScannerPageState extends State<ScannerPage>
     List<File> scans,
     GlobalSettings settings,
   ) async {
+    if (_isQuickUploading) {
+      return;
+    }
     final hasInternetConnection =
         await context.read<ConnectivityStatusService>().isConnectedToInternet();
     if (!hasInternetConnection) {
@@ -378,6 +402,7 @@ class _ScannerPageState extends State<ScannerPage>
     );
 
     try {
+      setState(() => _isQuickUploading = true);
       await uploadService.upload(
         assembled.bytes,
         filename: filename,
@@ -397,6 +422,10 @@ class _ScannerPageState extends State<ScannerPage>
     } on PaperlessApiException catch (error, stackTrace) {
       if (!context.mounted) return;
       showErrorMessage(context, error, stackTrace);
+    } finally {
+      if (mounted) {
+        setState(() => _isQuickUploading = false);
+      }
     }
   }
 
@@ -458,45 +487,6 @@ class _ScannerPageState extends State<ScannerPage>
     );
   }
 
-  Widget _buildImageGrid(List<File> scans) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverOverlapInjector(handle: searchBarHandle),
-          SliverOverlapInjector(handle: actionsHandle),
-          SliverGrid.builder(
-            itemCount: scans.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1 / sqrt(2),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemBuilder: (context, index) {
-              return ScannedImageItem(
-                file: scans[index],
-                onDelete: () async {
-                  try {
-                    context
-                        .read<DocumentScannerCubit>()
-                        .removeScan(scans[index]);
-                  } on PaperlessApiException catch (error, stackTrace) {
-                    showErrorMessage(context, error, stackTrace);
-                  } on InfoMessageException catch (error, stackTrace) {
-                    showInfoMessage(context, error, stackTrace);
-                  }
-                },
-                index: index,
-                totalNumberOfFiles: scans.length,
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   void _reset(BuildContext context) {
     try {
       context.read<DocumentScannerCubit>().reset();
@@ -551,22 +541,14 @@ class _ScannerPageState extends State<ScannerPage>
     assert(files.isNotEmpty);
     if (files.length == 1 && !forcePdf) {
       final ext = p.extension(files.first.path);
-      return AssembledFile(ext, files.first.readAsBytesSync());
+      return AssembledFile(ext, await files.first.readAsBytes());
     }
-    final doc = pw.Document();
+    final imageBytes = <Uint8List>[];
     for (final file in files) {
-      final img = pw.MemoryImage(file.readAsBytesSync());
-      doc.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat(
-            img.width!.toDouble(),
-            img.height!.toDouble(),
-          ),
-          build: (context) => pw.Image(img),
-        ),
-      );
+      imageBytes.add(await file.readAsBytes());
     }
-    return AssembledFile('.pdf', await doc.save());
+    final pdfBytes = await buildPdfBytesFromImages(imageBytes);
+    return AssembledFile('.pdf', pdfBytes);
   }
 }
 

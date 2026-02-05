@@ -256,6 +256,8 @@
   "@reload": {},
   "documentSuccessfullyUploadedProcessing": "Doküman başarıyla yüklendi, işleniyor...",
   "@documentSuccessfullyUploadedProcessing": {},
+  "uploadProcessingStatusUnavailable": "Processing status is not available for this server.",
+  "@uploadProcessingStatusUnavailable": {},
   "deleteLabelWarningText": "Bu etiket, diğer belgelere referanslar içerir. Bu etiketi silerek, tüm referanslar kaldırılacaktır. Devam etmek ister misiniz?",
   "@deleteLabelWarningText": {},
   "couldNotAcknowledgeTasks": "Görevler kabul edilemedi.",
@@ -306,6 +308,8 @@
   "@userIsNotAuthenticated": {},
   "requestTimedOut": "Sunucuya yapılan istek zaman aşımına uğradı.",
   "@requestTimedOut": {},
+  "requestCancelled": "The request was cancelled.",
+  "@requestCancelled": {},
   "anErrorOccurredRemovingTheScans": "Taramalar kaldırılırken bir hata oluştu.",
   "@anErrorOccurredRemovingTheScans": {},
   "couldNotReachYourPaperlessServer": "Paperless sunucunuza erişilemedi, çalışır durumda mı?",
@@ -1113,5 +1117,6 @@
     }
   },
   "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
-  "certificatePreviousFingerprint": "Previous fingerprint"
+  "certificatePreviousFingerprint": "Previous fingerprint",
+  "uploading": "Uploading..."
 }

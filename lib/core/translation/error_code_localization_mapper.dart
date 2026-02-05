@@ -48,6 +48,7 @@ String translateError(BuildContext context, ErrorCode code) {
     ErrorCode.createSavedViewError => S.of(context)!.couldNotCreateSavedView,
     ErrorCode.deleteSavedViewError => S.of(context)!.couldNotDeleteSavedView,
     ErrorCode.requestTimedOut => S.of(context)!.requestTimedOut,
+    ErrorCode.requestCancelled => S.of(context)!.requestCancelled,
     ErrorCode.unsupportedFileFormat => S.of(context)!.fileFormatNotSupported,
     ErrorCode.missingClientCertificate =>
       S.of(context)!.aClientCertificateWasExpectedButNotSent,

@@ -15,7 +15,7 @@ import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/service/document_upload_service.dart';
-import 'package:paperless_mobile/features/document_upload/view/document_upload_preparation_page.dart';
+import 'package:paperless_mobile/features/document_upload/model/document_upload_result.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/features/notifications/services/local_notification_service.dart';
 import 'package:paperless_mobile/features/sharing/cubit/receive_share_cubit.dart';
@@ -23,6 +23,7 @@ import 'package:paperless_mobile/features/sharing/view/dialog/discard_shared_fil
 import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
+import 'package:paperless_mobile/core/translation/error_code_localization_mapper.dart';
 import 'package:paperless_mobile/routing/routes/scanner_route.dart';
 import 'package:path/path.dart' as p;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -46,15 +47,17 @@ class _EventListenerShellState extends State<EventListenerShell>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ReceiveSharingIntent.instance.getInitialMedia().then(_onReceiveSharedFiles);
-    _subscription = ReceiveSharingIntent.instance
-        .getMediaStream()
-        .listen(_onReceiveSharedFiles);
+    _subscription = ReceiveSharingIntent.instance.getMediaStream().listen(
+      _onReceiveSharedFiles,
+    );
     context.read<PendingTasksNotifier>().addListener(_onTasksChanged);
-    _documentDeletedSubscription =
-        context.read<DocumentChangedNotifier>().$deleted.listen((event) {
-      if (!mounted) return;
-      showSnackBar(context, S.of(context)!.documentSuccessfullyDeleted);
-    });
+    _documentDeletedSubscription = context
+        .read<DocumentChangedNotifier>()
+        .$deleted
+        .listen((event) {
+          if (!mounted) return;
+          showSnackBar(context, S.of(context)!.documentSuccessfullyDeleted);
+        });
     _listenToInboxChanges();
     // WidgetsBinding.instance.addPostFrameCallback((_) async {
     //   final notifier = context.read<ConsumptionChangeNotifier>();
@@ -130,9 +133,10 @@ class _EventListenerShellState extends State<EventListenerShell>
     final taskNotifier = context.read<PendingTasksNotifier>();
     final userId = context.read<LocalUserAccount>().id;
     for (var task in taskNotifier.value.values) {
-      context
-          .read<LocalNotificationService>()
-          .notifyTaskChanged(task, userId: userId);
+      context.read<LocalNotificationService>().notifyTaskChanged(
+        task,
+        userId: userId,
+      );
     }
   }
 
@@ -169,8 +173,9 @@ Future<void> consumeLocalFile(
   bool exitAppAfterConsumed = false,
 }) async {
   final filename = p.basename(file.path);
-  final hasInternetConnection =
-      await context.read<ConnectivityStatusService>().isConnectedToInternet();
+  final hasInternetConnection = await context
+      .read<ConnectivityStatusService>()
+      .isConnectedToInternet();
   if (!hasInternetConnection) {
     if (!context.mounted) return;
     showSnackBar(
@@ -182,14 +187,12 @@ Future<void> consumeLocalFile(
   }
   if (!context.mounted) return;
   final consumptionNotifier = context.read<ConsumptionChangeNotifier>();
-  final uploadService = DocumentUploadService(
-    context.read(),
-    context.read(),
-  );
+  final uploadService = DocumentUploadService(context.read(), context.read());
 
   final bytes = file.readAsBytes();
-  final shouldDirectlyUpload =
-      Hive.globalSettingsBox.getValue()!.skipDocumentPreprarationOnUpload;
+  final shouldDirectlyUpload = Hive.globalSettingsBox
+      .getValue()!
+      .skipDocumentPreprarationOnUpload;
   if (shouldDirectlyUpload) {
     try {
       await uploadService.upload(
@@ -198,11 +201,13 @@ Future<void> consumeLocalFile(
         title: p.basenameWithoutExtension(file.path),
       );
       consumptionNotifier.discardFile(file, userId: userId);
+    } on PaperlessApiException catch (error) {
+      if (!context.mounted) return;
+      await Fluttertoast.showToast(msg: translateError(context, error.code));
+      return;
     } catch (error) {
       if (!context.mounted) return;
-      await Fluttertoast.showToast(
-        msg: S.of(context)!.couldNotUploadDocument,
-      );
+      await Fluttertoast.showToast(msg: S.of(context)!.couldNotUploadDocument);
       return;
     } finally {
       if (exitAppAfterConsumed) {
@@ -210,13 +215,14 @@ Future<void> consumeLocalFile(
       }
     }
   } else {
-    final result = await DocumentUploadRoute(
+    final result =
+        await DocumentUploadRoute(
           $extra: bytes,
           filename: p.basenameWithoutExtension(file.path),
           title: p.basenameWithoutExtension(file.path),
           fileExtension: p.extension(file.path),
         ).push<DocumentUploadResult>(context) ??
-        DocumentUploadResult(false, null);
+        const DocumentUploadResult.cancelled();
 
     if (result.success) {
       if (context.mounted) {
@@ -234,15 +240,17 @@ Future<void> consumeLocalFile(
       }
     } else {
       if (!context.mounted) return;
-      final shouldDiscard = await showDialog<bool>(
+      final shouldDiscard =
+          await showDialog<bool>(
             context: context,
             builder: (context) => DiscardSharedFileDialog(bytes: bytes),
           ) ??
           false;
       if (shouldDiscard && context.mounted) {
-        await context
-            .read<ConsumptionChangeNotifier>()
-            .discardFile(file, userId: userId);
+        await context.read<ConsumptionChangeNotifier>().discardFile(
+          file,
+          userId: userId,
+        );
       }
     }
   }

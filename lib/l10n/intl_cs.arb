@@ -256,6 +256,8 @@
   "@reload": {},
   "documentSuccessfullyUploadedProcessing": "Dokument úspěšně nahrán, zpracovávám...",
   "@documentSuccessfullyUploadedProcessing": {},
+  "uploadProcessingStatusUnavailable": "Processing status is not available for this server.",
+  "@uploadProcessingStatusUnavailable": {},
   "deleteLabelWarningText": "Dokumenty mají přiřazen tento štítek. Odstraněním štítku bude označení odstraněno. Pokračovat?",
   "@deleteLabelWarningText": {},
   "couldNotAcknowledgeTasks": "Nepodařilo se potvrdit úkoly.",
@@ -306,6 +308,8 @@
   "@userIsNotAuthenticated": {},
   "requestTimedOut": "Při dotazu na server došlo k překročení času odezvy.",
   "@requestTimedOut": {},
+  "requestCancelled": "The request was cancelled.",
+  "@requestCancelled": {},
   "anErrorOccurredRemovingTheScans": "Došlo k chybě při odstraňování skenů.",
   "@anErrorOccurredRemovingTheScans": {},
   "couldNotReachYourPaperlessServer": "Nelze se připojit k Paperless serveru, je opravdu spuštěn a dostupný?",
@@ -1113,5 +1117,6 @@
     }
   },
   "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
-  "certificatePreviousFingerprint": "Previous fingerprint"
+  "certificatePreviousFingerprint": "Previous fingerprint",
+  "uploading": "Uploading..."
 }

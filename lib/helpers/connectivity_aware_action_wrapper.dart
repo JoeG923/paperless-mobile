@@ -41,17 +41,17 @@ class ConnectivityAwareActionWrapper extends StatelessWidget {
     return StreamBuilder<bool>(
       stream: context.read<ConnectivityStatusService>().connectivityChanges(),
       builder: (context, snapshot) {
-        final disableButton =
-            !snapshot.hasData || snapshot.data == false || disabled;
-        if (disableButton) {
+        if (disabled) {
+          return AbsorbPointer(child: offlineBuilder(context, child));
+        }
+        final isOffline = snapshot.hasData && snapshot.data == false;
+        if (isOffline) {
           return GestureDetector(
             onTap: () {
               HapticFeedback.heavyImpact();
               showSnackBar(context, S.of(context)!.youAreCurrentlyOffline);
             },
-            child: AbsorbPointer(
-              child: offlineBuilder(context, child),
-            ),
+            child: AbsorbPointer(child: offlineBuilder(context, child)),
           );
         }
         return child;

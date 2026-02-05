@@ -256,6 +256,8 @@
   "@reload": {},
   "documentSuccessfullyUploadedProcessing": "Документ успешно загружен, обработка...",
   "@documentSuccessfullyUploadedProcessing": {},
+  "uploadProcessingStatusUnavailable": "Processing status is not available for this server.",
+  "@uploadProcessingStatusUnavailable": {},
   "deleteLabelWarningText": "Эта метка содержит ссылки на другие документы. Удаляя эту метку, все ссылки будут удалены. Продолжить?",
   "@deleteLabelWarningText": {},
   "couldNotAcknowledgeTasks": "Не удалось подтвердить задания.",
@@ -306,6 +308,8 @@
   "@userIsNotAuthenticated": {},
   "requestTimedOut": "Время ожидания запроса на сервер истекло.",
   "@requestTimedOut": {},
+  "requestCancelled": "The request was cancelled.",
+  "@requestCancelled": {},
   "anErrorOccurredRemovingTheScans": "Произошла ошибка при удалении сканирования.",
   "@anErrorOccurredRemovingTheScans": {},
   "couldNotReachYourPaperlessServer": "Не удалось получить доступ к вашему серверу Paperless, он работает?",
@@ -1113,5 +1117,6 @@
     }
   },
   "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
-  "certificatePreviousFingerprint": "Previous fingerprint"
+  "certificatePreviousFingerprint": "Previous fingerprint",
+  "uploading": "Uploading..."
 }

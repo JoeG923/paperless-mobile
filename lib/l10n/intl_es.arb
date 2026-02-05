@@ -256,6 +256,8 @@
   "@reload": {},
   "documentSuccessfullyUploadedProcessing": "Documento subido correctamente, procesando...",
   "@documentSuccessfullyUploadedProcessing": {},
+  "uploadProcessingStatusUnavailable": "Processing status is not available for this server.",
+  "@uploadProcessingStatusUnavailable": {},
   "deleteLabelWarningText": "Esta etiqueta contiene referencias a otros documentos. Al eliminar esta etiqueta, todas las referencias serán eliminadas. ¿Desea continuar?",
   "@deleteLabelWarningText": {},
   "couldNotAcknowledgeTasks": "No se han podido reconocer las tareas.",
@@ -306,6 +308,8 @@
   "@userIsNotAuthenticated": {},
   "requestTimedOut": "La petición al servidor ha superado el tiempo de espera.",
   "@requestTimedOut": {},
+  "requestCancelled": "The request was cancelled.",
+  "@requestCancelled": {},
   "anErrorOccurredRemovingTheScans": "Ha ocurrido un error eliminando los escaneos.",
   "@anErrorOccurredRemovingTheScans": {},
   "couldNotReachYourPaperlessServer": "No se ha podido conectar con el servidor de Paperless, ¿Está funcionando?",
@@ -1113,5 +1117,6 @@
     }
   },
   "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
-  "certificatePreviousFingerprint": "Previous fingerprint"
+  "certificatePreviousFingerprint": "Previous fingerprint",
+  "uploading": "Uploading..."
 }

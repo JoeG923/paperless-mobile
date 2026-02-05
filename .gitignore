@@ -78,3 +78,7 @@ assets/changelogs/*.md
 
 # FVM Version Cache
 .fvm/
+
+# Local Flutter SDKs
+flutter-sdk/
+flutter/

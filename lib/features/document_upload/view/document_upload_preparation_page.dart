@@ -24,13 +24,6 @@ import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/helpers/upload_preset_helper.dart';
 import 'package:paperless_mobile/routing/routes/labels_route.dart';
 
-class DocumentUploadResult {
-  final bool success;
-  final String? taskId;
-
-  DocumentUploadResult(this.success, this.taskId);
-}
-
 class DocumentUploadPreparationPage extends StatefulWidget {
   final FutureOr<Uint8List> fileBytes;
   final String? title;
@@ -68,24 +61,29 @@ class _DocumentUploadPreparationPageState
   @override
   Widget build(BuildContext context) {
     final labelRepository = context.watch<LabelRepository>();
-    final settings =
-        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    final settings = Hive.box<GlobalSettings>(
+      HiveBoxes.globalSettings,
+    ).getValue()!;
     final preset = UploadPreset.fromSettings(settings);
-    final defaultTitle = widget.title ??
+    final defaultTitle =
+        widget.title ??
         (preset.enabled ? preset.buildTitle(_now) : defaultScanTitle(_now));
-    final defaultFileName =
-        widget.filename ?? formatFilename(defaultTitle);
-    final initialCreatedDate =
-        preset.enabled && preset.useCurrentDate ? _now : null;
+    final defaultFileName = widget.filename ?? formatFilename(defaultTitle);
+    final initialCreatedDate = preset.enabled && preset.useCurrentDate
+        ? _now
+        : null;
     final initialTags = preset.enabled && preset.tagIds.isNotEmpty
         ? IdsTagsQuery(include: preset.tagIds)
         : null;
-    final initialCorrespondent =
-        preset.enabled ? _buildIdParam(preset.correspondentId) : null;
-    final initialDocumentType =
-        preset.enabled ? _buildIdParam(preset.documentTypeId) : null;
-    final initialStoragePath =
-        preset.enabled ? _buildIdParam(preset.storagePathId) : null;
+    final initialCorrespondent = preset.enabled
+        ? _buildIdParam(preset.correspondentId)
+        : null;
+    final initialDocumentType = preset.enabled
+        ? _buildIdParam(preset.documentTypeId)
+        : null;
+    final initialStoragePath = preset.enabled
+        ? _buildIdParam(preset.storagePathId)
+        : null;
     return BlocBuilder<DocumentUploadCubit, DocumentUploadState>(
       builder: (context, state) {
         return Scaffold(
@@ -98,7 +96,7 @@ class _DocumentUploadPreparationPageState
               onPressed: state.uploadProgress == null ? _onSubmit : null,
               label: state.uploadProgress == null
                   ? Text(S.of(context)!.upload)
-                  : Text("Uploading..."), //TODO: INTL
+                  : Text(S.of(context)!.uploading),
               icon: state.uploadProgress == null
                   ? const Icon(Icons.upload)
                   : SizedBox(
@@ -107,7 +105,8 @@ class _DocumentUploadPreparationPageState
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         value: state.uploadProgress,
-                      )).padded(4),
+                      ),
+                    ).padded(4),
             ),
           ),
           body: FormBuilder(
@@ -115,12 +114,22 @@ class _DocumentUploadPreparationPageState
             child: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverOverlapAbsorber(
-                  handle:
-                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                    context,
+                  ),
                   sliver: SliverAppBar(
                     leading: const BackButton(),
                     pinned: true,
                     expandedHeight: 150,
+                    actions: [
+                      if (state.uploadProgress != null)
+                        TextButton(
+                          onPressed: () => context
+                              .read<DocumentUploadCubit>()
+                              .cancelUpload(),
+                          child: Text(S.of(context)!.cancel),
+                        ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       background: FutureOrBuilder<Uint8List>(
                         future: widget.fileBytes,
@@ -145,194 +154,206 @@ class _DocumentUploadPreparationPageState
                 padding: const EdgeInsets.only(top: 16.0),
                 child: Builder(
                   builder: (context) {
+                    final bottomPadding =
+                        MediaQuery.of(context).padding.bottom + 96;
                     return CustomScrollView(
                       slivers: [
                         SliverOverlapInjector(
                           handle:
                               NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                  context),
+                                context,
+                              ),
                         ),
-                        SliverList.list(
-                          children: [
-                            // Title
-                            FormBuilderTextField(
-                              autovalidateMode: AutovalidateMode.always,
-                              name: DocumentModel.titleKey,
-                              initialValue: defaultTitle,
-                              validator: (value) {
-                                if (value?.trim().isEmpty ?? true) {
-                                  return S.of(context)!.thisFieldIsRequired;
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                labelText: S.of(context)!.title,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.close),
-                                  onPressed: () {
-                                    _formKey.currentState
-                                        ?.fields[DocumentModel.titleKey]
-                                        ?.didChange("");
-                                    if (_syncTitleAndFilename) {
-                                      _formKey.currentState?.fields[fkFileName]
-                                          ?.didChange("");
-                                    }
-                                  },
-                                ),
-                                errorText: _errors[DocumentModel.titleKey],
-                              ),
-                              onChanged: (value) {
-                                final String transformedValue =
-                                    _formatFilename(value ?? '');
-                                if (_syncTitleAndFilename) {
-                                  _formKey.currentState?.fields[fkFileName]
-                                      ?.didChange(transformedValue);
-                                }
-                              },
-                            ),
-                            // Filename
-                            FormBuilderTextField(
-                              autovalidateMode: AutovalidateMode.always,
-                              readOnly: _syncTitleAndFilename,
-                              enabled: !_syncTitleAndFilename,
-                              name: fkFileName,
-                              decoration: InputDecoration(
-                                labelText: S.of(context)!.fileName,
-                                suffixText: widget.fileExtension,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: () => _formKey
-                                      .currentState?.fields[fkFileName]
-                                      ?.didChange(''),
-                                ),
-                              ),
-                              initialValue: widget.filename ??
-                                  defaultFileName,
-                            ),
-                            // Synchronize title and filename
-                            SwitchListTile(
-                              value: _syncTitleAndFilename,
-                              onChanged: (value) {
-                                setState(
-                                  () => _syncTitleAndFilename = value,
-                                );
-                                if (_syncTitleAndFilename) {
-                                  final String transformedValue =
-                                      _formatFilename(_formKey
+                        SliverPadding(
+                          padding: EdgeInsets.only(bottom: bottomPadding),
+                          sliver: SliverList.list(
+                            children: [
+                              // Title
+                              FormBuilderTextField(
+                                autovalidateMode: AutovalidateMode.always,
+                                name: DocumentModel.titleKey,
+                                initialValue: defaultTitle,
+                                validator: (value) {
+                                  if (value?.trim().isEmpty ?? true) {
+                                    return S.of(context)!.thisFieldIsRequired;
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: S.of(context)!.title,
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () {
+                                      _formKey
                                           .currentState
                                           ?.fields[DocumentModel.titleKey]
-                                          ?.value as String);
+                                          ?.didChange("");
+                                      if (_syncTitleAndFilename) {
+                                        _formKey
+                                            .currentState
+                                            ?.fields[fkFileName]
+                                            ?.didChange("");
+                                      }
+                                    },
+                                  ),
+                                  errorText: _errors[DocumentModel.titleKey],
+                                ),
+                                onChanged: (value) {
+                                  final String transformedValue =
+                                      _formatFilename(value ?? '');
                                   if (_syncTitleAndFilename) {
                                     _formKey.currentState?.fields[fkFileName]
                                         ?.didChange(transformedValue);
                                   }
-                                }
-                              },
-                              title: Text(
-                                S.of(context)!.synchronizeTitleAndFilename,
+                                },
                               ),
-                            ),
-                            // Created at
-                            FormBuilderLocalizedDatePicker(
-                              name: DocumentModel.createdKey,
-                              firstDate: DateTime(1970, 1, 1),
-                              lastDate: DateTime(2100, 1, 1),
-                              locale: Localizations.localeOf(context),
-                              labelText: "${S.of(context)!.createdAt} *",
-                              allowUnset: true,
-                              initialValue: initialCreatedDate,
-                            ),
-                            // Correspondent
-                            if (context
-                                .watch<LocalUserAccount>()
-                                .paperlessUser
-                                .canViewCorrespondents)
-                              LabelFormField<Correspondent>(
-                                showAnyAssignedOption: false,
-                                showNotAssignedOption: false,
-                                onAddLabel: (initialName) => CreateLabelRoute(
-                                  LabelType.correspondent,
-                                  name: initialName,
-                                ).push<Correspondent>(context),
-                                addLabelText: S.of(context)!.addCorrespondent,
-                                labelText: "${S.of(context)!.correspondent} *",
-                                name: DocumentModel.correspondentKey,
-                                options: labelRepository.correspondents,
-                                prefixIcon: const Icon(Icons.person_outline),
-                                allowSelectUnassigned: true,
-                                canCreateNewLabel: context
-                                    .watch<LocalUserAccount>()
-                                    .paperlessUser
-                                    .canCreateCorrespondents,
-                                initialValue: initialCorrespondent,
+                              // Filename
+                              FormBuilderTextField(
+                                autovalidateMode: AutovalidateMode.always,
+                                readOnly: _syncTitleAndFilename,
+                                enabled: !_syncTitleAndFilename,
+                                name: fkFileName,
+                                decoration: InputDecoration(
+                                  labelText: S.of(context)!.fileName,
+                                  suffixText: widget.fileExtension,
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () => _formKey
+                                        .currentState
+                                        ?.fields[fkFileName]
+                                        ?.didChange(''),
+                                  ),
+                                ),
+                                initialValue:
+                                    widget.filename ?? defaultFileName,
                               ),
-                            // Document type
-                            if (context
-                                .watch<LocalUserAccount>()
-                                .paperlessUser
-                                .canViewDocumentTypes)
-                              LabelFormField<DocumentType>(
-                                showAnyAssignedOption: false,
-                                showNotAssignedOption: false,
-                                onAddLabel: (initialName) => CreateLabelRoute(
-                                  LabelType.documentType,
-                                  name: initialName,
-                                ).push<DocumentType>(context),
-                                addLabelText: S.of(context)!.addDocumentType,
-                                labelText: "${S.of(context)!.documentType} *",
-                                name: DocumentModel.documentTypeKey,
-                                options: labelRepository.documentTypes,
-                                prefixIcon:
-                                    const Icon(Icons.description_outlined),
-                                allowSelectUnassigned: true,
-                                canCreateNewLabel: context
-                                    .watch<LocalUserAccount>()
-                                    .paperlessUser
-                                    .canCreateDocumentTypes,
-                                initialValue: initialDocumentType,
+                              // Synchronize title and filename
+                              SwitchListTile(
+                                value: _syncTitleAndFilename,
+                                onChanged: (value) {
+                                  setState(() => _syncTitleAndFilename = value);
+                                  if (_syncTitleAndFilename) {
+                                    final String
+                                    transformedValue = _formatFilename(
+                                      _formKey
+                                              .currentState
+                                              ?.fields[DocumentModel.titleKey]
+                                              ?.value
+                                          as String,
+                                    );
+                                    if (_syncTitleAndFilename) {
+                                      _formKey.currentState?.fields[fkFileName]
+                                          ?.didChange(transformedValue);
+                                    }
+                                  }
+                                },
+                                title: Text(
+                                  S.of(context)!.synchronizeTitleAndFilename,
+                                ),
                               ),
-                            if (context
-                                .watch<LocalUserAccount>()
-                                .paperlessUser
-                                .canViewStoragePaths)
-                              LabelFormField<StoragePath>(
-                                showAnyAssignedOption: false,
-                                showNotAssignedOption: false,
-                                onAddLabel: (initialName) => CreateLabelRoute(
-                                  LabelType.storagePath,
-                                  name: initialName,
-                                ).push<StoragePath>(context),
-                                addLabelText: S.of(context)!.addStoragePath,
-                                labelText: "${S.of(context)!.storagePath} *",
-                                name: DocumentModel.storagePathKey,
-                                options: labelRepository.storagePaths,
-                                prefixIcon: const Icon(Icons.folder_open),
-                                allowSelectUnassigned: true,
-                                canCreateNewLabel: context
-                                    .watch<LocalUserAccount>()
-                                    .paperlessUser
-                                    .canCreateStoragePaths,
-                                initialValue: initialStoragePath,
+                              // Created at
+                              FormBuilderLocalizedDatePicker(
+                                name: DocumentModel.createdKey,
+                                firstDate: DateTime(1970, 1, 1),
+                                lastDate: DateTime(2100, 1, 1),
+                                locale: Localizations.localeOf(context),
+                                labelText: "${S.of(context)!.createdAt} *",
+                                allowUnset: true,
+                                initialValue: initialCreatedDate,
                               ),
-                            if (context
-                                .watch<LocalUserAccount>()
-                                .paperlessUser
-                                .canViewTags)
-                              TagsFormField(
-                                name: DocumentModel.tagsKey,
-                                allowCreation: true,
-                                allowExclude: false,
-                                allowOnlySelection: true,
-                                options: labelRepository.tags,
-                                initialValue: initialTags,
-                              ),
-                            Text(
-                              "* ${S.of(context)!.uploadInferValuesHint}",
-                              style: Theme.of(context).textTheme.bodySmall,
-                              textAlign: TextAlign.justify,
-                            ).padded(),
-                            const SizedBox(height: 300),
-                          ].padded(),
+                              // Correspondent
+                              if (context
+                                  .watch<LocalUserAccount>()
+                                  .paperlessUser
+                                  .canViewCorrespondents)
+                                LabelFormField<Correspondent>(
+                                  showAnyAssignedOption: false,
+                                  showNotAssignedOption: false,
+                                  onAddLabel: (initialName) => CreateLabelRoute(
+                                    LabelType.correspondent,
+                                    name: initialName,
+                                  ).push<Correspondent>(context),
+                                  addLabelText: S.of(context)!.addCorrespondent,
+                                  labelText:
+                                      "${S.of(context)!.correspondent} *",
+                                  name: DocumentModel.correspondentKey,
+                                  options: labelRepository.correspondents,
+                                  prefixIcon: const Icon(Icons.person_outline),
+                                  allowSelectUnassigned: true,
+                                  canCreateNewLabel: context
+                                      .watch<LocalUserAccount>()
+                                      .paperlessUser
+                                      .canCreateCorrespondents,
+                                  initialValue: initialCorrespondent,
+                                ),
+                              // Document type
+                              if (context
+                                  .watch<LocalUserAccount>()
+                                  .paperlessUser
+                                  .canViewDocumentTypes)
+                                LabelFormField<DocumentType>(
+                                  showAnyAssignedOption: false,
+                                  showNotAssignedOption: false,
+                                  onAddLabel: (initialName) => CreateLabelRoute(
+                                    LabelType.documentType,
+                                    name: initialName,
+                                  ).push<DocumentType>(context),
+                                  addLabelText: S.of(context)!.addDocumentType,
+                                  labelText: "${S.of(context)!.documentType} *",
+                                  name: DocumentModel.documentTypeKey,
+                                  options: labelRepository.documentTypes,
+                                  prefixIcon: const Icon(
+                                    Icons.description_outlined,
+                                  ),
+                                  allowSelectUnassigned: true,
+                                  canCreateNewLabel: context
+                                      .watch<LocalUserAccount>()
+                                      .paperlessUser
+                                      .canCreateDocumentTypes,
+                                  initialValue: initialDocumentType,
+                                ),
+                              if (context
+                                  .watch<LocalUserAccount>()
+                                  .paperlessUser
+                                  .canViewStoragePaths)
+                                LabelFormField<StoragePath>(
+                                  showAnyAssignedOption: false,
+                                  showNotAssignedOption: false,
+                                  onAddLabel: (initialName) => CreateLabelRoute(
+                                    LabelType.storagePath,
+                                    name: initialName,
+                                  ).push<StoragePath>(context),
+                                  addLabelText: S.of(context)!.addStoragePath,
+                                  labelText: "${S.of(context)!.storagePath} *",
+                                  name: DocumentModel.storagePathKey,
+                                  options: labelRepository.storagePaths,
+                                  prefixIcon: const Icon(Icons.folder_open),
+                                  allowSelectUnassigned: true,
+                                  canCreateNewLabel: context
+                                      .watch<LocalUserAccount>()
+                                      .paperlessUser
+                                      .canCreateStoragePaths,
+                                  initialValue: initialStoragePath,
+                                ),
+                              if (context
+                                  .watch<LocalUserAccount>()
+                                  .paperlessUser
+                                  .canViewTags)
+                                TagsFormField(
+                                  name: DocumentModel.tagsKey,
+                                  allowCreation: true,
+                                  allowExclude: false,
+                                  allowOnlySelection: true,
+                                  options: labelRepository.tags,
+                                  initialValue: initialTags,
+                                ),
+                              Text(
+                                "* ${S.of(context)!.uploadInferValuesHint}",
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.justify,
+                              ).padded(),
+                            ].padded(),
+                          ),
                         ),
                       ],
                     );
@@ -379,15 +400,12 @@ class _DocumentUploadPreparationPageState
         };
 
         final asn = formValues[DocumentModel.asnKey] as int?;
-        final taskId = await cubit.upload(
+        final outcome = await cubit.upload(
           await widget.fileBytes,
           filename: _padWithExtension(
             _formKey.currentState?.value[fkFileName],
             widget.fileExtension,
           ),
-          userId: Hive.box<GlobalSettings>(HiveBoxes.globalSettings)
-              .getValue()!
-              .loggedInUserId!,
           title: title,
           documentType: docType,
           correspondent: correspondent,
@@ -396,13 +414,29 @@ class _DocumentUploadPreparationPageState
           createdAt: createdAt?.toDateTime(),
           asn: asn,
         );
-        if (mounted) {
-          showSnackBar(
-            context,
-            S.of(context)!.documentSuccessfullyUploadedProcessing,
-          );
-          context.pop(DocumentUploadResult(true, taskId));
+        if (!mounted) return;
+        if (outcome.cancelled) {
+          showSnackBar(context, S.of(context)!.requestCancelled);
+          return;
         }
+        if (!outcome.success) {
+          final error = outcome.error;
+          if (error != null) {
+            showErrorMessage(context, error);
+          } else {
+            showSnackBar(context, S.of(context)!.couldNotUploadDocument);
+          }
+          return;
+        }
+        final details = outcome.taskId == null
+            ? S.of(context)!.uploadProcessingStatusUnavailable
+            : null;
+        showSnackBar(
+          context,
+          S.of(context)!.documentSuccessfullyUploadedProcessing,
+          details: details,
+        );
+        context.pop(outcome);
       } on PaperlessFormValidationException catch (exception) {
         setState(() => _errors = exception.validationMessages);
       } catch (error, stackTrace) {

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:paperless_api/src/models/models.dart';
 
 abstract class PaperlessDocumentsApi {
@@ -16,6 +17,8 @@ abstract class PaperlessDocumentsApi {
     Iterable<int> tags = const [],
     int? asn,
     void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
   });
   Future<DocumentModel> update(DocumentModel doc);
   Future<int> findNextAsn();
@@ -38,6 +41,8 @@ abstract class PaperlessDocumentsApi {
 
   Future<List<String>> autocomplete(String query, [int limit = 10]);
 
-  Future<DocumentModel> addNote(
-      {required DocumentModel document, required String text});
+  Future<DocumentModel> addNote({
+    required DocumentModel document,
+    required String text,
+  });
 }
