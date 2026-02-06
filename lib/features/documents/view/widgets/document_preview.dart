@@ -37,19 +37,21 @@ class DocumentPreview extends StatelessWidget {
         behavior: HitTestBehavior.translucent,
         onTap: isClickable
             ? () => DocumentPreviewRoute(
-                  id: documentId,
-                  title: title,
-                ).push(context)
+                id: documentId,
+                title: title,
+              ).push(context)
             : null,
-        child: Builder(builder: (context) {
-          if (enableHero) {
-            return Hero(
-              tag: "thumb_$documentId",
-              child: _buildPreview(context),
-            ).accessible();
-          }
-          return _buildPreview(context);
-        }),
+        child: Builder(
+          builder: (context) {
+            if (enableHero) {
+              return Hero(
+                tag: "thumb_$documentId",
+                child: _buildPreview(context),
+              ).accessible();
+            }
+            return _buildPreview(context);
+          },
+        ),
       ),
     );
   }
@@ -63,9 +65,10 @@ class DocumentPreview extends StatelessWidget {
           fit: fit,
           alignment: alignment,
           cacheKey: "thumb_$documentId",
-          imageUrl:
-              context.read<PaperlessDocumentsApi>().getThumbnailUrl(documentId),
-          errorWidget: (ctxt, msg, __) => Text(msg),
+          imageUrl: context.read<PaperlessDocumentsApi>().getThumbnailUrl(
+            documentId,
+          ),
+          errorWidget: (_, msg, _) => Text(msg),
           placeholder: (context, value) => Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,

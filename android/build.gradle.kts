@@ -22,6 +22,11 @@ subprojects {
             if (requested.group == "org.jetbrains.kotlin") {
                 useVersion("2.1.0")
             }
+            if (requested.group == "net.bytebuddy") {
+                // Keep Byte Buddy on a Jetifier-compatible class file target so
+                // Android lint model generation for test classpaths does not fail.
+                useVersion("1.14.18")
+            }
         }
     }
 }
@@ -51,9 +56,13 @@ subprojects {
 
 subprojects {
     if (name != "app") {
-        tasks.matching { it.name.contains("AndroidTest", ignoreCase = true) }.configureEach {
-            enabled = false
-        }
+        // Don't run instrumentation tests for plugin subprojects, but keep
+        // AndroidTest build + lint model tasks enabled (AGP lint depends on them).
+        tasks.matching {
+            val n = it.name.lowercase()
+            (n.startsWith("connected") || n.startsWith("device") || n.contains("manageddevice")) &&
+                n.contains("androidtest")
+        }.configureEach { enabled = false }
     }
 }
 

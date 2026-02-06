@@ -23,10 +23,23 @@ class TrustedCertificateStore {
     }
     final hostPort = canonicalHostPort(host, port);
     final fingerprint = fingerprintSha256FromBytes(certificate.der);
-    return settings.trustedCertificatePins.any(
-      (pin) =>
-          pin.hostPort == hostPort && pin.fingerprintSha256 == fingerprint,
-    );
+    return settings.trustedCertificatePins.any((pin) {
+      final isFingerprintMatch =
+          pin.hostPort == hostPort && pin.fingerprintSha256 == fingerprint;
+      if (!isFingerprintMatch) {
+        return false;
+      }
+
+      return isPinWithinValidity(pin);
+    });
+  }
+
+  static bool isPinWithinValidity(TrustedCertificatePin pin, {DateTime? now}) {
+    final current = now ?? DateTime.now();
+    // A previously trusted certificate is no longer accepted once it is
+    // outside its validity window.
+    return !current.isBefore(pin.startValidity) &&
+        !current.isAfter(pin.endValidity);
   }
 
   static TrustedCertificatePin? getLastUntrustedPinForUri(Uri uri) {
@@ -59,12 +72,7 @@ class TrustedCertificateStore {
     String host,
     int port,
   ) {
-    final pin = buildPin(
-      certificate,
-      host,
-      port,
-      addedAt: DateTime.now(),
-    );
+    final pin = buildPin(certificate, host, port, addedAt: DateTime.now());
     _lastUntrustedPins[pin.hostPort] = pin;
   }
 
@@ -83,8 +91,9 @@ class TrustedCertificateStore {
       return;
     }
     settings.trustedCertificatePins = [
-      ...settings.trustedCertificatePins
-          .where((existing) => existing.hostPort != pin.hostPort),
+      ...settings.trustedCertificatePins.where(
+        (existing) => existing.hostPort != pin.hostPort,
+      ),
       pin,
     ];
     await settings.save();

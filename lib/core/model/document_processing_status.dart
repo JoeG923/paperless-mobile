@@ -1,3 +1,7 @@
+// ignore_for_file: constant_identifier_names
+//
+// These enum cases intentionally match wire-format (snake_case) values returned
+// by the Paperless API (`ProcessingMessage.values.byName(...)`).
 enum ProcessingStatus { starting, working, success, error }
 
 enum ProcessingMessage {
@@ -6,7 +10,7 @@ enum ProcessingMessage {
   generating_thumbnail,
   parse_date,
   save_document,
-  finished
+  finished,
 }
 
 class DocumentProcessingStatus {

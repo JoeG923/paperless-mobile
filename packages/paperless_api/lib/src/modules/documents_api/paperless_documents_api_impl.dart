@@ -34,6 +34,105 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
         MultipartFile.fromBytes(documentBytes, filename: filename),
       ),
     );
+    _addCommonUploadFields(
+      formData,
+      title: title,
+      createdAt: createdAt,
+      correspondent: correspondent,
+      documentType: documentType,
+      storagePath: storagePath,
+      tags: tags,
+      asn: asn,
+    );
+    return _sendCreateRequest(
+      formData,
+      onProgressChanged: onProgressChanged,
+      timeout: timeout,
+      cancelToken: cancelToken,
+    );
+  }
+
+  @override
+  Future<String?> createFromFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    final formData = FormData();
+    formData.files.add(
+      MapEntry(
+        'document',
+        await MultipartFile.fromFile(filePath, filename: filename),
+      ),
+    );
+    _addCommonUploadFields(
+      formData,
+      title: title,
+      createdAt: createdAt,
+      correspondent: correspondent,
+      documentType: documentType,
+      storagePath: storagePath,
+      tags: tags,
+      asn: asn,
+    );
+    return _sendCreateRequest(
+      formData,
+      onProgressChanged: onProgressChanged,
+      timeout: timeout,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<String?> _sendCreateRequest(
+    FormData formData, {
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await client.post(
+        '/api/documents/post_document/',
+        data: formData,
+        onSendProgress: (count, total) {
+          onProgressChanged?.call(safeProgress(count, total));
+        },
+        cancelToken: cancelToken,
+        options: Options(
+          validateStatus: (status) => status == 200,
+          sendTimeout: timeout,
+          receiveTimeout: timeout,
+        ),
+      );
+      if (response.data != "OK") {
+        return response.data as String;
+      }
+      return null;
+    } on DioException catch (exception) {
+      throw exception.unravel(
+        orElse: const PaperlessApiException(ErrorCode.documentUploadFailed),
+      );
+    }
+  }
+
+  void _addCommonUploadFields(
+    FormData formData, {
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+  }) {
     formData.fields.add(MapEntry('title', title));
 
     if (createdAt != null) {
@@ -53,30 +152,6 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     }
     for (final tag in tags) {
       formData.fields.add(MapEntry('tags', tag.toString()));
-    }
-    try {
-      final response = await client.post(
-        '/api/documents/post_document/',
-        data: formData,
-        onSendProgress: (count, total) {
-          onProgressChanged?.call(safeProgress(count, total));
-        },
-        cancelToken: cancelToken,
-        options: Options(
-          validateStatus: (status) => status == 200,
-          sendTimeout: timeout,
-          receiveTimeout: timeout,
-        ),
-      );
-      if (response.data != "OK") {
-        return response.data as String;
-      } else {
-        return null;
-      }
-    } on DioException catch (exception) {
-      throw exception.unravel(
-        orElse: const PaperlessApiException(ErrorCode.documentUploadFailed),
-      );
     }
   }
 

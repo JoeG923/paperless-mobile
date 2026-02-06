@@ -12,11 +12,7 @@ class ServerAddressFormField extends StatefulWidget {
   final String? initialValue;
   final ValueChanged<String?>? onChanged;
 
-  const ServerAddressFormField({
-    super.key,
-    this.onChanged,
-    this.initialValue,
-  });
+  const ServerAddressFormField({super.key, this.onChanged, this.initialValue});
 
   @override
   State<ServerAddressFormField> createState() => _ServerAddressFormFieldState();
@@ -62,66 +58,73 @@ class _ServerAddressFormFieldState extends State<ServerAddressFormField>
           },
           key: TestKeys.login.serverAddressFormField,
           optionsBuilder: (textEditingValue) {
-            return Hive.box<String>(HiveBoxes.hosts)
-                .values
-                .where((element) => element.contains(textEditingValue.text));
+            return Hive.box<String>(HiveBoxes.hosts).values.where(
+              (element) => element.contains(textEditingValue.text),
+            );
           },
           onSelected: (option) {
             _formatInput(field);
           },
           fieldViewBuilder:
               (context, textEditingController, focusNode, onFieldSubmitted) {
-            return TextFormField(
-              key: _textFieldKey,
-              controller: textEditingController,
-              focusNode: focusNode,
-              decoration: InputDecoration(
-                hintText: "http://192.168.1.50:8000",
-                labelText: S.of(context)!.serverAddress,
-                suffixIcon: _canClear
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        color: Theme.of(context).iconTheme.color,
-                        onPressed: () {
-                          textEditingController.clear();
-                          field.didChange(textEditingController.text);
-                        },
-                      )
-                    : null,
-              ),
-              autofocus: false,
-              onFieldSubmitted: (_) {
-                _formatInput(field);
-                onFieldSubmitted();
+                return TextFormField(
+                  key: _textFieldKey,
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    hintText: "http://192.168.1.50:8000",
+                    labelText: S.of(context)!.serverAddress,
+                    suffixIcon: _canClear
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            color: Theme.of(context).iconTheme.color,
+                            onPressed: () {
+                              textEditingController.clear();
+                              field.didChange(textEditingController.text);
+                            },
+                          )
+                        : null,
+                  ),
+                  autofocus: false,
+                  onFieldSubmitted: (_) {
+                    _formatInput(field);
+                    onFieldSubmitted();
+                  },
+                  onTapOutside: (event) {
+                    if (!FocusScope.of(context).hasFocus) {
+                      return;
+                    }
+                    _formatInput(field);
+                    onFieldSubmitted();
+                    FocusScope.of(context).unfocus();
+                  },
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) {
+                    final normalized = value?.trim();
+                    if (normalized?.isEmpty ?? true) {
+                      return S.of(context)!.serverAddressMustNotBeEmpty;
+                    }
+
+                    final uri = Uri.tryParse(normalized!);
+                    final isValidScheme =
+                        uri != null &&
+                        (uri.scheme == 'http' || uri.scheme == 'https');
+                    final hasHost = uri?.host.isNotEmpty ?? false;
+                    if (!isValidScheme || !hasHost) {
+                      return S.of(context)!.serverAddressMustIncludeAScheme;
+                    }
+                    return null;
+                  },
+                  keyboardType: TextInputType.url,
+                  onChanged: (value) {
+                    field.didChange(value);
+                  },
+                  onEditingComplete: () {
+                    field.didChange(_textEditingController.text);
+                    _focusNode.unfocus();
+                  },
+                );
               },
-              onTapOutside: (event) {
-                if (!FocusScope.of(context).hasFocus) {
-                  return;
-                }
-                _formatInput(field);
-                onFieldSubmitted();
-                FocusScope.of(context).unfocus();
-              },
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return S.of(context)!.serverAddressMustNotBeEmpty;
-                }
-                if (!RegExp(r"^https?://.*").hasMatch(value!)) {
-                  return S.of(context)!.serverAddressMustIncludeAScheme;
-                }
-                return null;
-              },
-              keyboardType: TextInputType.url,
-              onChanged: (value) {
-                field.didChange(value);
-              },
-              onEditingComplete: () {
-                field.didChange(_textEditingController.text);
-                _focusNode.unfocus();
-              },
-            );
-          },
         );
       },
     );
@@ -178,21 +181,24 @@ class _AutocompleteOptions extends StatelessWidget {
                 onTap: () {
                   onSelected(option);
                 },
-                child: Builder(builder: (BuildContext context) {
-                  final bool highlight =
-                      AutocompleteHighlightedOption.of(context) == index;
-                  if (highlight) {
-                    SchedulerBinding.instance
-                        .addPostFrameCallback((Duration timeStamp) {
-                      Scrollable.ensureVisible(context, alignment: 0.5);
-                    });
-                  }
-                  return Container(
-                    color: highlight ? Theme.of(context).focusColor : null,
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(option),
-                  );
-                }),
+                child: Builder(
+                  builder: (BuildContext context) {
+                    final bool highlight =
+                        AutocompleteHighlightedOption.of(context) == index;
+                    if (highlight) {
+                      SchedulerBinding.instance.addPostFrameCallback((
+                        Duration timeStamp,
+                      ) {
+                        Scrollable.ensureVisible(context, alignment: 0.5);
+                      });
+                    }
+                    return Container(
+                      color: highlight ? Theme.of(context).focusColor : null,
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(option),
+                    );
+                  },
+                ),
               );
             },
           ),

@@ -6,7 +6,6 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/constants.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/hive/hive_extensions.dart';
-import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 
 class ApiVersionInterceptor extends Interceptor {
   @override
@@ -23,8 +22,9 @@ class ApiVersionInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    final headerValue = response.headers
-        .value(PaperlessServerInformationModel.apiVersionHeader);
+    final headerValue = response.headers.value(
+      PaperlessServerInformationModel.apiVersionHeader,
+    );
     final apiVersion = int.tryParse(headerValue ?? '');
     if (apiVersion != null) {
       _updateApiVersion(apiVersion);

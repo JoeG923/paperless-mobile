@@ -32,22 +32,69 @@ class DocumentUploadService {
         details: 'File is empty.',
       );
     }
+    return _uploadWithTimeout(
+      (token, effectiveTimeout) => _documentApi.create(
+        bytes,
+        filename: filename,
+        title: title,
+        correspondent: correspondent,
+        documentType: documentType,
+        storagePath: storagePath,
+        tags: tags,
+        createdAt: createdAt,
+        asn: asn,
+        onProgressChanged: onProgressChanged,
+        cancelToken: token,
+        timeout: effectiveTimeout,
+      ),
+      timeout: timeout,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<String?> uploadFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    DateTime? createdAt,
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) {
+    return _uploadWithTimeout(
+      (token, effectiveTimeout) => _documentApi.createFromFile(
+        filePath,
+        filename: filename,
+        title: title,
+        correspondent: correspondent,
+        documentType: documentType,
+        storagePath: storagePath,
+        tags: tags,
+        createdAt: createdAt,
+        asn: asn,
+        onProgressChanged: onProgressChanged,
+        cancelToken: token,
+        timeout: effectiveTimeout,
+      ),
+      timeout: timeout,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<String?> _uploadWithTimeout(
+    Future<String?> Function(CancelToken token, Duration effectiveTimeout)
+    uploadRequest, {
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
     final token = cancelToken ?? CancelToken();
     final effectiveTimeout = timeout ?? defaultUploadTimeout;
-    final uploadFuture = _documentApi.create(
-      bytes,
-      filename: filename,
-      title: title,
-      correspondent: correspondent,
-      documentType: documentType,
-      storagePath: storagePath,
-      tags: tags,
-      createdAt: createdAt,
-      asn: asn,
-      onProgressChanged: onProgressChanged,
-      cancelToken: token,
-      timeout: effectiveTimeout,
-    );
+    final uploadFuture = uploadRequest(token, effectiveTimeout);
     final taskId = await uploadFuture.timeout(
       effectiveTimeout,
       onTimeout: () {

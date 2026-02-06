@@ -37,12 +37,11 @@ void main() {
   });
 
   Future<void> pumpGrid(WidgetTester tester, Size size) async {
-    final binding = tester.binding;
-    binding.window.physicalSizeTestValue = size;
-    binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      binding.window.clearPhysicalSizeTestValue();
-      binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     final searchHandle = SliverOverlapAbsorberHandle();
@@ -75,7 +74,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  int _crossAxisCount(WidgetTester tester) {
+  int crossAxisCount(WidgetTester tester) {
     final renderGrid = tester.renderObject<RenderSliverGrid>(
       find.byType(SliverGrid),
     );
@@ -86,10 +85,10 @@ void main() {
 
   testWidgets('uses more columns on wide widths', (WidgetTester tester) async {
     await pumpGrid(tester, const Size(360, 800));
-    final narrowCount = _crossAxisCount(tester);
+    final narrowCount = crossAxisCount(tester);
 
     await pumpGrid(tester, const Size(800, 800));
-    final wideCount = _crossAxisCount(tester);
+    final wideCount = crossAxisCount(tester);
 
     expect(wideCount, greaterThan(narrowCount));
   });

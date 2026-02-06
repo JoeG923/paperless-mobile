@@ -18,28 +18,18 @@ Future<R?> withEncryptedBox<T, R>(
   FutureOr<R?> Function(Box<T> box) callback,
 ) async {
   final key = await _getEncryptedBoxKey();
-  final box = await Hive.openBox<T>(
-    name,
-    encryptionCipher: HiveAesCipher(key),
-  );
+  final box = await Hive.openBox<T>(name, encryptionCipher: HiveAesCipher(key));
   final result = await callback(box);
   await box.close();
   return result;
 }
 
 Future<Uint8List> _getEncryptedBoxKey() async {
-  const secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-  );
+  const secureStorage = FlutterSecureStorage();
   if (!await secureStorage.containsKey(key: 'key')) {
     final key = Hive.generateSecureKey();
 
-    await secureStorage.write(
-      key: 'key',
-      value: base64UrlEncode(key),
-    );
+    await secureStorage.write(key: 'key', value: base64UrlEncode(key));
   }
   final key = (await secureStorage.read(key: 'key'))!;
   return base64Decode(key);

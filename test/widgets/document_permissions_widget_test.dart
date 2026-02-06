@@ -10,30 +10,12 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 
 class FakeUserApi implements PaperlessUserApi {
   @override
-  Future<UserModel> find(int id) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Iterable<UserModel>> findAll() async => [];
-
-  @override
   Future<int> findCurrentUserId() {
     throw UnimplementedError();
   }
 
   @override
   Future<UserModel> findCurrentUser() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Iterable<UserModel>> findWhere({
-    String startsWith = '',
-    String endsWith = '',
-    String contains = '',
-    String username = '',
-  }) {
     throw UnimplementedError();
   }
 }
@@ -50,77 +32,77 @@ class TestUserRepository extends UserRepository {
 }
 
 void main() {
-  testWidgets('DocumentPermissionsWidget shows explicit permissions empty message',
-      (WidgetTester tester) async {
-    final repo = TestUserRepository();
-    repo.seed({
-      1: UserModelV3(
+  testWidgets(
+    'DocumentPermissionsWidget shows explicit permissions empty message',
+    (WidgetTester tester) async {
+      final repo = TestUserRepository();
+      repo.seed({
+        1: UserModelV3(
+          id: 1,
+          username: 'alice',
+          email: 'alice@example.com',
+          firstName: 'Alice',
+          lastName: 'Example',
+          dateJoined: DateTime(2024, 1, 1),
+          isStaff: false,
+          isActive: true,
+          isSuperuser: false,
+          groups: const [],
+          userPermissions: const [],
+          inheritedPermissions: const [],
+        ),
+      });
+
+      final document = DocumentModel(
         id: 1,
-        username: 'alice',
-        email: 'alice@example.com',
-        firstName: 'Alice',
-        lastName: 'Example',
-        dateJoined: DateTime(2024, 1, 1),
-        isStaff: false,
-        isActive: true,
-        isSuperuser: false,
-        groups: const [],
-        userPermissions: const [],
-        inheritedPermissions: const [],
-      ),
-    });
+        title: 'Test Document',
+        content: null,
+        tags: const [],
+        documentType: null,
+        correspondent: null,
+        storagePath: null,
+        created: DateTime(2024, 1, 1),
+        modified: DateTime(2024, 1, 1),
+        added: DateTime(2024, 1, 1),
+        archiveSerialNumber: null,
+        originalFileName: null,
+        archivedFileName: null,
+        owner: null,
+        userCanChange: null,
+        permissions: const Permissions(
+          view: UsersAndGroupsPermissions(),
+          change: UsersAndGroupsPermissions(),
+        ),
+        customFields: const [],
+        notes: const [],
+      );
 
-    final document = DocumentModel(
-      id: 1,
-      title: 'Test Document',
-      content: null,
-      tags: const [],
-      documentType: null,
-      correspondent: null,
-      storagePath: null,
-      created: DateTime(2024, 1, 1),
-      modified: DateTime(2024, 1, 1),
-      added: DateTime(2024, 1, 1),
-      archiveSerialNumber: null,
-      originalFileName: null,
-      archivedFileName: null,
-      owner: null,
-      userCanChange: null,
-      permissions: const Permissions(
-        view: UsersAndGroupsPermissions(),
-        change: UsersAndGroupsPermissions(),
-      ),
-      customFields: const [],
-      notes: const [],
-    );
-
-    await tester.pumpWidget(
-      BlocProvider<UserRepository>.value(
-        value: repo,
-        child: MaterialApp(
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: S.supportedLocales,
-          home: CustomScrollView(
-            slivers: [
-              DocumentPermissionsWidget(document: document),
+      await tester.pumpWidget(
+        BlocProvider<UserRepository>.value(
+          value: repo,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
             ],
+            supportedLocales: S.supportedLocales,
+            home: CustomScrollView(
+              slivers: [DocumentPermissionsWidget(document: document)],
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('Owner'), findsOneWidget);
-    expect(find.text('Unassigned'), findsOneWidget);
-    expect(
-      find.text(
-        'No explicit permissions set. Access is determined by global permissions or workflows.',
-      ),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('Owner'), findsOneWidget);
+      expect(find.text('Unassigned'), findsOneWidget);
+      expect(
+        find.text(
+          'No explicit permissions set. Access is determined by global permissions or workflows.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 }

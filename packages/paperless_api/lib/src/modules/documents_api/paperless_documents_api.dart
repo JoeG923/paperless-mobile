@@ -20,6 +20,23 @@ abstract class PaperlessDocumentsApi {
     Duration? timeout,
     CancelToken? cancelToken,
   });
+
+  /// Uploads a document from the filesystem without preloading file bytes into
+  /// memory and returns the server task id when available.
+  Future<String?> createFromFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  });
   Future<DocumentModel> update(DocumentModel doc);
   Future<int> findNextAsn();
   Future<PagedSearchResult<DocumentModel>> findAll(DocumentFilter filter);

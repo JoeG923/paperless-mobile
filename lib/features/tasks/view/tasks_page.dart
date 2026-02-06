@@ -34,10 +34,13 @@ class _TasksPageState extends State<TasksPage> {
 
   Future<void> _acknowledgeTask(Task task) async {
     try {
-      await context.read<PaperlessTasksApi>().acknowledgeTask(task);
+      final tasksApi = context.read<PaperlessTasksApi>();
+      final pendingTasksNotifier = context.read<PendingTasksNotifier>();
+
+      await tasksApi.acknowledgeTask(task);
       final taskId = task.taskId;
       if (taskId != null) {
-        await context.read<PendingTasksNotifier>().acknowledgeTasks([taskId]);
+        await pendingTasksNotifier.acknowledgeTasks([taskId]);
       }
       if (!mounted) return;
       showSnackBar(context, 'Task acknowledged.'); // TODO: INTL
@@ -54,10 +57,7 @@ class _TasksPageState extends State<TasksPage> {
       appBar: AppBar(
         title: const Text('Tasks'), // TODO: INTL
         actions: [
-          IconButton(
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh),
-          ),
+          IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh)),
         ],
       ),
       body: Consumer<PendingTasksNotifier>(
@@ -73,10 +73,9 @@ class _TasksPageState extends State<TasksPage> {
                   for (final task in serverTasks) task.id: task,
                   for (final task in pendingTasks) task.id: task,
                 };
-                final tasks = combined.values
-                    .where((task) => !task.acknowledged)
-                    .toList()
-                  ..sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
+                final tasks =
+                    combined.values.where((task) => !task.acknowledged).toList()
+                      ..sort((a, b) => b.dateCreated.compareTo(a.dateCreated));
 
                 if (snapshot.hasError) {
                   return ListView(
@@ -107,7 +106,7 @@ class _TasksPageState extends State<TasksPage> {
                 return ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: tasks.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final task = tasks[index];
                     final status = task.status;
@@ -117,7 +116,7 @@ class _TasksPageState extends State<TasksPage> {
                         : (task.taskFileName ?? statusLabel);
                     final canAcknowledge =
                         status == TaskStatus.success ||
-                            status == TaskStatus.failure;
+                        status == TaskStatus.failure;
 
                     return ListTile(
                       leading: Icon(_statusIcon(status)),

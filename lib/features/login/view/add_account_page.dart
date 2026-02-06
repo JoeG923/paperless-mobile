@@ -32,7 +32,8 @@ class AddAccountPage extends StatefulWidget {
     String serverUrl,
     ClientCertificate? clientCertificate,
     String? mfaCode,
-  ) onSubmit;
+  )
+  onSubmit;
 
   final String? initialServerUrl;
   final String? initialUsername;
@@ -66,7 +67,6 @@ class _AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormBuilderState>();
   bool _isCheckingConnection = false;
   ReachabilityStatus _reachabilityStatus = ReachabilityStatus.unknown;
-  bool _isFormSubmitted = false;
   bool _certificateChanged = false;
 
   final _pageController = PageController();
@@ -74,188 +74,186 @@ class _AddAccountPageState extends State<AddAccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: Text(widget.titleText),
-      ),
+      appBar: AppBar(title: Text(widget.titleText)),
       body: SafeArea(
         top: false,
         child: FormBuilder(
           key: _formKey,
           child: AutofillGroup(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Assets.logos.paperlessLogoGreenPng.image(
-                width: 150,
-                height: 150,
-              ),
-              Text(
-                'Paperless Mobile',
-                style: Theme.of(context).textTheme.displaySmall,
-              ).padded(),
-              SizedBox(height: 24),
-              Expanded(
-                child: PageView(
-                  physics: NeverScrollableScrollPhysics(),
-                  controller: _pageController,
-                  allowImplicitScrolling: false,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        ServerAddressFormField(
-                          onChanged: (value) {
-                            setState(() {
-                              _reachabilityStatus = ReachabilityStatus.unknown;
-                              _certificateChanged = false;
-                            });
-                          },
-                        ).paddedSymmetrically(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        ClientCertificateFormField(
-                          initialBytes: widget.initialClientCertificate?.bytes,
-                          initialPassphrase:
-                              widget.initialClientCertificate?.passphrase,
-                        ).padded(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            //TODO: Move additional headers and client cert to separate page
-                            // IconButton.filledTonal(
-                            //   onPressed: () {
-                            //     Navigator.of(context).push(
-                            //       MaterialPageRoute(builder: (context) {
-                            //         return LoginSettingsPage();
-                            //       }),
-                            //     );
-                            //   },
-                            //   icon: Icon(Icons.settings),
-                            // ),
-                            SizedBox(width: 8),
-                            FilledButton.icon(
-                              onPressed: () async {
-                                final status = await _updateReachability();
-                                if (!mounted) return;
-                                if (status ==
-                                    ReachabilityStatus.untrustedCertificate) {
-                                  final shouldTrust =
-                                      await _showUntrustedCertificateDialog();
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Assets.logos.paperlessLogoGreenPng.image(
+                  width: 150,
+                  height: 150,
+                ),
+                Text(
+                  'Paperless Mobile',
+                  style: Theme.of(context).textTheme.displaySmall,
+                ).padded(),
+                SizedBox(height: 24),
+                Expanded(
+                  child: PageView(
+                    physics: NeverScrollableScrollPhysics(),
+                    controller: _pageController,
+                    allowImplicitScrolling: false,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          ServerAddressFormField(
+                            onChanged: (value) {
+                              setState(() {
+                                _reachabilityStatus =
+                                    ReachabilityStatus.unknown;
+                                _certificateChanged = false;
+                              });
+                            },
+                          ).paddedSymmetrically(horizontal: 12, vertical: 12),
+                          ClientCertificateFormField(
+                            initialBytes:
+                                widget.initialClientCertificate?.bytes,
+                            initialPassphrase:
+                                widget.initialClientCertificate?.passphrase,
+                          ).padded(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              //TODO: Move additional headers and client cert to separate page
+                              // IconButton.filledTonal(
+                              //   onPressed: () {
+                              //     Navigator.of(context).push(
+                              //       MaterialPageRoute(builder: (context) {
+                              //         return LoginSettingsPage();
+                              //       }),
+                              //     );
+                              //   },
+                              //   icon: Icon(Icons.settings),
+                              // ),
+                              SizedBox(width: 8),
+                              FilledButton.icon(
+                                onPressed: () async {
+                                  final status = await _updateReachability();
                                   if (!mounted) return;
-                                  if (shouldTrust) {
-                                    await _trustCurrentServer();
-                                    final recheck =
-                                        await _updateReachability();
+                                  if (status ==
+                                      ReachabilityStatus.untrustedCertificate) {
+                                    final shouldTrust =
+                                        await _showUntrustedCertificateDialog();
                                     if (!mounted) return;
-                                    if (recheck ==
-                                        ReachabilityStatus.reachable) {
-                                      Future.delayed(1.seconds, () {
-                                        _pageController.nextPage(
-                                          duration: Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      });
+                                    if (shouldTrust) {
+                                      await _trustCurrentServer();
+                                      final recheck =
+                                          await _updateReachability();
+                                      if (!mounted) return;
+                                      if (recheck ==
+                                          ReachabilityStatus.reachable) {
+                                        Future.delayed(1.seconds, () {
+                                          _pageController.nextPage(
+                                            duration: Duration(
+                                              milliseconds: 300,
+                                            ),
+                                            curve: Curves.easeInOut,
+                                          );
+                                        });
+                                      }
                                     }
+                                    return;
                                   }
-                                  return;
-                                }
-                                if (status == ReachabilityStatus.reachable) {
-                                  Future.delayed(1.seconds, () {
-                                    _pageController.nextPage(
-                                      duration: Duration(milliseconds: 300),
-                                      curve: Curves.easeInOut,
-                                    );
-                                  });
-                                }
-                              },
-                              icon: _isCheckingConnection
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondary,
-                                      ),
-                                    )
-                                  : _reachabilityStatus ==
+                                  if (status == ReachabilityStatus.reachable) {
+                                    Future.delayed(1.seconds, () {
+                                      _pageController.nextPage(
+                                        duration: Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    });
+                                  }
+                                },
+                                icon: _isCheckingConnection
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSecondary,
+                                        ),
+                                      )
+                                    : _reachabilityStatus ==
                                           ReachabilityStatus.reachable
-                                      ? Icon(Icons.done)
-                                      : Icon(Icons.arrow_forward),
-                              label: Text(S.of(context)!.continueLabel),
-                            ),
-                          ],
-                        ).paddedSymmetrically(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        _buildStatusIndicator().padded(),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        UserCredentialsFormField(
-                          formKey: _formKey,
-                          initialUsername: widget.initialUsername,
-                          initialPassword: widget.initialPassword,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton.icon(
-                              onPressed: () {
-                                _pageController.previousPage(
-                                  duration: Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              },
-                              icon: Icon(Icons.arrow_back),
-                              label: Text(S.of(context)!.edit),
-                            ),
-                            FilledButton(
-                              onPressed: () {
-                                _onSubmit();
-                              },
-                              child: Text(S.of(context)!.signIn),
-                            ),
-                          ],
-                        ).padded(),
-                        Text(
-                          S.of(context)!.loginRequiredPermissionsHint,
-                          style: Theme.of(context).textTheme.bodySmall?.apply(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withAlpha(153),
+                                    ? Icon(Icons.done)
+                                    : Icon(Icons.arrow_forward),
+                                label: Text(S.of(context)!.continueLabel),
                               ),
-                        ).padded(16),
-                      ],
-                    ),
-                  ],
+                            ],
+                          ).paddedSymmetrically(horizontal: 16, vertical: 8),
+                          _buildStatusIndicator().padded(),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          UserCredentialsFormField(
+                            formKey: _formKey,
+                            initialUsername: widget.initialUsername,
+                            initialPassword: widget.initialPassword,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  _pageController.previousPage(
+                                    duration: Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                },
+                                icon: Icon(Icons.arrow_back),
+                                label: Text(S.of(context)!.edit),
+                              ),
+                              FilledButton(
+                                onPressed: () {
+                                  _onSubmit();
+                                },
+                                child: Text(S.of(context)!.signIn),
+                              ),
+                            ],
+                          ).padded(),
+                          Text(
+                            S.of(context)!.loginRequiredPermissionsHint,
+                            style: Theme.of(context).textTheme.bodySmall?.apply(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withAlpha(153),
+                            ),
+                          ).padded(16),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Text.rich(
-                TextSpan(
-                  style: Theme.of(context).textTheme.labelLarge,
-                  children: [
-                    TextSpan(text: S.of(context)!.version(packageInfo.version)),
-                    WidgetSpan(child: SizedBox(width: 24)),
-                    TextSpan(
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary),
-                      text: S.of(context)!.appLogs(''),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          AppLogsRoute().push(context);
-                        },
-                    ),
-                  ],
-                ),
-              ).padded(),
-            ],
-          ),
+                Text.rich(
+                  TextSpan(
+                    style: Theme.of(context).textTheme.labelLarge,
+                    children: [
+                      TextSpan(
+                        text: S.of(context)!.version(packageInfo.version),
+                      ),
+                      WidgetSpan(child: SizedBox(width: 24)),
+                      TextSpan(
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        text: S.of(context)!.appLogs(''),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            AppLogsRoute().push(context);
+                          },
+                      ),
+                    ],
+                  ),
+                ).padded(),
+              ],
+            ),
           ),
         ),
       ),
@@ -266,50 +264,48 @@ class _AddAccountPageState extends State<AddAccountPage> {
     setState(() {
       _isCheckingConnection = true;
     });
-    final selectedCertificate =
-        _formKey.currentState?.getRawValue<ClientCertificate>(
-      ClientCertificateFormField.fkClientCertificate,
-    );
+    final selectedCertificate = _formKey.currentState
+        ?.getRawValue<ClientCertificate>(
+          ClientCertificateFormField.fkClientCertificate,
+        );
     final status = await context
         .read<ConnectivityStatusService>()
         .isPaperlessServerReachable(
           address ??
-              _formKey.currentState!
-                  .getRawValue(ServerAddressFormField.fkServerAddress),
+              _formKey.currentState!.getRawValue(
+                ServerAddressFormField.fkServerAddress,
+              ),
           selectedCertificate,
         );
     final uri = _currentServerUri();
-    final lastPin =
-        uri == null ? null : TrustedCertificateStore.getLastUntrustedPinForUri(uri);
-    final trustedPin =
-        uri == null ? null : TrustedCertificateStore.getTrustedPinForUri(uri);
-    final certificateChanged = lastPin != null &&
+    final lastPin = uri == null
+        ? null
+        : TrustedCertificateStore.getLastUntrustedPinForUri(uri);
+    final trustedPin = uri == null
+        ? null
+        : TrustedCertificateStore.getTrustedPinForUri(uri);
+    final certificateChanged =
+        lastPin != null &&
         trustedPin != null &&
         lastPin.fingerprintSha256 != trustedPin.fingerprintSha256;
     setState(() {
       _isCheckingConnection = false;
       _reachabilityStatus = status;
       _certificateChanged =
-          status == ReachabilityStatus.untrustedCertificate && certificateChanged;
+          status == ReachabilityStatus.untrustedCertificate &&
+          certificateChanged;
     });
     return status;
   }
 
   Widget _buildStatusIndicator() {
-    Widget buildIconText(
-      IconData icon,
-      String text, [
-      Color? color,
-    ]) {
+    Widget buildIconText(IconData icon, String text, [Color? color]) {
       return ListTile(
         title: Text(
           text,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
         ),
-        leading: Icon(
-          icon,
-          color: color,
-        ),
+        leading: Icon(icon, color: color),
       );
     }
 
@@ -365,10 +361,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
     }
     final trusted = await TrustedCertificateStore.trustLastUntrustedForUri(uri);
     if (!trusted && mounted) {
-      showSnackBar(
-        context,
-        S.of(context)!.certificateDetailsUnavailable,
-      );
+      showSnackBar(context, S.of(context)!.certificateDetailsUnavailable);
     }
   }
 
@@ -377,8 +370,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
     final pin = uri == null
         ? null
         : TrustedCertificateStore.getLastUntrustedPinForUri(uri);
-    final trustedPin =
-        uri == null ? null : TrustedCertificateStore.getTrustedPinForUri(uri);
+    final trustedPin = uri == null
+        ? null
+        : TrustedCertificateStore.getTrustedPinForUri(uri);
     return await showDialog<bool>(
           context: context,
           builder: (context) {
@@ -404,8 +398,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   child: Text(S.of(context)!.cancel),
                 ),
                 FilledButton(
-                  onPressed:
-                      pin == null ? null : () => Navigator.of(context).pop(true),
+                  onPressed: pin == null
+                      ? null
+                      : () => Navigator.of(context).pop(true),
                   child: Text(S.of(context)!.trustServerCertificate),
                 ),
               ],
@@ -416,8 +411,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
   }
 
   Uri? _currentServerUri() {
-    final serverAddress = _formKey.currentState
-        ?.getRawValue(ServerAddressFormField.fkServerAddress);
+    final serverAddress = _formKey.currentState?.getRawValue(
+      ServerAddressFormField.fkServerAddress,
+    );
     if (serverAddress == null) {
       return null;
     }
@@ -489,9 +485,6 @@ class _AddAccountPageState extends State<AddAccountPage> {
 
   Future<void> _onSubmit() async {
     FocusScope.of(context).unfocus();
-    setState(() {
-      _isFormSubmitted = true;
-    });
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final form = _formKey.currentState!.value;
       final clientCertFormModel =
@@ -517,10 +510,6 @@ class _AddAccountPageState extends State<AddAccountPage> {
         if (mounted) showInfoMessage(context, error);
       } catch (error) {
         if (mounted) showGenericError(context, error);
-      } finally {
-        setState(() {
-          _isFormSubmitted = false;
-        });
       }
     }
   }

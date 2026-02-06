@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:paperless_mobile/features/document_scan/view/widgets/scanned_image_item.dart';
-import 'package:sliver_tools/sliver_tools.dart';
 
 class ScannerGrid extends StatelessWidget {
   static const double _maxTileExtent = 160.0;

@@ -28,6 +28,8 @@ import 'package:paperless_mobile/routing/routes/scanner_route.dart';
 import 'package:path/path.dart' as p;
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
+const _maxInMemoryShareSizeBytes = 25 * 1024 * 1024;
+
 class EventListenerShell extends StatefulWidget {
   final Widget child;
   const EventListenerShell({super.key, required this.child});
@@ -188,15 +190,13 @@ Future<void> consumeLocalFile(
   if (!context.mounted) return;
   final consumptionNotifier = context.read<ConsumptionChangeNotifier>();
   final uploadService = DocumentUploadService(context.read(), context.read());
-
-  final bytes = file.readAsBytes();
   final shouldDirectlyUpload = Hive.globalSettingsBox
       .getValue()!
       .skipDocumentPreprarationOnUpload;
   if (shouldDirectlyUpload) {
     try {
-      await uploadService.upload(
-        await bytes,
+      await uploadService.uploadFile(
+        file.path,
         filename: filename,
         title: p.basenameWithoutExtension(file.path),
       );
@@ -215,9 +215,22 @@ Future<void> consumeLocalFile(
       }
     }
   } else {
+    final fileLength = await file.length();
+    if (fileLength > _maxInMemoryShareSizeBytes) {
+      if (!context.mounted) return;
+      showSnackBar(
+        context,
+        'The shared file is too large to open in preparation mode. '
+        'Enable direct upload or share a smaller file.',
+      );
+      return;
+    }
+
+    final bytes = await file.readAsBytes();
+    if (!context.mounted) return;
     final result =
         await DocumentUploadRoute(
-          $extra: bytes,
+          $extra: Future.value(bytes),
           filename: p.basenameWithoutExtension(file.path),
           title: p.basenameWithoutExtension(file.path),
           fileExtension: p.extension(file.path),
@@ -243,7 +256,8 @@ Future<void> consumeLocalFile(
       final shouldDiscard =
           await showDialog<bool>(
             context: context,
-            builder: (context) => DiscardSharedFileDialog(bytes: bytes),
+            builder: (context) =>
+                DiscardSharedFileDialog(bytes: Future.value(bytes)),
           ) ??
           false;
       if (shouldDiscard && context.mounted) {

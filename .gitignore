@@ -82,3 +82,6 @@ assets/changelogs/*.md
 # Local Flutter SDKs
 flutter-sdk/
 flutter/
+
+# Local artifact sharing (e.g., APK via tailscale serve)
+.tailscale-share/

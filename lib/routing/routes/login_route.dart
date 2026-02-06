@@ -47,22 +47,15 @@ class LoginRoute extends GoRouteData with $LoginRoute {
   static final $parentNavigatorKey = rootNavigatorKey;
   final String? serverUrl;
   final String? username;
-  final String? password;
   final ClientCertificate? $extra;
 
-  const LoginRoute({
-    this.serverUrl,
-    this.username,
-    this.password,
-    this.$extra,
-  });
+  const LoginRoute({this.serverUrl, this.username, this.$extra});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return LoginPage(
       initialServerUrl: serverUrl,
       initialUsername: username,
-      initialPassword: password,
       initialClientCertificate: $extra,
     );
   }
@@ -124,9 +117,7 @@ class VerifyIdentityRoute extends GoRouteData with $VerifyIdentityRoute {
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return NoTransitionPage(
-      child: VerifyIdentityPage(userId: userId),
-    );
+    return NoTransitionPage(child: VerifyIdentityPage(userId: userId));
   }
 }
 
@@ -146,9 +137,7 @@ class LoginToExistingAccountRoute extends GoRouteData
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(
-      child: LoginToExistingAccountPage(),
-    );
+    return const NoTransitionPage(child: LoginToExistingAccountPage());
   }
 }
 
@@ -160,9 +149,7 @@ class RestoringSessionRoute extends GoRouteData with $RestoringSessionRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: LoginTransitionPage(
-        text: S.of(context)!.restoringSession,
-      ),
+      child: LoginTransitionPage(text: S.of(context)!.restoringSession),
     );
   }
 }

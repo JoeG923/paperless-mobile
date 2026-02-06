@@ -31,13 +31,20 @@ class ConsumptionChangeNotifier extends ChangeNotifier {
     if (files.isEmpty) {
       return [];
     }
-    final consumptionDirectory =
-        await FileService.instance.getConsumptionDirectory(userId: userId);
+    final consumptionDirectory = await FileService.instance
+        .getConsumptionDirectory(userId: userId);
     final List<File> localFiles = [];
     for (final file in files) {
-      if (!file.path.startsWith(consumptionDirectory.path)) {
-        final localFile = await file
-            .copy(p.join(consumptionDirectory.path, p.basename(file.path)));
+      final isLocalFile = await _isWithinDirectory(
+        file,
+        directory: consumptionDirectory,
+      );
+      if (!isLocalFile) {
+        final localDestination = await _allocateUniqueDestination(
+          consumptionDirectory,
+          p.basename(file.path),
+        );
+        final localFile = await file.copy(localDestination.path);
         localFiles.add(localFile);
       } else {
         localFiles.add(file);
@@ -48,13 +55,14 @@ class ConsumptionChangeNotifier extends ChangeNotifier {
   }
 
   /// Marks a file as processed by removing it from the queue and deleting the local copy of the file.
-  Future<void> discardFile(
-    File file, {
-    required String userId,
-  }) async {
-    final consumptionDirectory =
-        await FileService.instance.getConsumptionDirectory(userId: userId);
-    if (file.path.startsWith(consumptionDirectory.path)) {
+  Future<void> discardFile(File file, {required String userId}) async {
+    final consumptionDirectory = await FileService.instance
+        .getConsumptionDirectory(userId: userId);
+    final isLocalFile = await _isWithinDirectory(
+      file,
+      directory: consumptionDirectory,
+    );
+    if (isLocalFile) {
       await file.delete();
     }
     return loadFromConsumptionDirectory(userId: userId);
@@ -70,8 +78,41 @@ class ConsumptionChangeNotifier extends ChangeNotifier {
   }
 
   Future<List<File>> _getCurrentFiles(String userId) async {
-    final directory =
-        await FileService.instance.getConsumptionDirectory(userId: userId);
+    final directory = await FileService.instance.getConsumptionDirectory(
+      userId: userId,
+    );
     return await FileService.instance.getAllFiles(directory);
+  }
+
+  Future<File> _allocateUniqueDestination(
+    Directory directory,
+    String originalFilename,
+  ) async {
+    final baseName = p.basenameWithoutExtension(originalFilename);
+    final extension = p.extension(originalFilename);
+
+    var candidate = File(p.join(directory.path, '$baseName$extension'));
+    var suffix = 1;
+    while (await candidate.exists()) {
+      candidate = File(p.join(directory.path, '${baseName}_$suffix$extension'));
+      suffix++;
+    }
+    return candidate;
+  }
+
+  Future<bool> _isWithinDirectory(
+    File file, {
+    required Directory directory,
+  }) async {
+    try {
+      final canonicalDirectory = p.normalize(
+        await directory.resolveSymbolicLinks(),
+      );
+      final canonicalFile = p.normalize(await file.resolveSymbolicLinks());
+      return p.isWithin(canonicalDirectory, canonicalFile) ||
+          canonicalDirectory == canonicalFile;
+    } on FileSystemException {
+      return false;
+    }
   }
 }

@@ -11,6 +11,7 @@ import 'package:paperless_mobile/features/notifications/models/notification_chan
 import 'package:paperless_mobile/features/notifications/models/notification_payloads/notification_action/create_document_success_payload.dart';
 import 'package:paperless_mobile/features/notifications/models/notification_payloads/notification_tap/open_directory_notification_response_payload.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
+import 'package:path/path.dart' as p;
 
 class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
@@ -25,15 +26,15 @@ class LocalNotificationService {
         AndroidInitializationSettings('paperless_logo_green');
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
-    );
+          requestSoundPermission: false,
+          requestBadgePermission: false,
+          requestAlertPermission: false,
+        );
     final InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+        );
     await _plugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
@@ -42,16 +43,16 @@ class LocalNotificationService {
     );
     await _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
   }
 
-  Future<void> notifyFileDownload({
-    required String filePath,
-  }) async {
+  Future<void> notifyFileDownload({required String filePath}) async {
+    final filename = p.basename(filePath);
     await _plugin.show(
       filePath.hashCode,
-      filePath,
+      filename,
       "File download complete.",
       NotificationDetails(
         android: AndroidNotificationDetails(
@@ -63,11 +64,12 @@ class LocalNotificationService {
           when: DateTime.now().millisecondsSinceEpoch,
           category: AndroidNotificationCategory.status,
           icon: 'file_download_done',
+          visibility: NotificationVisibility.private,
         ),
       ),
       payload: jsonEncode(
-          OpenDirectoryNotificationResponsePayload(filePath: filePath)
-              .toJson()),
+        OpenDirectoryNotificationResponsePayload(filePath: filePath).toJson(),
+      ),
     );
   }
 
@@ -103,19 +105,14 @@ class LocalNotificationService {
           when: DateTime.now().millisecondsSinceEpoch,
           category: AndroidNotificationCategory.progress,
           icon: finished ? 'file_download_done' : 'downloading',
+          visibility: NotificationVisibility.private,
         ),
         iOS: DarwinNotificationDetails(
-          attachments: [
-            DarwinNotificationAttachment(
-              filePath,
-            ),
-          ],
+          attachments: [DarwinNotificationAttachment(filePath)],
         ),
       ),
       payload: jsonEncode(
-        OpenDirectoryNotificationResponsePayload(
-          filePath: filePath,
-        ).toJson(),
+        OpenDirectoryNotificationResponsePayload(filePath: filePath).toJson(),
       ),
     ); //TODO: INTL
     _addNotification(userId, id);
@@ -155,11 +152,10 @@ class LocalNotificationService {
           when: DateTime.now().millisecondsSinceEpoch,
           category: AndroidNotificationCategory.progress,
           icon: finished ? 'file_download_done' : 'downloading',
+          visibility: NotificationVisibility.private,
         ),
         iOS: DarwinNotificationDetails(
-          attachments: [
-            DarwinNotificationAttachment(filePath),
-          ],
+          attachments: [DarwinNotificationAttachment(filePath)],
         ),
       ),
       payload: jsonEncode(
@@ -199,9 +195,7 @@ class LocalNotificationService {
         title = "Document successfully created";
         body = task.taskFileName;
         timestampMillis = task.dateDone!.millisecondsSinceEpoch;
-        payload = CreateDocumentSuccessPayload(
-          task.relatedDocument!,
-        );
+        payload = CreateDocumentSuccessPayload(task.relatedDocument!);
         break;
       default:
         break;
@@ -234,6 +228,7 @@ class LocalNotificationService {
                   // ),
                 ]
               : [],
+          visibility: NotificationVisibility.private,
         ),
         //TODO: Add darwin support
       ),
@@ -250,22 +245,21 @@ class LocalNotificationService {
 
   void onDidReceiveNotificationResponse(NotificationResponse response) {
     debugPrint(
-      "Received Notification ${response.id}: Action is ${response.actionId}): ${response.payload}",
+      "Received Notification ${response.id}: Action is ${response.actionId}",
     );
     switch (response.notificationResponseType) {
       case NotificationResponseType.selectedNotification:
         if (response.payload != null) {
-          final payload =
-              const NotificationTapResponsePayloadConverter().fromJson(
-            jsonDecode(response.payload!),
-          );
+          final payload = const NotificationTapResponsePayloadConverter()
+              .fromJson(jsonDecode(response.payload!));
           _handleResponseTapAction(payload.type, response);
         }
 
         break;
       case NotificationResponseType.selectedNotificationAction:
-        final action =
-            NotificationResponseButtonAction.values.byName(response.actionId!);
+        final action = NotificationResponseButtonAction.values.byName(
+          response.actionId!,
+        );
         _handleResponseButtonAction(action, response);
         break;
     }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      flutter_local_notifications refers to these drawables by *string name* from Dart.
+      Lint cannot see those references, so we keep a manifest-referenced XML resource
+      that explicitly references the drawables we ship for notifications.
+    -->
+    <item type="drawable" name="paperless_logo_green">@drawable/paperless_logo_green</item>
+    <item type="drawable" name="downloading">@drawable/downloading</item>
+    <item type="drawable" name="file_download_done">@drawable/file_download_done</item>
+</resources>
+

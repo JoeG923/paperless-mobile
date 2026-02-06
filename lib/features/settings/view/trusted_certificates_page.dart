@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
@@ -13,23 +12,20 @@ class TrustedCertificatesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context)!.trustedCertificates),
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.trustedCertificates)),
       body: ValueListenableBuilder<Box<GlobalSettings>>(
-        valueListenable:
-            Hive.box<GlobalSettings>(HiveBoxes.globalSettings).listenable(),
+        valueListenable: Hive.box<GlobalSettings>(
+          HiveBoxes.globalSettings,
+        ).listenable(),
         builder: (context, box, _) {
           final settings = box.getValue();
           final pins = settings?.trustedCertificatePins ?? const [];
           if (pins.isEmpty) {
-            return Center(
-              child: Text(S.of(context)!.noTrustedCertificates),
-            );
+            return Center(child: Text(S.of(context)!.noTrustedCertificates));
           }
           return ListView.separated(
             itemCount: pins.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final pin = pins[index];
               return ListTile(
@@ -56,7 +52,8 @@ class TrustedCertificatesPage extends StatelessWidget {
     BuildContext context,
     TrustedCertificatePin pin,
   ) async {
-    final shouldRemove = await showDialog<bool>(
+    final shouldRemove =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: Text(S.of(context)!.removeTrustedCertificate),

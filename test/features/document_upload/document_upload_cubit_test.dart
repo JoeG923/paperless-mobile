@@ -43,6 +43,24 @@ class FailingDocumentsApi implements PaperlessDocumentsApi {
   }
 
   @override
+  Future<String?> createFromFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    throw const PaperlessApiException(ErrorCode.documentUploadFailed);
+  }
+
+  @override
   Future<DocumentModel> update(DocumentModel doc) {
     throw UnimplementedError();
   }
@@ -151,6 +169,25 @@ class SlowDocumentsApi implements PaperlessDocumentsApi {
   }
 
   @override
+  Future<String?> createFromFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    await Future<void>.delayed(delay);
+    return 'task-1';
+  }
+
+  @override
   Future<DocumentModel> update(DocumentModel doc) {
     throw UnimplementedError();
   }
@@ -238,6 +275,28 @@ class CancellableDocumentsApi implements PaperlessDocumentsApi {
   @override
   Future<String?> create(
     Uint8List documentBytes, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    if (cancelToken == null) {
+      throw const PaperlessApiException(ErrorCode.requestCancelled);
+    }
+    await cancelToken.whenCancel;
+    throw const PaperlessApiException(ErrorCode.requestCancelled);
+  }
+
+  @override
+  Future<String?> createFromFile(
+    String filePath, {
     required String filename,
     required String title,
     DateTime? createdAt,

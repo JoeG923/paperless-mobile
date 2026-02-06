@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
-import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:paperless_api/paperless_api.dart';
@@ -43,18 +42,21 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
   Future<void> initialize() async {
     emit(const DocumentDetailsState(status: LoadingStatus.loading));
     try {
-      final (document, metaData) = await Future.wait([
-        _api.find(id, fullPermissions: true),
-        _api.getMetaData(id),
-      ]).then((value) => (
-            value[0] as DocumentModel,
-            value[1] as DocumentMetaData,
-          ));
-      emit(DocumentDetailsState(
-        status: LoadingStatus.loaded,
-        document: document,
-        metaData: metaData,
-      ));
+      final (document, metaData) =
+          await Future.wait([
+            _api.find(id, fullPermissions: true),
+            _api.getMetaData(id),
+          ]).then(
+            (value) =>
+                (value[0] as DocumentModel, value[1] as DocumentMetaData),
+          );
+      emit(
+        DocumentDetailsState(
+          status: LoadingStatus.loaded,
+          document: document,
+          metaData: metaData,
+        ),
+      );
     } on PaperlessApiException catch (error, stackTrace) {
       logger.fe(
         "An error occurred while loading data for document $id.",
@@ -75,9 +77,7 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
       await _api.delete(document);
       _notifier.notifyDeleted(document);
     } on PaperlessApiException catch (e) {
-      addError(
-        TransientPaperlessApiError(code: e.code, details: e.details),
-      );
+      addError(TransientPaperlessApiError(code: e.code, details: e.details));
     }
   }
 
@@ -87,38 +87,25 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
     final updatedNotes = document.notes.map((e) => e.id == note.id ? note : e);
     try {
       final updatedDocument = await _api.update(
-        state.document!.copyWith(
-          notes: updatedNotes,
-        ),
+        state.document!.copyWith(notes: updatedNotes),
       );
       _notifier.notifyUpdated(updatedDocument);
     } on PaperlessApiException catch (e) {
-      addError(
-        TransientPaperlessApiError(
-          code: e.code,
-          details: e.details,
-        ),
-      );
+      addError(TransientPaperlessApiError(code: e.code, details: e.details));
     }
   }
 
   Future<void> deleteNote(NoteModel note) async {
-    assert(state.status == LoadingStatus.loaded,
-        "Document data has to be loaded before calling this method.");
+    assert(
+      state.status == LoadingStatus.loaded,
+      "Document data has to be loaded before calling this method.",
+    );
     assert(note.id != null, "Note id cannot be null.");
     try {
-      final updatedDocument = await _api.deleteNote(
-        state.document!,
-        note.id!,
-      );
+      final updatedDocument = await _api.deleteNote(state.document!, note.id!);
       _notifier.notifyUpdated(updatedDocument);
     } on PaperlessApiException catch (e) {
-      addError(
-        TransientPaperlessApiError(
-          code: e.code,
-          details: e.details,
-        ),
-      );
+      addError(TransientPaperlessApiError(code: e.code, details: e.details));
     }
   }
 
@@ -135,14 +122,13 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
         _notifier.notifyUpdated(updatedDocument);
       } else {
         final int autoAsn = await _api.findNextAsn();
-        final updatedDocument = await _api
-            .update(document.copyWith(archiveSerialNumber: () => autoAsn));
+        final updatedDocument = await _api.update(
+          document.copyWith(archiveSerialNumber: () => autoAsn),
+        );
         _notifier.notifyUpdated(updatedDocument);
       }
     } on PaperlessApiException catch (e) {
-      addError(
-        TransientPaperlessApiError(code: e.code, details: e.details),
-      );
+      addError(TransientPaperlessApiError(code: e.code, details: e.details));
     }
   }
 
@@ -161,10 +147,7 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
 
     if (!file.existsSync()) {
       file.createSync();
-      await _api.downloadToFile(
-        state.document!.id,
-        file.path,
-      );
+      await _api.downloadToFile(state.document!.id, file.path);
     }
     return OpenFilex.open(
       file.path,
@@ -253,17 +236,19 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
       filePath,
       original: shareOriginal,
     );
-    SharePlus.instance.share(ShareParams(
-      files: [
-        XFile(
-          filePath,
-          name: state.document!.originalFileName,
-          mimeType: "application/pdf",
-          lastModified: state.document!.modified,
-        ),
-      ],
-      subject: state.document!.title,
-    ));
+    SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile(
+            filePath,
+            name: state.document!.originalFileName,
+            mimeType: "application/pdf",
+            lastModified: state.document!.modified,
+          ),
+        ],
+        subject: state.document!.title,
+      ),
+    );
   }
 
   Future<void> printDocument() async {
@@ -275,11 +260,7 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
       false,
       FileService.instance.temporaryDirectory,
     );
-    await _api.downloadToFile(
-      state.document!.id,
-      filePath,
-      original: false,
-    );
+    await _api.downloadToFile(state.document!.id, filePath, original: false);
     final file = File(filePath);
     if (!file.existsSync()) {
       throw Exception("An error occurred while downloading the document.");

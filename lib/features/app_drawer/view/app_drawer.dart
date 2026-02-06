@@ -26,8 +26,10 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentAccount = context.watch<LocalUserAccount>();
     final username = currentAccount.paperlessUser.username;
-    final serverUrl =
-        currentAccount.serverUrl.replaceAll(RegExp(r'https?://'), '');
+    final serverUrl = currentAccount.serverUrl.replaceAll(
+      RegExp(r'https?://'),
+      '',
+    );
     return SafeArea(
       child: Drawer(
         child: Column(
@@ -35,9 +37,10 @@ class AppDrawer extends StatelessWidget {
           children: [
             Row(
               children: [
-                const $AssetsLogosGen()
-                    .paperlessLogoGreenSvg
-                    .svg(width: 32, height: 32),
+                const $AssetsLogosGen().paperlessLogoGreenSvg.svg(
+                  width: 32,
+                  height: 32,
+                ),
                 SizedBox(width: 8),
                 Text(
                   "Paperless Mobile",
@@ -53,22 +56,20 @@ class AppDrawer extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withAlpha(128),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha(128),
+                  ),
                 ),
                 Text(
                   serverUrl,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withAlpha(128),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha(128),
+                  ),
                 ),
               ],
             ).paddedSymmetrically(horizontal: 16),
@@ -89,9 +90,7 @@ class AppDrawer extends StatelessWidget {
                   builder: (context) => AlertDialog(
                     icon: const Icon(Icons.favorite),
                     title: Text(S.of(context)!.donate),
-                    content: Text(
-                      S.of(context)!.donationDialogContent,
-                    ),
+                    content: Text(S.of(context)!.donationDialogContent),
                     actionsAlignment: MainAxisAlignment.spaceBetween,
                     actions: [
                       const Text("~ Anton"),
@@ -111,10 +110,7 @@ class AppDrawer extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(S.of(context)!.reportABug),
-                  const Icon(
-                    Icons.open_in_new,
-                    size: 16,
-                  )
+                  const Icon(Icons.open_in_new, size: 16),
                 ],
               ),
               onTap: () {
@@ -135,10 +131,7 @@ class AppDrawer extends StatelessWidget {
                 width: 24,
               ),
               title: Text(S.of(context)!.sourceCode),
-              trailing: const Icon(
-                Icons.open_in_new,
-                size: 16,
-              ),
+              trailing: const Icon(Icons.open_in_new, size: 16),
               onTap: () {
                 launchUrlString(
                   "https://github.com/astubenbord/paperless-mobile",
@@ -194,9 +187,7 @@ class AppDrawer extends StatelessWidget {
             ListTile(
               dense: true,
               leading: const Icon(Icons.settings_outlined),
-              title: Text(
-                S.of(context)!.settings,
-              ),
+              title: Text(S.of(context)!.settings),
               onTap: () => SettingsRoute().push(context),
             ),
             const Divider(),
@@ -214,59 +205,58 @@ class AppDrawer extends StatelessWidget {
 
   Widget _buildSavedViews() {
     return BlocBuilder<SavedViewCubit, SavedViewState>(
-        builder: (context, state) {
-      return state.when(
-        initial: () => const SizedBox.shrink(),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        loaded: (savedViews) {
-          final sidebarViews = savedViews.values
-              .where((element) => element.showInSidebar)
-              .toList();
-          if (sidebarViews.isEmpty) {
-            return Column(
-              children: [
-                Text(
-                  S.of(context)!.youDidNotSaveAnyViewsYet,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ).paddedOnly(
-                  left: 16,
-                  right: 16,
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Scaffold.of(context).closeDrawer();
-                    const CreateSavedViewRoute(showInSidebar: true)
-                        .push(context);
-                  },
-                  icon: const Icon(Icons.add),
-                  label: Text(S.of(context)!.newView),
-                ),
-              ],
+      builder: (context, state) {
+        return state.when(
+          initial: () => const SizedBox.shrink(),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          loaded: (savedViews) {
+            final sidebarViews = savedViews.values
+                .where((element) => element.showInSidebar)
+                .toList();
+            if (sidebarViews.isEmpty) {
+              return Column(
+                children: [
+                  Text(
+                    S.of(context)!.youDidNotSaveAnyViewsYet,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ).paddedOnly(left: 16, right: 16),
+                  TextButton.icon(
+                    onPressed: () {
+                      Scaffold.of(context).closeDrawer();
+                      const CreateSavedViewRoute(
+                        showInSidebar: true,
+                      ).push(context);
+                    },
+                    icon: const Icon(Icons.add),
+                    label: Text(S.of(context)!.newView),
+                  ),
+                ],
+              );
+            }
+            return Expanded(
+              child: ListView.builder(
+                itemBuilder: (context, index) {
+                  final view = sidebarViews[index];
+                  return ListTile(
+                    title: Text(view.name),
+                    trailing: const Icon(Icons.arrow_forward),
+                    onTap: () {
+                      Scaffold.of(context).closeDrawer();
+                      context.read<DocumentsCubit>().updateFilter(
+                        filter: view.toDocumentFilter(),
+                      );
+                      DocumentsRoute().go(context);
+                    },
+                  );
+                },
+                itemCount: sidebarViews.length,
+              ),
             );
-          }
-          return Expanded(
-            child: ListView.builder(
-              itemBuilder: (context, index) {
-                final view = sidebarViews[index];
-                return ListTile(
-                  title: Text(view.name),
-                  trailing: const Icon(Icons.arrow_forward),
-                  onTap: () {
-                    Scaffold.of(context).closeDrawer();
-                    context
-                        .read<DocumentsCubit>()
-                        .updateFilter(filter: view.toDocumentFilter());
-                    DocumentsRoute().go(context);
-                  },
-                );
-              },
-              itemCount: sidebarViews.length,
-            ),
-          );
-        },
-        error: () => Text(S.of(context)!.couldNotLoadSavedViews),
-      );
-    });
+          },
+          error: () => Text(S.of(context)!.couldNotLoadSavedViews),
+        );
+      },
+    );
   }
 
   void _showAboutDialog(BuildContext context) {
@@ -282,18 +272,14 @@ class AppDrawer extends StatelessWidget {
       children: [
         Text(S.of(context)!.developedBy('Anton Stubenbord')),
         const SizedBox(height: 16),
-        Text(
-          "Source Code",
-          style: theme.textTheme.titleMedium,
-        ),
+        Text("Source Code", style: theme.textTheme.titleMedium),
         RichText(
           text: TextSpan(
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: colorScheme.onSurface),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
             children: [
-              TextSpan(
-                text: S.of(context)!.findTheSourceCodeOn,
-              ),
+              TextSpan(text: S.of(context)!.findTheSourceCodeOn),
               TextSpan(
                 text: ' GitHub',
                 style: const TextStyle(color: Colors.blue),
@@ -312,72 +298,32 @@ class AppDrawer extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'Credits',
-          style: theme.textTheme.titleMedium
-              ?.copyWith(color: colorScheme.onSurface),
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+          ),
         ),
         RichText(
           text: TextSpan(
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: colorScheme.onSurface),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
             children: [
-              const TextSpan(
-                text: 'Onboarding images by ',
-              ),
+              const TextSpan(text: 'Onboarding images by '),
               TextSpan(
                 text: 'pch.vector',
                 style: const TextStyle(color: Colors.blue),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
                     launchUrlString(
-                        'https://www.freepik.com/free-vector/business-team-working-cogwheel-mechanism-together_8270974.htm#query=setting&position=4&from_view=author');
+                      'https://www.freepik.com/free-vector/business-team-working-cogwheel-mechanism-together_8270974.htm#query=setting&position=4&from_view=author',
+                    );
                   },
               ),
-              const TextSpan(
-                text: ' on Freepik.',
-              ),
+              const TextSpan(text: ' on Freepik.'),
             ],
           ),
         ),
       ],
     );
   }
-
-  Widget _buildOnboardingImageCredits() {
-    return RichText(
-      text: TextSpan(
-        children: [
-          const TextSpan(
-            text: 'Onboarding images by ',
-          ),
-          TextSpan(
-            text: 'pch.vector',
-            style: const TextStyle(color: Colors.blue),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                launchUrlString(
-                    'https://www.freepik.com/free-vector/business-team-working-cogwheel-mechanism-together_8270974.htm#query=setting&position=4&from_view=author');
-              },
-          ),
-          const TextSpan(
-            text: ' on Freepik.',
-          ),
-        ],
-      ),
-    );
-  }
 }
-
-//Wrap(
-//   children: [
-//     const Text('Onboarding images by '),
-//     GestureDetector(
-//       onTap: followLink,
-//       child: RichText(
-
-//         'pch.vector',
-//         style: TextStyle(color: Colors.blue),
-//       ),
-//     ),
-//     const Text(' on Freepik.')
-//   ],
-// )

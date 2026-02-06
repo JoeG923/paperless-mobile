@@ -36,45 +36,41 @@ class _AppLogsPageState extends State<AppLogsPage> {
                 AppLogsStateInitial() => [],
                 AppLogsStateLoading() => [],
                 AppLogsStateLoaded() => [
-                    IconButton(
-                      tooltip: S.of(context)!.copyToClipboard,
-                      onPressed: () {
-                        context
-                            .read<AppLogsCubit>()
-                            .copyToClipboard(state.date);
-                      },
-                      icon: const Icon(Icons.copy),
-                    ).padded(),
-                    IconButton(
-                      tooltip: S.of(context)!.saveLogsToFile,
-                      onPressed: () {
-                        context
-                            .read<AppLogsCubit>()
-                            .saveLogs(state.date, locale);
-                      },
-                      icon: const Icon(Icons.download),
-                    ).padded(),
-                    IconButton(
-                      tooltip: S.of(context)!.clearLogs(formattedDate),
-                      onPressed: () {
-                        context.read<AppLogsCubit>().clearLogs(state.date);
-                      },
-                      icon: Icon(
-                        Icons.delete_sweep,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ).padded(),
-                  ],
+                  IconButton(
+                    tooltip: S.of(context)!.copyToClipboard,
+                    onPressed: () {
+                      context.read<AppLogsCubit>().copyToClipboard(state.date);
+                    },
+                    icon: const Icon(Icons.copy),
+                  ).padded(),
+                  IconButton(
+                    tooltip: S.of(context)!.saveLogsToFile,
+                    onPressed: () {
+                      context.read<AppLogsCubit>().saveLogs(state.date, locale);
+                    },
+                    icon: const Icon(Icons.download),
+                  ).padded(),
+                  IconButton(
+                    tooltip: S.of(context)!.clearLogs(formattedDate),
+                    onPressed: () {
+                      context.read<AppLogsCubit>().clearLogs(state.date);
+                    },
+                    icon: Icon(
+                      Icons.delete_sweep,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ).padded(),
+                ],
                 _ => [],
               },
             ),
           ),
           appBar: AppBar(
-            title: Text(S
-                .of(context)!
-                .appLogs(formattedDate)), //TODO: CHange to App-Logs in german
+            title: Text(
+              S.of(context)!.appLogs(formattedDate),
+            ), //TODO: CHange to App-Logs in german
             actions: [
-              if (state is AppLogsStateLoaded)
+              if (state is AppLogsStateLoaded && state.availableLogs.isNotEmpty)
                 IconButton(
                   tooltip: MaterialLocalizations.of(context).datePickerHelpText,
                   onPressed: () async {
@@ -83,8 +79,9 @@ class _AppLogsPageState extends State<AppLogsPage> {
                       initialDate: state.date,
                       firstDate: state.availableLogs.first,
                       lastDate: state.availableLogs.last,
-                      selectableDayPredicate: (day) => state.availableLogs
-                          .any((date) => day.isOnSameDayAs(date)),
+                      selectableDayPredicate: (day) => state.availableLogs.any(
+                        (date) => day.isOnSameDayAs(date),
+                      ),
                       initialEntryMode: DatePickerEntryMode.calendarOnly,
                     );
                     if (selectedDate != null && context.mounted) {
@@ -96,50 +93,50 @@ class _AppLogsPageState extends State<AppLogsPage> {
             ],
           ),
           body: switch (state) {
-            AppLogsStateLoaded(
-              logs: var logs,
-            ) =>
-              Builder(
-                builder: (context) {
-                  if (state.logs.isEmpty) {
-                    return Center(
-                      child: Text(S.of(context)!.noLogsFoundOn(formattedDate)),
-                    );
-                  }
-                  return ListView.builder(
-                    reverse: true,
-                    controller: _scrollController,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return Center(
-                          child: Text(S.of(context)!.logfileBottomReached,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.disabledColor,
-                              )),
-                        ).padded(24);
-                      }
-                      final messages = state.logs;
-                      final logMessage = messages[index - 1];
-                      final altColor = CupertinoDynamicColor.withBrightness(
-                        color: Colors.grey.shade200,
-                        darkColor: Colors.grey.shade800,
-                      ).resolveFrom(context);
-                      return ParsedLogMessageTile(
-                        message: logMessage,
-                        backgroundColor: (index % 2 == 0)
-                            ? theme.colorScheme.surface
-                            : altColor,
-                      );
-                    },
-                    itemCount: logs.length + 1,
+            AppLogsStateLoaded(logs: var logs) => Builder(
+              builder: (context) {
+                if (state.logs.isEmpty) {
+                  return Center(
+                    child: Text(S.of(context)!.noLogsFoundOn(formattedDate)),
                   );
-                },
-              ),
+                }
+                return ListView.builder(
+                  reverse: true,
+                  controller: _scrollController,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Center(
+                        child: Text(
+                          S.of(context)!.logfileBottomReached,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.disabledColor,
+                          ),
+                        ),
+                      ).padded(24);
+                    }
+                    final messages = state.logs;
+                    final logMessage = messages[index - 1];
+                    final altColor = CupertinoDynamicColor.withBrightness(
+                      color: Colors.grey.shade200,
+                      darkColor: Colors.grey.shade800,
+                    ).resolveFrom(context);
+                    return ParsedLogMessageTile(
+                      message: logMessage,
+                      backgroundColor: (index % 2 == 0)
+                          ? theme.colorScheme.surface
+                          : altColor,
+                    );
+                  },
+                  itemCount: logs.length + 1,
+                );
+              },
+            ),
             AppLogsStateError() => Center(
-                child:
-                    Text(S.of(context)!.couldNotLoadLogfileFrom(formattedDate)),
+              child: Text(
+                S.of(context)!.couldNotLoadLogfileFrom(formattedDate),
               ),
-            _ => _buildLoadingLogs(state.date)
+            ),
+            _ => _buildLoadingLogs(state.date),
           },
         );
       },
@@ -147,8 +144,9 @@ class _AppLogsPageState extends State<AppLogsPage> {
   }
 
   Widget _buildLoadingLogs(DateTime date) {
-    final formattedDate =
-        DateFormat.yMd(Localizations.localeOf(context).toString()).format(date);
+    final formattedDate = DateFormat.yMd(
+      Localizations.localeOf(context).toString(),
+    ).format(date);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -175,9 +173,9 @@ class ParsedLogMessageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (message) {
       ParsedFormattedLogMessage m => FormattedLogMessageWidget(
-          message: m,
-          backgroundColor: backgroundColor,
-        ),
+        message: m,
+        backgroundColor: backgroundColor,
+      ),
       UnformattedLogMessage(message: var m) => Text(m),
     };
   }
@@ -186,8 +184,11 @@ class ParsedLogMessageTile extends StatelessWidget {
 class FormattedLogMessageWidget extends StatelessWidget {
   final ParsedFormattedLogMessage message;
   final Color backgroundColor;
-  const FormattedLogMessageWidget(
-      {super.key, required this.message, required this.backgroundColor});
+  const FormattedLogMessageWidget({
+    super.key,
+    required this.message,
+    required this.backgroundColor,
+  });
   static final _timeFormat = DateFormat("HH:mm:ss.SSS");
   @override
   Widget build(BuildContext context) {
@@ -211,12 +212,12 @@ class FormattedLogMessageWidget extends StatelessWidget {
       _ => c.onSurface,
     };
 
-    final logStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontFamily: 'monospace',
-          fontSize: 12,
-        );
-    final formattedMethodName =
-        message.methodName != null ? '${message.methodName!.trim()}()' : '';
+    final logStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontFamily: 'monospace', fontSize: 12);
+    final formattedMethodName = message.methodName != null
+        ? '${message.methodName!.trim()}()'
+        : '';
     final source = switch (message.className) {
       '' || null => formattedMethodName,
       String className => '$className.$formattedMethodName',
@@ -228,14 +229,8 @@ class FormattedLogMessageWidget extends StatelessWidget {
           _timeFormat.format(message.timestamp),
           style: logStyle?.copyWith(color: color),
         ),
-        title: Text(
-          message.message,
-          style: logStyle?.copyWith(color: color),
-        ),
-        trailing: Icon(
-          icon,
-          color: color,
-        ),
+        title: Text(message.message, style: logStyle?.copyWith(color: color)),
+        trailing: Icon(icon, color: color),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         expandedAlignment: Alignment.topLeft,
@@ -271,9 +266,9 @@ class FormattedLogMessageWidget extends StatelessWidget {
           Text(
             message.error!.stackTrace!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
-                  fontSize: 10,
-                ),
+              fontFamily: 'monospace',
+              fontSize: 10,
+            ),
           ).paddedOnly(left: 8),
         ],
       ];

@@ -21,9 +21,7 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
       floating: true,
       snap: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      title: Text(
-        S.of(context)!.countSelected(state.selection.length),
-      ),
+      title: Text(S.of(context)!.countSelected(state.selection.length)),
       leading: IconButton(
         icon: const Icon(Icons.close),
         onPressed: () => context.read<DocumentsCubit>().resetSelection(),
@@ -32,7 +30,8 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.delete),
           onPressed: () async {
-            final shouldDelete = await showDialog<bool>(
+            final shouldDelete =
+                await showDialog<bool>(
                   context: context,
                   builder: (context) =>
                       BulkDeleteConfirmationDialog(state: state),
@@ -41,9 +40,9 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
             if (shouldDelete) {
               try {
                 if (!context.mounted) return;
-                await context
-                    .read<DocumentsCubit>()
-                    .bulkDelete(state.selection);
+                await context.read<DocumentsCubit>().bulkDelete(
+                  state.selection,
+                );
                 if (!context.mounted) return;
                 showSnackBar(
                   context,
@@ -107,30 +106,36 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
                 label: Text(S.of(context)!.correspondent),
                 avatar: const Icon(Icons.edit),
                 onPressed: () {
-                  BulkEditDocumentsRoute(BulkEditExtraWrapper(
-                    state.selection,
-                    LabelType.correspondent,
-                  )).push(context);
+                  BulkEditDocumentsRoute(
+                    BulkEditExtraWrapper(
+                      state.selection,
+                      LabelType.correspondent,
+                    ),
+                  ).push(context);
                 },
               ).paddedOnly(left: 8, right: 4),
               ActionChip(
                 label: Text(S.of(context)!.documentType),
                 avatar: const Icon(Icons.edit),
                 onPressed: () async {
-                  BulkEditDocumentsRoute(BulkEditExtraWrapper(
-                    state.selection,
-                    LabelType.documentType,
-                  )).push(context);
+                  BulkEditDocumentsRoute(
+                    BulkEditExtraWrapper(
+                      state.selection,
+                      LabelType.documentType,
+                    ),
+                  ).push(context);
                 },
               ).paddedOnly(left: 8, right: 4),
               ActionChip(
                 label: Text(S.of(context)!.storagePath),
                 avatar: const Icon(Icons.edit),
                 onPressed: () async {
-                  BulkEditDocumentsRoute(BulkEditExtraWrapper(
-                    state.selection,
-                    LabelType.storagePath,
-                  )).push(context);
+                  BulkEditDocumentsRoute(
+                    BulkEditExtraWrapper(
+                      state.selection,
+                      LabelType.storagePath,
+                    ),
+                  ).push(context);
                 },
               ).paddedOnly(left: 8, right: 4),
               _buildBulkEditTagsChip(context).paddedOnly(left: 4, right: 4),
@@ -146,22 +151,15 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
       label: Text(S.of(context)!.tags),
       avatar: const Icon(Icons.edit),
       onPressed: () {
-        BulkEditDocumentsRoute(BulkEditExtraWrapper(
-          state.selection,
-          LabelType.tag,
-        )).push(context);
+        BulkEditDocumentsRoute(
+          BulkEditExtraWrapper(state.selection, LabelType.tag),
+        ).push(context);
       },
     );
   }
 }
 
-enum _BulkSelectionAction {
-  reprocess,
-  merge,
-  rotate,
-  split,
-  deletePages,
-}
+enum _BulkSelectionAction { reprocess, merge, rotate, split, deletePages }
 
 Future<void> _handleBulkAction(
   BuildContext context,
@@ -244,10 +242,7 @@ Future<void> _handleBulkAction(
         }
         final pages = await _showDeletePagesDialog(context);
         if (pages == null || !context.mounted) return;
-        await documentsCubit.bulkDeletePages(
-          selection.first,
-          pages: pages,
-        );
+        await documentsCubit.bulkDeletePages(selection.first, pages: pages);
         if (!context.mounted) return;
         showSnackBar(context, 'Pages deleted.'); // TODO: INTL
         documentsCubit.resetSelection();
@@ -355,7 +350,7 @@ Future<int?> _showRotateDialog(BuildContext context) async {
           return AlertDialog(
             title: const Text('Rotate documents'), // TODO: INTL
             content: DropdownButtonFormField<int>(
-              value: selectedDegrees,
+              initialValue: selectedDegrees,
               decoration: const InputDecoration(
                 labelText: 'Degrees', // TODO: INTL
               ),

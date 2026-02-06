@@ -6,9 +6,17 @@
 
   final username = parts.first;
   final serverUrl = parts.last;
-  final uri = Uri.parse(serverUrl);
-  final obscuredUrl = '${uri.host.substring(0, 2)}***'
-      '${uri.host.substring(uri.host.length - 2, uri.host.length)}';
+  final uri = Uri.tryParse(serverUrl);
+  final host = uri?.host;
+  if (host == null || host.isEmpty) {
+    return (username, 'unknown');
+  }
+
+  final obscuredUrl = switch (host.length) {
+    <= 2 => '${host[0]}***',
+    <= 4 => '${host.substring(0, 1)}***${host.substring(host.length - 1)}',
+    _ => '${host.substring(0, 2)}***${host.substring(host.length - 2)}',
+  };
   return (username, obscuredUrl);
 }
 

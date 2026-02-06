@@ -76,7 +76,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     androidTestUtil("androidx.test:orchestrator:1.5.1")
     androidTestImplementation("androidx.test:runner:1.5.1")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

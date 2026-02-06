@@ -9,7 +9,8 @@ import 'package:paperless_mobile/features/settings/view/widgets/global_settings_
 
 extension AccessibilityAwareAnimationDurationExtension on Duration {
   Duration accessible() {
-    bool shouldDisableAnimations = WidgetsBinding.instance.disableAnimations ||
+    bool shouldDisableAnimations =
+        WidgetsBinding.instance.disableAnimations ||
         Hive.globalSettingsBox.getValue()!.disableAnimations;
     // print(shouldDisableAnimations);
     if (shouldDisableAnimations) {
@@ -24,7 +25,8 @@ extension AccessibleHero on Hero {
     return GlobalSettingsBuilder(
       builder: (context, settings) {
         return HeroMode(
-          enabled: WidgetsBinding.instance.disableAnimations ||
+          enabled:
+              WidgetsBinding.instance.disableAnimations ||
               !settings.disableAnimations,
           child: this,
         );
@@ -47,7 +49,8 @@ class _AccessibilityAwareObserverWidget extends StatefulWidget {
   final Widget Function(
     BuildContext context,
     AccessibilityFeatures accessibilityFeatures,
-  ) accessibilityAwareBuilder;
+  )
+  accessibilityAwareBuilder;
   const _AccessibilityAwareObserverWidget({
     required this.accessibilityAwareBuilder,
   });
@@ -74,14 +77,10 @@ class _AccessibilityAwareObserverWidgetState
     setState(() {
       _accessibilityFeatures = WidgetsBinding.instance.accessibilityFeatures;
     });
-    print("Accessibility features changed");
   }
 
   @override
   Widget build(BuildContext context) {
-    return widget.accessibilityAwareBuilder(
-      context,
-      _accessibilityFeatures,
-    );
+    return widget.accessibilityAwareBuilder(context, _accessibilityFeatures);
   }
 }

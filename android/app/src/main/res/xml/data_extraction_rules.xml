@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Backups are explicitly disabled for this app (android:allowBackup="false").
+      Keep this file anyway to satisfy Android 12+ expectations and to make any
+      future backup policy changes explicit and reviewable.
+    -->
+    <cloud-backup disable="true" />
+    <device-transfer disable="true" />
+</data-extraction-rules>
