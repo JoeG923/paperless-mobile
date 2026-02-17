@@ -1,0 +1,52 @@
+name: Quality Checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set Flutter root
+        run: echo "FLUTTER_ROOT=$(pwd)/flutter-sdk/bin" >> $GITHUB_ENV
+
+      - name: Flutter doctor
+        run: $FLUTTER_ROOT/flutter doctor -v
+
+      - name: Install dependencies and generate code
+        run: bash scripts/install_dependencies_with_submodule.sh
+
+      - name: Check app formatting
+        run: $FLUTTER_ROOT/dart format --set-exit-if-changed lib test
+
+      - name: Check paperless_api formatting
+        working-directory: packages/paperless_api
+        run: $FLUTTER_ROOT/dart format --set-exit-if-changed lib test
+
+      - name: Verify l10n generation is up to date
+        run: |
+          $FLUTTER_ROOT/flutter gen-l10n
+          git diff --exit-code
+
+      - name: Analyze app
+        run: $FLUTTER_ROOT/flutter analyze
+
+      - name: Test app
+        run: $FLUTTER_ROOT/flutter test
+
+      - name: Analyze paperless_api package
+        working-directory: packages/paperless_api
+        run: $FLUTTER_ROOT/flutter analyze
+
+      - name: Test paperless_api package
+        working-directory: packages/paperless_api
+        run: $FLUTTER_ROOT/flutter test

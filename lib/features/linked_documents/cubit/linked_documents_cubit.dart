@@ -25,11 +25,7 @@ class LinkedDocumentsCubit extends HydratedCubit<LinkedDocumentsState>
     this.connectivityStatusService,
   ) : super(LinkedDocumentsState(filter: filter)) {
     updateFilter(filter: filter);
-    notifier.addListener(
-      this,
-      onUpdated: replace,
-      onDeleted: remove,
-    );
+    notifier.addListener(this, onUpdated: replace, onDeleted: remove);
   }
 
   @override

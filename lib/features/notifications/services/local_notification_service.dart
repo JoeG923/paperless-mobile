@@ -50,10 +50,13 @@ class LocalNotificationService {
 
   Future<void> notifyFileDownload({required String filePath}) async {
     final filename = p.basename(filePath);
+    final tr = await S.delegate.load(
+      WidgetsBinding.instance.platformDispatcher.locale,
+    );
     await _plugin.show(
       filePath.hashCode,
       filename,
-      "File download complete.",
+      tr.notificationDownloadComplete,
       NotificationDetails(
         android: AndroidNotificationDetails(
           "${NotificationChannel.fileDownload.id}_${filePath.hashCode}",
@@ -114,7 +117,7 @@ class LocalNotificationService {
       payload: jsonEncode(
         OpenDirectoryNotificationResponsePayload(filePath: filePath).toJson(),
       ),
-    ); //TODO: INTL
+    );
     _addNotification(userId, id);
   }
 
@@ -164,9 +167,11 @@ class LocalNotificationService {
     );
   }
 
-  //TODO: INTL
   Future<void> notifyTaskChanged(Task task, {required String userId}) async {
     log("[LocalNotificationService] notifyTaskChanged: ${task.toString()}");
+    final tr = await S.delegate.load(
+      WidgetsBinding.instance.platformDispatcher.locale,
+    );
     int id = task.id + 1000;
     final status = task.status;
     late String title;
@@ -177,22 +182,22 @@ class LocalNotificationService {
     dynamic payload;
     switch (status) {
       case TaskStatus.started:
-        title = "Document received";
+        title = tr.notificationTaskDocumentReceived;
         body = task.taskFileName;
         timestampMillis = task.dateCreated.millisecondsSinceEpoch;
         break;
       case TaskStatus.pending:
-        title = "Processing document...";
+        title = tr.notificationTaskProcessingDocument;
         body = task.taskFileName;
         timestampMillis = task.dateCreated.millisecondsSinceEpoch;
         break;
       case TaskStatus.failure:
-        title = "Failed to process document";
-        body = task.result ?? 'Rejected by the server.';
+        title = tr.notificationTaskFailedToProcess;
+        body = task.result ?? tr.notificationTaskRejectedByServer;
         timestampMillis = task.dateCreated.millisecondsSinceEpoch;
         break;
       case TaskStatus.success:
-        title = "Document successfully created";
+        title = tr.notificationTaskDocumentCreated;
         body = task.taskFileName;
         timestampMillis = task.dateDone!.millisecondsSinceEpoch;
         payload = CreateDocumentSuccessPayload(task.relatedDocument!);

@@ -12,9 +12,7 @@ class AddCorrespondentPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: AddLabelPage<Correspondent>(
         pageTitle: Text(S.of(context)!.addCorrespondent),
         fromJsonT: Correspondent.fromJson,

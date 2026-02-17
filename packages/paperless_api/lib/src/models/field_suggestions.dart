@@ -40,12 +40,12 @@ class FieldSuggestions with EquatableMixin {
       (dates.isNotEmpty ? 1 : 0);
 
   FieldSuggestions forDocumentId(int id) => FieldSuggestions(
-        documentId: id,
-        correspondents: correspondents,
-        dates: dates,
-        documentTypes: documentTypes,
-        tags: tags,
-      );
+    documentId: id,
+    correspondents: correspondents,
+    dates: dates,
+    documentTypes: documentTypes,
+    tags: tags,
+  );
 
   ///
   /// Removes the suggestions given in the parameters.
@@ -58,10 +58,12 @@ class FieldSuggestions with EquatableMixin {
   }) {
     return copyWith(
       tags: this.tags.toSet().difference(tags.toSet()),
-      correspondents:
-          this.correspondents.toSet().difference(correspondents.toSet()),
-      documentTypes:
-          this.documentTypes.toSet().difference(documentTypes.toSet()),
+      correspondents: this.correspondents.toSet().difference(
+        correspondents.toSet(),
+      ),
+      documentTypes: this.documentTypes.toSet().difference(
+        documentTypes.toSet(),
+      ),
       dates: this.dates.toSet().difference(dates.toSet()),
     );
   }
@@ -69,10 +71,12 @@ class FieldSuggestions with EquatableMixin {
   FieldSuggestions documentDifference(DocumentModel document) {
     return difference(
       tags: document.tags,
-      correspondents:
-          [document.correspondent].where((e) => e != null).map((e) => e!),
-      documentTypes:
-          [document.documentType].where((e) => e != null).map((e) => e!),
+      correspondents: [
+        document.correspondent,
+      ].where((e) => e != null).map((e) => e!),
+      documentTypes: [
+        document.documentType,
+      ].where((e) => e != null).map((e) => e!),
       dates: [document.created],
     );
   }
@@ -99,10 +103,10 @@ class FieldSuggestions with EquatableMixin {
 
   @override
   List<Object?> get props => [
-        documentId,
-        correspondents,
-        tags,
-        documentTypes,
-        dates,
-      ];
+    documentId,
+    correspondents,
+    tags,
+    documentTypes,
+    dates,
+  ];
 }

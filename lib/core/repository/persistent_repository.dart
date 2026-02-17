@@ -7,10 +7,7 @@ abstract class PersistentRepository<T> extends Cubit<T> {
 
   PersistentRepository(super.initialState);
 
-  void addListener(
-    Object subscriber, {
-    required void Function(T) onChanged,
-  }) {
+  void addListener(Object subscriber, {required void Function(T) onChanged}) {
     onChanged(state);
     _subscribers.putIfAbsent(subscriber, () {
       return stream.listen((event) => onChanged(event));

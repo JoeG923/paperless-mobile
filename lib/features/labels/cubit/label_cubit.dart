@@ -14,12 +14,14 @@ class LabelCubit extends Cubit<LabelState> {
   }
 
   void _updateStateListener() {
-    emit(state.copyWith(
-      correspondents: labelRepository.correspondents,
-      documentTypes: labelRepository.documentTypes,
-      storagePaths: labelRepository.storagePaths,
-      tags: labelRepository.tags,
-    ));
+    emit(
+      state.copyWith(
+        correspondents: labelRepository.correspondents,
+        documentTypes: labelRepository.documentTypes,
+        storagePaths: labelRepository.storagePaths,
+        tags: labelRepository.tags,
+      ),
+    );
   }
 
   Future<void> reload({

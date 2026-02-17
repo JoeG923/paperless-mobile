@@ -62,6 +62,9 @@ class DocumentFilter extends Equatable {
   @HiveField(14)
   final int? selectedView;
 
+  @HiveField(15)
+  final String? customFieldQuery;
+
   const DocumentFilter({
     this.documentType = const UnsetIdQueryParameter(),
     this.correspondent = const UnsetIdQueryParameter(),
@@ -78,6 +81,7 @@ class DocumentFilter extends Equatable {
     this.modified = const UnsetDateRangeQuery(),
     this.moreLike,
     this.selectedView,
+    this.customFieldQuery,
   });
 
   bool get forceExtendedQuery {
@@ -99,6 +103,8 @@ class DocumentFilter extends Equatable {
       ...created.toQueryParameter(DateRangeQueryField.created).entries,
       ...modified.toQueryParameter(DateRangeQueryField.modified).entries,
       ...query.toQueryParameter().entries,
+      if (customFieldQuery?.isNotEmpty ?? false)
+        MapEntry('custom_field_query', customFieldQuery!),
     ];
     if (sortField != null) {
       params.add(
@@ -144,6 +150,7 @@ class DocumentFilter extends Equatable {
     TextQuery? query,
     int? Function()? moreLike,
     int? Function()? selectedView,
+    String? Function()? customFieldQuery,
   }) {
     final newFilter = DocumentFilter(
       pageSize: pageSize ?? this.pageSize,
@@ -160,8 +167,12 @@ class DocumentFilter extends Equatable {
       created: created ?? this.created,
       modified: modified ?? this.modified,
       moreLike: moreLike != null ? moreLike.call() : this.moreLike,
-      selectedView:
-          selectedView != null ? selectedView.call() : this.selectedView,
+      selectedView: selectedView != null
+          ? selectedView.call()
+          : this.selectedView,
+      customFieldQuery: customFieldQuery != null
+          ? customFieldQuery.call()
+          : this.customFieldQuery,
     );
     if (query?.queryType != QueryType.extended &&
         newFilter.forceExtendedQuery) {
@@ -192,61 +203,63 @@ class DocumentFilter extends Equatable {
   }
 
   int get appliedFiltersCount => [
-        switch (documentType) {
-          UnsetIdQueryParameter() => 0,
-          _ => 1,
-        },
-        switch (correspondent) {
-          UnsetIdQueryParameter() => 0,
-          _ => 1,
-        },
-        switch (storagePath) {
-          UnsetIdQueryParameter() => 0,
-          _ => 1,
-        },
-        switch (tags) {
-          NotAssignedTagsQuery() => 1,
-          AnyAssignedTagsQuery(tagIds: var tags) => tags.length,
-          IdsTagsQuery(include: var i, exclude: var e) => e.length + i.length,
-        },
-        switch (added) {
-          RelativeDateRangeQuery() => 1,
-          AbsoluteDateRangeQuery() => 1,
-          UnsetDateRangeQuery() => 0,
-        },
-        switch (created) {
-          RelativeDateRangeQuery() => 1,
-          AbsoluteDateRangeQuery() => 1,
-          UnsetDateRangeQuery() => 0,
-        },
-        switch (modified) {
-          RelativeDateRangeQuery() => 1,
-          AbsoluteDateRangeQuery() => 1,
-          UnsetDateRangeQuery() => 0,
-        },
-        switch (asnQuery) {
-          UnsetIdQueryParameter() => 0,
-          _ => 1,
-        },
-        (query.queryText?.isNotEmpty ?? false) ? 1 : 0,
-      ].fold(0, (previousValue, element) => previousValue + element);
+    switch (documentType) {
+      UnsetIdQueryParameter() => 0,
+      _ => 1,
+    },
+    switch (correspondent) {
+      UnsetIdQueryParameter() => 0,
+      _ => 1,
+    },
+    switch (storagePath) {
+      UnsetIdQueryParameter() => 0,
+      _ => 1,
+    },
+    switch (tags) {
+      NotAssignedTagsQuery() => 1,
+      AnyAssignedTagsQuery(tagIds: var tags) => tags.length,
+      IdsTagsQuery(include: var i, exclude: var e) => e.length + i.length,
+    },
+    switch (added) {
+      RelativeDateRangeQuery() => 1,
+      AbsoluteDateRangeQuery() => 1,
+      UnsetDateRangeQuery() => 0,
+    },
+    switch (created) {
+      RelativeDateRangeQuery() => 1,
+      AbsoluteDateRangeQuery() => 1,
+      UnsetDateRangeQuery() => 0,
+    },
+    switch (modified) {
+      RelativeDateRangeQuery() => 1,
+      AbsoluteDateRangeQuery() => 1,
+      UnsetDateRangeQuery() => 0,
+    },
+    switch (asnQuery) {
+      UnsetIdQueryParameter() => 0,
+      _ => 1,
+    },
+    (customFieldQuery?.isNotEmpty ?? false) ? 1 : 0,
+    (query.queryText?.isNotEmpty ?? false) ? 1 : 0,
+  ].fold(0, (previousValue, element) => previousValue + element);
 
   @override
   List<Object?> get props => [
-        pageSize,
-        page,
-        documentType,
-        correspondent,
-        storagePath,
-        asnQuery,
-        tags,
-        sortField,
-        sortOrder,
-        added,
-        created,
-        modified,
-        query,
-        moreLike,
-        selectedView,
-      ];
+    pageSize,
+    page,
+    documentType,
+    correspondent,
+    storagePath,
+    asnQuery,
+    tags,
+    sortField,
+    sortOrder,
+    added,
+    created,
+    modified,
+    query,
+    moreLike,
+    selectedView,
+    customFieldQuery,
+  ];
 }

@@ -56,10 +56,7 @@ class _SortFieldSelectionBottomSheetState
                 TextButton(
                   child: Text(S.of(context)!.apply),
                   onPressed: () async {
-                    await widget.onSubmit(
-                      _currentSortField,
-                      _currentSortOrder,
-                    );
+                    await widget.onSubmit(_currentSortField, _currentSortOrder);
                     if (context.mounted) {
                       Navigator.pop(context);
                     }
@@ -73,17 +70,19 @@ class _SortFieldSelectionBottomSheetState
                 _buildSortOption(
                   SortField.correspondentName,
                   enabled: labelRepository.correspondents.values.fold<bool>(
-                      false,
-                      (previousValue, element) =>
-                          previousValue || (element.documentCount ?? 0) > 0),
+                    false,
+                    (previousValue, element) =>
+                        previousValue || (element.documentCount ?? 0) > 0,
+                  ),
                 ),
                 _buildSortOption(SortField.title),
                 _buildSortOption(
                   SortField.documentType,
                   enabled: labelRepository.documentTypes.values.fold<bool>(
-                      false,
-                      (previousValue, element) =>
-                          previousValue || (element.documentCount ?? 0) > 0),
+                    false,
+                    (previousValue, element) =>
+                        previousValue || (element.documentCount ?? 0) > 0,
+                  ),
                 ),
                 _buildSortOption(SortField.created),
                 _buildSortOption(SortField.added),

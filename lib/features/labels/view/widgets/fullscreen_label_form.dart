@@ -32,9 +32,9 @@ class FullscreenLabelForm<T extends Label> extends StatefulWidget {
     this.autofocus = true,
     this.allowSelectUnassigned = true,
     required this.canCreateNewLabel,
-  })  : assert(!(initialValue.isOnlyAssigned) || showAnyAssignedOption),
-        assert(!(initialValue.isOnlyNotAssigned) || showNotAssignedOption),
-        assert((addNewLabelText != null) == (onCreateNewLabel != null));
+  }) : assert(!(initialValue.isOnlyAssigned) || showAnyAssignedOption),
+       assert(!(initialValue.isOnlyNotAssigned) || showNotAssignedOption),
+       assert((addNewLabelText != null) == (onCreateNewLabel != null));
 
   @override
   State<FullscreenLabelForm> createState() => _FullscreenLabelFormState();
@@ -72,9 +72,7 @@ class _FullscreenLabelFormState<T extends Label>
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         toolbarHeight: 72,
-        leading: BackButton(
-          color: theme.colorScheme.onSurface,
-        ),
+        leading: BackButton(color: theme.colorScheme.onSurface),
         title: TextFormField(
           focusNode: _focusNode,
           controller: _textEditingController,
@@ -115,9 +113,7 @@ class _FullscreenLabelFormState<T extends Label>
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            color: theme.colorScheme.outline,
-          ),
+          child: Divider(color: theme.colorScheme.outline),
         ),
       ),
       floatingActionButton: showFab && widget.onCreateNewLabel != null
@@ -127,51 +123,51 @@ class _FullscreenLabelFormState<T extends Label>
               child: const Icon(Icons.add),
             )
           : null,
-      body: Builder(builder: (context) {
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final option = options.elementAt(index);
-                  final shouldHighlight = switch (option) {
-                    NotAssignedIdQueryParameter() => true,
-                    AnyAssignedIdQueryParameter() => true,
-                    SetIdQueryParameter(id: var id) =>
-                      (widget.options[id]?.documentCount ?? 0) > 0,
-                    _ => false,
-                  };
-                  final highlight =
-                      AutocompleteHighlightedOption.of(context) == index;
-                  if (highlight && shouldHighlight) {
-                    SchedulerBinding.instance
-                        .addPostFrameCallback((Duration timeStamp) {
-                      Scrollable.ensureVisible(
-                        context,
-                        alignment: 0,
-                      );
-                    });
-                  }
-                  return _buildOptionWidget(
-                      option, highlight && shouldHighlight);
-                },
+      body: Builder(
+        builder: (context) {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final option = options.elementAt(index);
+                    final shouldHighlight = switch (option) {
+                      NotAssignedIdQueryParameter() => true,
+                      AnyAssignedIdQueryParameter() => true,
+                      SetIdQueryParameter(id: var id) =>
+                        (widget.options[id]?.documentCount ?? 0) > 0,
+                      _ => false,
+                    };
+                    final highlight =
+                        AutocompleteHighlightedOption.of(context) == index;
+                    if (highlight && shouldHighlight) {
+                      SchedulerBinding.instance.addPostFrameCallback((
+                        Duration timeStamp,
+                      ) {
+                        Scrollable.ensureVisible(context, alignment: 0);
+                      });
+                    }
+                    return _buildOptionWidget(
+                      option,
+                      highlight && shouldHighlight,
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        },
+      ),
     );
   }
 
   void _onCreateNewLabel() async {
     final label = await widget.onCreateNewLabel!(_textEditingController.text);
     if (label?.id != null) {
-      widget.onSubmit(
-        returnValue: SetIdQueryParameter(id: label!.id!),
-      );
+      widget.onSubmit(returnValue: SetIdQueryParameter(id: label!.id!));
     }
   }
 
@@ -217,8 +213,9 @@ class _FullscreenLabelFormState<T extends Label>
       }
     } else {
       // Show filtered options, if no matching option is found, always show not assigned and any assigned (if enabled) and proceed.
-      final matches = widget.options.values
-          .where((e) => e.name.trim().toLowerCase().contains(normalizedQuery));
+      final matches = widget.options.values.where(
+        (e) => e.name.trim().toLowerCase().contains(normalizedQuery),
+      );
       if (matches.isNotEmpty) {
         for (final match in matches) {
           yield SetIdQueryParameter(id: match.id!);
@@ -255,56 +252,56 @@ class _FullscreenLabelFormState<T extends Label>
 
   Widget _buildOptionWidget(IdQueryParameter option, bool highlight) {
     void onTap() => widget.onSubmit(returnValue: option);
-    final hasNoAssignedDocumentsTextStyle = Theme.of(context)
-        .textTheme
-        .labelMedium
-        ?.apply(color: Theme.of(context).disabledColor);
-    final hasAssignedDocumentsTextStyle =
-        Theme.of(context).textTheme.labelMedium;
+    final hasNoAssignedDocumentsTextStyle = Theme.of(
+      context,
+    ).textTheme.labelMedium?.apply(color: Theme.of(context).disabledColor);
+    final hasAssignedDocumentsTextStyle = Theme.of(
+      context,
+    ).textTheme.labelMedium;
 
     return switch (option) {
       NotAssignedIdQueryParameter() => ListTile(
-          selected: highlight,
-          selectedTileColor: Theme.of(context).focusColor,
-          title: Text(S.of(context)!.notAssigned),
-          onTap: onTap,
-        ),
+        selected: highlight,
+        selectedTileColor: Theme.of(context).focusColor,
+        title: Text(S.of(context)!.notAssigned),
+        onTap: onTap,
+      ),
       AnyAssignedIdQueryParameter() => ListTile(
-          selected: highlight,
-          selectedTileColor: Theme.of(context).focusColor,
-          title: Text(S.of(context)!.anyAssigned),
-          onTap: onTap,
-        ),
+        selected: highlight,
+        selectedTileColor: Theme.of(context).focusColor,
+        title: Text(S.of(context)!.anyAssigned),
+        onTap: onTap,
+      ),
       SetIdQueryParameter(id: var id) => ListTile(
-          selected: highlight,
-          selectedTileColor: Theme.of(context).focusColor,
-          title: Text(
-            widget.options[id]!.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          onTap: onTap,
-          trailing: Text(
-            S
-                .of(context)!
-                .documentsAssigned(widget.options[id]!.documentCount ?? 0),
-            style: (widget.options[id]!.documentCount ?? 0) > 0
-                ? hasAssignedDocumentsTextStyle
-                : hasNoAssignedDocumentsTextStyle,
-          ),
+        selected: highlight,
+        selectedTileColor: Theme.of(context).focusColor,
+        title: Text(
+          widget.options[id]!.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
+        onTap: onTap,
+        trailing: Text(
+          S
+              .of(context)!
+              .documentsAssigned(widget.options[id]!.documentCount ?? 0),
+          style: (widget.options[id]!.documentCount ?? 0) > 0
+              ? hasAssignedDocumentsTextStyle
+              : hasNoAssignedDocumentsTextStyle,
+        ),
+      ),
       UnsetIdQueryParameter() => Center(
-          child: Column(
-            children: [
-              Text(S.of(context)!.noItemsFound).padded(),
-              if (widget.onCreateNewLabel != null)
-                TextButton(
-                  onPressed: _onCreateNewLabel,
-                  child: Text(widget.addNewLabelText!),
-                ),
-            ],
-          ),
+        child: Column(
+          children: [
+            Text(S.of(context)!.noItemsFound).padded(),
+            if (widget.onCreateNewLabel != null)
+              TextButton(
+                onPressed: _onCreateNewLabel,
+                child: Text(widget.addNewLabelText!),
+              ),
+          ],
         ),
+      ),
     };
   }
 }

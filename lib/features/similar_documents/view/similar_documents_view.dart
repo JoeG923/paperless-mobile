@@ -46,9 +46,7 @@ class _SimilarDocumentsViewState extends State<SimilarDocumentsView>
         return BlocBuilder<SimilarDocumentsCubit, SimilarDocumentsState>(
           builder: (context, state) {
             if (!connectivity.isConnected && !state.hasLoaded) {
-              return const SliverToBoxAdapter(
-                child: OfflineWidget(),
-              );
+              return const SliverToBoxAdapter(child: OfflineWidget());
             }
             if (state.error != null) {
               return SliverFillRemaining(
@@ -64,9 +62,7 @@ class _SimilarDocumentsViewState extends State<SimilarDocumentsView>
                 !state.isLoading &&
                 state.documents.isEmpty) {
               return SliverToBoxAdapter(
-                child: Center(
-                  child: Text(S.of(context)!.noItemsFound),
-                ),
+                child: Center(child: Text(S.of(context)!.noItemsFound)),
               );
             }
             return SliverAdaptiveDocumentsView(

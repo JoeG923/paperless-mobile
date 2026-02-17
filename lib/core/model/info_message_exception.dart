@@ -4,11 +4,7 @@ class InfoMessageException implements Exception {
   final ErrorCode code;
   final String? message;
   final StackTrace? stackTrace;
-  InfoMessageException({
-    required this.code,
-    this.message,
-    this.stackTrace,
-  });
+  InfoMessageException({required this.code, this.message, this.stackTrace});
 
   @override
   String toString() {

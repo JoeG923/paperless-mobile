@@ -59,12 +59,9 @@ class PagedSearchResult<T> extends Equatable {
   factory PagedSearchResult.fromJson(
     Map<String, dynamic> json,
     T Function(Object?) fromJsonT,
-  ) =>
-      _$PagedSearchResultFromJson(json, fromJsonT);
+  ) => _$PagedSearchResultFromJson(json, fromJsonT);
 
-  Map<String, dynamic> toJson(
-    Object? Function(T value) toJsonT,
-  ) =>
+  Map<String, dynamic> toJson(Object? Function(T value) toJsonT) =>
       _$PagedSearchResultToJson(this, toJsonT);
 
   factory PagedSearchResult.fromJsonSingleParam(
@@ -102,10 +99,5 @@ class PagedSearchResult<T> extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        count,
-        next,
-        previous,
-        results,
-      ];
+  List<Object?> get props => [count, next, previous, results];
 }

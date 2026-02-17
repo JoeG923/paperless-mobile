@@ -21,15 +21,15 @@ class InboxState extends DocumentPagingState {
 
   @override
   List<Object?> get props => [
-        hasLoaded,
-        isLoading,
-        value,
-        filter,
-        inboxTags,
-        documents,
-        isHintAcknowledged,
-        itemsInInboxCount,
-      ];
+    hasLoaded,
+    isLoading,
+    value,
+    filter,
+    inboxTags,
+    documents,
+    isHintAcknowledged,
+    itemsInInboxCount,
+  ];
 
   InboxState copyWith({
     bool? hasLoaded,
@@ -63,7 +63,7 @@ class InboxState extends DocumentPagingState {
     bool? isLoading,
     List<PagedSearchResult<DocumentModel>>? value,
     DocumentFilter?
-        filter, // Ignored as filter does not change while inbox is open
+    filter, // Ignored as filter does not change while inbox is open
   }) {
     return copyWith(
       hasLoaded: hasLoaded,

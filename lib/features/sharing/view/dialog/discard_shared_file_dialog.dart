@@ -10,10 +10,7 @@ import 'package:paperless_mobile/features/sharing/view/widgets/file_thumbnail.da
 
 class DiscardSharedFileDialog extends StatelessWidget {
   final FutureOr<Uint8List> bytes;
-  const DiscardSharedFileDialog({
-    super.key,
-    required this.bytes,
-  });
+  const DiscardSharedFileDialog({super.key, required this.bytes});
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +33,7 @@ class DiscardSharedFileDialog extends StatelessWidget {
         },
       ),
       title: Text(S.of(context)!.discardFile),
-      content: Text(
-        "The shared file was not yet processed. Do you want to discard the file?", //TODO: INTL
-      ),
+      content: Text(S.of(context)!.sharedFileDiscardPrompt),
       actions: [
         DialogCancelButton(),
         DialogConfirmButton(

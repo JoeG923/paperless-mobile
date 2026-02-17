@@ -37,9 +37,7 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surfaceContainerHighest,
         toolbarHeight: 72 - progressIndicatorHeight,
-        leading: BackButton(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+        leading: BackButton(color: theme.colorScheme.onSurfaceVariant),
         title: Hero(
           tag: "search_hero_tag",
           child: TextField(
@@ -114,9 +112,7 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
         .whereNot((element) => state.searchHistory.contains(element))
         .toList();
     final historyMatches = state.searchHistory
-        .where(
-          (element) => element.startsWith(query),
-        )
+        .where((element) => element.startsWith(query))
         .toList();
     return CustomScrollView(
       slivers: [
@@ -155,7 +151,8 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
   }
 
   void _onDeleteHistoryEntry(String entry) async {
-    final shouldRemove = await showDialog<bool>(
+    final shouldRemove =
+        await showDialog<bool>(
           context: context,
           builder: (context) => RemoveHistoryEntryDialog(entry: entry),
         ) ??
@@ -198,7 +195,7 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
                   context.read<DocumentSearchCubit>().updateViewType(type),
             );
           },
-        )
+        ),
       ],
     ).paddedLTRB(16, 8, 8, 8);
     return CustomScrollView(
@@ -227,7 +224,7 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
                 thumbnailUrl: document.buildThumbnailUrl(context),
               ).push(context);
             },
-          )
+          ),
       ],
     );
   }

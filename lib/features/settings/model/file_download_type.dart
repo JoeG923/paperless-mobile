@@ -10,5 +10,5 @@ enum FileDownloadType {
   @HiveField(2)
   archived,
   @HiveField(3)
-  alwaysAsk;
+  alwaysAsk,
 }

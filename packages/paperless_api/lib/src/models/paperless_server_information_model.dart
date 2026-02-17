@@ -16,7 +16,8 @@ class PaperlessServerInformationModel {
   });
 
   int compareToOtherVersion(String other) {
-    return getExtendedVersionNumber(version)
-        .compareTo(getExtendedVersionNumber(other));
+    return getExtendedVersionNumber(
+      version,
+    ).compareTo(getExtendedVersionNumber(other));
   }
 }

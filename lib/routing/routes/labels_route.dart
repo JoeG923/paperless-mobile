@@ -54,10 +54,7 @@ class CreateLabelRoute extends GoRouteData with $CreateLabelRoute {
   final LabelType $extra;
   final String? name;
 
-  CreateLabelRoute(
-    this.$extra, {
-    this.name,
-  });
+  CreateLabelRoute(this.$extra, {this.name});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {

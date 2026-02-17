@@ -36,13 +36,13 @@ class DocumentsState extends DocumentPagingState {
 
   @override
   List<Object?> get props => [
-        selection,
-        viewType,
-        super.filter,
-        super.hasLoaded,
-        super.isLoading,
-        super.value,
-      ];
+    selection,
+    viewType,
+    super.filter,
+    super.hasLoaded,
+    super.isLoading,
+    super.value,
+  ];
 
   @override
   DocumentsState copyWithPaged({

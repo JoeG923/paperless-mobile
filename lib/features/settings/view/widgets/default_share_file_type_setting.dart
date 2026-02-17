@@ -26,17 +26,23 @@ class DefaultShareFileTypeSetting extends StatelessWidget {
                     RadioOption(
                       value: FileDownloadType.alwaysAsk,
                       label: _downloadFileTypeToString(
-                          context, FileDownloadType.alwaysAsk),
+                        context,
+                        FileDownloadType.alwaysAsk,
+                      ),
                     ),
                     RadioOption(
                       value: FileDownloadType.original,
                       label: _downloadFileTypeToString(
-                          context, FileDownloadType.original),
+                        context,
+                        FileDownloadType.original,
+                      ),
                     ),
                     RadioOption(
                       value: FileDownloadType.archived,
                       label: _downloadFileTypeToString(
-                          context, FileDownloadType.archived),
+                        context,
+                        FileDownloadType.archived,
+                      ),
                     ),
                   ],
                   initialValue: settings.defaultShareType,
@@ -55,7 +61,9 @@ class DefaultShareFileTypeSetting extends StatelessWidget {
   }
 
   String _downloadFileTypeToString(
-      BuildContext context, FileDownloadType type) {
+    BuildContext context,
+    FileDownloadType type,
+  ) {
     switch (type) {
       case FileDownloadType.original:
         return S.of(context)!.original;

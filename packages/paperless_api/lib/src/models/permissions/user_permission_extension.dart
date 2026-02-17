@@ -10,7 +10,7 @@ extension UserPermissionExtension on UserModel {
         inheritedPermissions: var inheritedPermissions,
       ) =>
         userPermissions.any((p) => p == permission) ||
-            inheritedPermissions.any((p) => p.split(".").last == permission)
+            inheritedPermissions.any((p) => p.split(".").last == permission),
     };
   }
 
@@ -20,7 +20,7 @@ extension UserPermissionExtension on UserModel {
   ) {
     final permissions = [
       for (var action in actions)
-        for (var target in targets) [action, target].join("_")
+        for (var target in targets) [action, target].join("_"),
     ];
     return switch (this) {
       UserModelV2() => true,
@@ -28,9 +28,11 @@ extension UserPermissionExtension on UserModel {
         userPermissions: var userPermissions,
         inheritedPermissions: var inheritedPermissions,
       ) =>
-        permissions.every((p) =>
-            userPermissions.contains(p) ||
-            inheritedPermissions.any((ip) => ip.split(".").last == p))
+        permissions.every(
+          (p) =>
+              userPermissions.contains(p) ||
+              inheritedPermissions.any((ip) => ip.split(".").last == p),
+        ),
     };
   }
 
@@ -44,6 +46,8 @@ extension UserPermissionExtension on UserModel {
       hasPermission(PermissionAction.view, PermissionTarget.tag);
   bool get canViewStoragePaths =>
       hasPermission(PermissionAction.view, PermissionTarget.storagePath);
+  bool get canViewCustomFields =>
+      hasPermission(PermissionAction.view, PermissionTarget.customField);
   bool get canViewSavedViews =>
       hasPermission(PermissionAction.view, PermissionTarget.savedView);
 
@@ -57,6 +61,8 @@ extension UserPermissionExtension on UserModel {
       hasPermission(PermissionAction.change, PermissionTarget.tag);
   bool get canEditStoragePaths =>
       hasPermission(PermissionAction.change, PermissionTarget.storagePath);
+  bool get canEditCustomFields =>
+      hasPermission(PermissionAction.change, PermissionTarget.customField);
   bool get canEditavedViews =>
       hasPermission(PermissionAction.change, PermissionTarget.savedView);
 
@@ -70,6 +76,8 @@ extension UserPermissionExtension on UserModel {
       hasPermission(PermissionAction.delete, PermissionTarget.tag);
   bool get canDeleteStoragePaths =>
       hasPermission(PermissionAction.delete, PermissionTarget.storagePath);
+  bool get canDeleteCustomFields =>
+      hasPermission(PermissionAction.delete, PermissionTarget.customField);
   bool get canDeleteSavedViews =>
       hasPermission(PermissionAction.delete, PermissionTarget.savedView);
 
@@ -83,6 +91,8 @@ extension UserPermissionExtension on UserModel {
       hasPermission(PermissionAction.add, PermissionTarget.tag);
   bool get canCreateStoragePaths =>
       hasPermission(PermissionAction.add, PermissionTarget.storagePath);
+  bool get canCreateCustomFields =>
+      hasPermission(PermissionAction.add, PermissionTarget.customField);
   bool get canCreateSavedViews =>
       hasPermission(PermissionAction.add, PermissionTarget.savedView);
 

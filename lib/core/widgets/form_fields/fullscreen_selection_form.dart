@@ -74,9 +74,7 @@ class _FullscreenSelectionFormState extends State<FullscreenSelectionForm> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         toolbarHeight: 72,
-        leading: BackButton(
-          color: theme.colorScheme.onSurface,
-        ),
+        leading: BackButton(color: theme.colorScheme.onSurface),
         title: TextFormField(
           focusNode: _focusNode,
           controller: _controller,
@@ -112,44 +110,42 @@ class _FullscreenSelectionFormState extends State<FullscreenSelectionForm> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            color: theme.colorScheme.outline,
-          ),
+          child: Divider(color: theme.colorScheme.outline),
         ),
       ),
-      body: Builder(builder: (context) {
-        if (widget.selectionCount == 0) {
-          return Align(
-            alignment: Alignment.topCenter,
-            child: Text(S.of(context)!.noItemsFound).padded(16),
-          );
-        }
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: widget.selectionCount,
-                itemBuilder: (BuildContext context, int index) {
-                  final highlight =
-                      AutocompleteHighlightedOption.of(context) == index;
-                  if (highlight) {
-                    SchedulerBinding.instance
-                        .addPostFrameCallback((Duration timeStamp) {
-                      Scrollable.ensureVisible(
-                        context,
-                        alignment: 0,
-                      );
-                    });
-                  }
-                  return widget.selectionBuilder(context, index);
-                },
+      body: Builder(
+        builder: (context) {
+          if (widget.selectionCount == 0) {
+            return Align(
+              alignment: Alignment.topCenter,
+              child: Text(S.of(context)!.noItemsFound).padded(16),
+            );
+          }
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: widget.selectionCount,
+                  itemBuilder: (BuildContext context, int index) {
+                    final highlight =
+                        AutocompleteHighlightedOption.of(context) == index;
+                    if (highlight) {
+                      SchedulerBinding.instance.addPostFrameCallback((
+                        Duration timeStamp,
+                      ) {
+                        Scrollable.ensureVisible(context, alignment: 0);
+                      });
+                    }
+                    return widget.selectionBuilder(context, index);
+                  },
+                ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        },
+      ),
     );
   }
 }

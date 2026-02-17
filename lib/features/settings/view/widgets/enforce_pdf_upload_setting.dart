@@ -7,16 +7,18 @@ class EnforcePdfUploadSetting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlobalSettingsBuilder(builder: (context, settings) {
-      return SwitchListTile(
-        title: Text(S.of(context)!.uploadScansAsPdf),
-        subtitle: Text(S.of(context)!.convertSinglePageScanToPdf),
-        value: settings.enforceSinglePagePdfUpload,
-        onChanged: (value) {
-          settings.enforceSinglePagePdfUpload = value;
-          settings.save();
-        },
-      );
-    });
+    return GlobalSettingsBuilder(
+      builder: (context, settings) {
+        return SwitchListTile(
+          title: Text(S.of(context)!.uploadScansAsPdf),
+          subtitle: Text(S.of(context)!.convertSinglePageScanToPdf),
+          value: settings.enforceSinglePagePdfUpload,
+          onChanged: (value) {
+            settings.enforceSinglePagePdfUpload = value;
+            settings.save();
+          },
+        );
+      },
+    );
   }
 }

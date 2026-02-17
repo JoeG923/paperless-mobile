@@ -5,20 +5,19 @@ import 'package:dio/dio.dart';
 class RetryOnConnectionChangeInterceptor extends Interceptor {
   final Dio dio;
 
-  RetryOnConnectionChangeInterceptor({
-    required this.dio,
-  });
+  RetryOnConnectionChangeInterceptor({required this.dio});
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (_shouldRetryOnHttpException(err)) {
       try {
-        handler.resolve(await DioHttpRequestRetrier(dio: dio)
-            .requestRetry(err.requestOptions)
-            // ignore: body_might_complete_normally_catch_error
-            .catchError((e) {
-          handler.next(err);
-        }));
+        handler.resolve(
+          await DioHttpRequestRetrier(dio: dio).requestRetry(err.requestOptions)
+          // ignore: body_might_complete_normally_catch_error
+          .catchError((e) {
+            handler.next(err);
+          }),
+        );
       } catch (e) {
         handler.next(err);
       }
@@ -41,9 +40,7 @@ class RetryOnConnectionChangeInterceptor extends Interceptor {
 class DioHttpRequestRetrier {
   final Dio dio;
 
-  DioHttpRequestRetrier({
-    required this.dio,
-  });
+  DioHttpRequestRetrier({required this.dio});
 
   Future<Response> requestRetry(RequestOptions requestOptions) async {
     return dio.request(

@@ -88,8 +88,9 @@ Future<void> performMigrations() async {
   }
   final migrationProcedure = _migrations[currentVersion]!;
   final performedMigrations = sp.getStringList("performed_migrations") ?? [];
-  final requiresMigrationForCurrentVersion =
-      !performedMigrations.contains(currentVersion);
+  final requiresMigrationForCurrentVersion = !performedMigrations.contains(
+    currentVersion,
+  );
   if (requiresMigrationForCurrentVersion) {
     logger.fd(
       "Applying migration scripts for version $currentVersion",
@@ -97,10 +98,10 @@ Future<void> performMigrations() async {
       methodName: "performMigrations",
     );
     await migrationProcedure();
-    await sp.setStringList(
-      'performed_migrations',
-      [...performedMigrations, currentVersion],
-    );
+    await sp.setStringList('performed_migrations', [
+      ...performedMigrations,
+      currentVersion,
+    ]);
   }
 }
 
@@ -127,84 +128,88 @@ Future<void> initializeDefaultParameters() async {
 }
 
 void main() async {
-  runZonedGuarded(() async {
-    final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-    final hiveDirectory = await getApplicationDocumentsDirectory();
-    final defaultLocale = defaultPreferredLocale.languageCode;
-    await initializeDefaultParameters();
-    await initHive(hiveDirectory, defaultLocale);
-    await performMigrations();
+  runZonedGuarded(
+    () async {
+      final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+      final hiveDirectory = await getApplicationDocumentsDirectory();
+      final defaultLocale = defaultPreferredLocale.languageCode;
+      await initializeDefaultParameters();
+      await initHive(hiveDirectory, defaultLocale);
+      await performMigrations();
 
-    final connectivityStatusService = ConnectivityStatusServiceImpl(
-      Connectivity(),
-    );
-    final localAuthService = LocalAuthenticationService(
-      LocalAuthentication(),
-    );
+      final connectivityStatusService = ConnectivityStatusServiceImpl(
+        Connectivity(),
+      );
+      final localAuthService = LocalAuthenticationService(
+        LocalAuthentication(),
+      );
 
-    HydratedBloc.storage = await HydratedStorage.build(
-      storageDirectory: HydratedStorageDirectory(
-          (await getApplicationDocumentsDirectory()).path),
-    );
+      HydratedBloc.storage = await HydratedStorage.build(
+        storageDirectory: HydratedStorageDirectory(
+          (await getApplicationDocumentsDirectory()).path,
+        ),
+      );
 
-    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+      FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-    final languageHeaderInterceptor = LanguageHeaderInterceptor(
-      () => Hive.globalSettingsBox.getValue()!.preferredLocaleSubtag,
-    );
-    // Manages security context, required for self signed client certificates
-    final SessionManager sessionManager = SessionManagerImpl([
-      PrettyDioLogger(
-        compact: true,
-        responseBody: false,
-        responseHeader: false,
-        request: false,
-        requestBody: false,
-        requestHeader: false,
-        logPrint: (object) => logger.t,
-      ),
-      languageHeaderInterceptor,
-    ]);
+      final languageHeaderInterceptor = LanguageHeaderInterceptor(
+        () => Hive.globalSettingsBox.getValue()!.preferredLocaleSubtag,
+      );
+      // Manages security context, required for self signed client certificates
+      final SessionManager sessionManager = SessionManagerImpl([
+        PrettyDioLogger(
+          compact: true,
+          responseBody: false,
+          responseHeader: false,
+          request: false,
+          requestBody: false,
+          requestHeader: false,
+          logPrint: (object) => logger.t,
+        ),
+        languageHeaderInterceptor,
+      ]);
 
-    final localNotificationService = LocalNotificationService();
-    await localNotificationService.initialize();
+      final localNotificationService = LocalNotificationService();
+      await localNotificationService.initialize();
 
-    final apiFactory = PaperlessApiFactoryImpl(sessionManager);
-    final authenticationCubit = AuthenticationCubit(
-      localAuthService,
-      apiFactory,
-      sessionManager,
-      connectivityStatusService,
-      localNotificationService,
-    );
-    runApp(
-      AppEntrypoint(
-        sessionManager: sessionManager,
-        apiFactory: apiFactory,
-        authenticationCubit: authenticationCubit,
-        connectivityStatusService: connectivityStatusService,
-        localNotificationService: localNotificationService,
-        localAuthService: localAuthService,
-      ),
-    );
-  }, (error, stackTrace) {
-    if (error is StateError &&
-        error.message.contains("Cannot emit new states")) {
-      return;
-    }
-    // Catches all unexpected/uncaught errors and prints them to the console.
-    final message = switch (error) {
-      PaperlessApiException e => e.details ?? error.toString(),
-      ServerMessageException e => e.message,
-      _ => null
-    };
-    logger.fe(
-      "An unexpected error occurred ${message != null ? "- $message" : ""}",
-      error: message == null ? error : null,
-      methodName: "main",
-      stackTrace: stackTrace,
-    );
-  });
+      final apiFactory = PaperlessApiFactoryImpl(sessionManager);
+      final authenticationCubit = AuthenticationCubit(
+        localAuthService,
+        apiFactory,
+        sessionManager,
+        connectivityStatusService,
+        localNotificationService,
+      );
+      runApp(
+        AppEntrypoint(
+          sessionManager: sessionManager,
+          apiFactory: apiFactory,
+          authenticationCubit: authenticationCubit,
+          connectivityStatusService: connectivityStatusService,
+          localNotificationService: localNotificationService,
+          localAuthService: localAuthService,
+        ),
+      );
+    },
+    (error, stackTrace) {
+      if (error is StateError &&
+          error.message.contains("Cannot emit new states")) {
+        return;
+      }
+      // Catches all unexpected/uncaught errors and prints them to the console.
+      final message = switch (error) {
+        PaperlessApiException e => e.details ?? error.toString(),
+        ServerMessageException e => e.message,
+        _ => null,
+      };
+      logger.fe(
+        "An unexpected error occurred ${message != null ? "- $message" : ""}",
+        error: message == null ? error : null,
+        methodName: "main",
+        stackTrace: stackTrace,
+      );
+    },
+  );
 }
 
 class AppEntrypoint extends StatelessWidget {
@@ -239,9 +244,7 @@ class AppEntrypoint extends StatelessWidget {
         Provider.value(value: localNotificationService),
         Provider.value(value: localAuthService),
       ],
-      child: GoRouterShell(
-        apiFactory: apiFactory,
-      ),
+      child: GoRouterShell(apiFactory: apiFactory),
     );
   }
 }
@@ -249,10 +252,7 @@ class AppEntrypoint extends StatelessWidget {
 class GoRouterShell extends StatefulWidget {
   final PaperlessApiFactory apiFactory;
 
-  const GoRouterShell({
-    super.key,
-    required this.apiFactory,
-  });
+  const GoRouterShell({super.key, required this.apiFactory});
 
   @override
   State<GoRouterShell> createState() => _GoRouterShellState();
@@ -277,13 +277,15 @@ class _GoRouterShellState extends State<GoRouterShell> {
     final List<DisplayMode> supported = await FlutterDisplayMode.supported;
     final DisplayMode active = await FlutterDisplayMode.active;
 
-    final List<DisplayMode> sameResolution = supported
-        .where((m) => m.width == active.width && m.height == active.height)
-        .toList()
-      ..sort((a, b) => b.refreshRate.compareTo(a.refreshRate));
+    final List<DisplayMode> sameResolution =
+        supported
+            .where((m) => m.width == active.width && m.height == active.height)
+            .toList()
+          ..sort((a, b) => b.refreshRate.compareTo(a.refreshRate));
 
-    final DisplayMode mostOptimalMode =
-        sameResolution.isNotEmpty ? sameResolution.first : active;
+    final DisplayMode mostOptimalMode = sameResolution.isNotEmpty
+        ? sameResolution.first
+        : active;
     logger.fi('Setting refresh rate to ${mostOptimalMode.refreshRate}');
 
     await FlutterDisplayMode.setPreferredMode(mostOptimalMode);
@@ -302,8 +304,8 @@ class _GoRouterShellState extends State<GoRouterShell> {
                 listener: (context, state) {
                   switch (state) {
                     case UnauthenticatedState(
-                        redirectToAccountSelection: var shouldRedirect
-                      ):
+                      redirectToAccountSelection: var shouldRedirect,
+                    ):
                       if (shouldRedirect) {
                         const LoginToExistingAccountRoute().go(context);
                       } else {
@@ -323,8 +325,9 @@ class _GoRouterShellState extends State<GoRouterShell> {
                       const LandingRoute().go(context);
                       break;
                     case AuthenticatingState state:
-                      AuthenticatingRoute(state.currentStage.name)
-                          .push(context);
+                      AuthenticatingRoute(
+                        state.currentStage.name,
+                      ).push(context);
                       break;
                     case LoggingOutState():
                       const LoggingOutRoute().go(context);
@@ -366,8 +369,9 @@ class _GoRouterShellState extends State<GoRouterShell> {
                 return AnnotatedRegion<SystemUiOverlayStyle>(
                   value: buildOverlayStyle(
                     Theme.of(context),
-                    systemNavigationBarColor:
-                        Theme.of(context).colorScheme.surface,
+                    systemNavigationBarColor: Theme.of(
+                      context,
+                    ).colorScheme.surface,
                   ),
                   child: child!,
                 );
@@ -405,16 +409,19 @@ class _GoRouterShellState extends State<GoRouterShell> {
                 }
 
                 final exactMatch = supportedLocales
-                    .where((element) =>
-                        element.languageCode == locale.languageCode &&
-                        element.countryCode == locale.countryCode)
+                    .where(
+                      (element) =>
+                          element.languageCode == locale.languageCode &&
+                          element.countryCode == locale.countryCode,
+                    )
                     .toList();
                 if (exactMatch.isNotEmpty) {
                   return exactMatch.first;
                 }
                 final superLanguageMatch = supportedLocales
-                    .where((element) =>
-                        element.languageCode == locale.languageCode)
+                    .where(
+                      (element) => element.languageCode == locale.languageCode,
+                    )
                     .toList();
                 if (superLanguageMatch.isNotEmpty) {
                   return superLanguageMatch.first;

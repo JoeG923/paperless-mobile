@@ -50,12 +50,8 @@ class _FormBuilderRelativeDateRangePickerState
               SizedBox(
                 width: 80,
                 child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: S.of(context)!.amount,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
+                  decoration: InputDecoration(labelText: S.of(context)!.amount),
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   // validator: (value) { //TODO: Check if this is required
                   // do numeric validation
                   // },
@@ -81,10 +77,7 @@ class _FormBuilderRelativeDateRangePickerState
                         (unit) => DropdownMenuItem(
                           value: unit,
                           child: Text(
-                            _dateRangeUnitToLocalizedString(
-                              unit,
-                              _offset,
-                            ),
+                            _dateRangeUnitToLocalizedString(unit, _offset),
                           ),
                         ),
                       )

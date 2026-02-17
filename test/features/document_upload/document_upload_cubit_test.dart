@@ -34,6 +34,7 @@ class FailingDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -52,6 +53,7 @@ class FailingDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -159,6 +161,7 @@ class SlowDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -178,6 +181,7 @@ class SlowDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -282,6 +286,7 @@ class CancellableDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -304,6 +309,7 @@ class CancellableDocumentsApi implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -397,6 +403,50 @@ class CancellableDocumentsApi implements PaperlessDocumentsApi {
     required String text,
   }) {
     throw UnimplementedError();
+  }
+}
+
+class RecordingDocumentsApi extends FailingDocumentsApi {
+  UploadCustomFields? lastCustomFields;
+
+  @override
+  Future<String?> create(
+    Uint8List documentBytes, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    lastCustomFields = customFields;
+    return 'task-1';
+  }
+
+  @override
+  Future<String?> createFromFile(
+    String filePath, {
+    required String filename,
+    required String title,
+    DateTime? createdAt,
+    int? documentType,
+    int? correspondent,
+    int? storagePath,
+    Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
+    int? asn,
+    void Function(double progress)? onProgressChanged,
+    Duration? timeout,
+    CancelToken? cancelToken,
+  }) async {
+    lastCustomFields = customFields;
+    return 'task-1';
   }
 }
 
@@ -499,4 +549,24 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('DocumentUploadCubit forwards customFields to upload API', () async {
+    final api = RecordingDocumentsApi();
+    final cubit = DocumentUploadCubit(
+      api,
+      PendingTasksNotifier(FakeTasksApi()),
+    );
+    final customFields = UploadCustomFields.values({99: 'value'});
+
+    final outcome = await cubit.upload(
+      Uint8List(4),
+      filename: 'scan.pdf',
+      title: 'Scan',
+      customFields: customFields,
+    );
+
+    expect(outcome.success, isTrue);
+    expect(api.lastCustomFields, same(customFields));
+    await cubit.close();
+  });
 }

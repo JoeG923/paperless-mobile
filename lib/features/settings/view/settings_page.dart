@@ -27,9 +27,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context)!.settings),
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.settings)),
       body: ListView(
         children: [
           _buildSectionHeader(context, S.of(context)!.appearance),
@@ -47,7 +45,7 @@ class SettingsPage extends StatelessWidget {
           const SkipDocumentPreprationOnShareSetting(),
           _buildSectionHeader(context, S.of(context)!.storage),
           const ClearCacheSetting(),
-          _buildSectionHeader(context, 'Accessibility'),
+          _buildSectionHeader(context, S.of(context)!.accessibility),
           const DisableAnimationsSetting(),
           _buildSectionHeader(context, S.of(context)!.misc),
           const AppLogsTile(),
@@ -72,10 +70,9 @@ class SettingsPage extends StatelessWidget {
                 if (snapshot.hasError) {
                   return Text(
                     S.of(context)!.errorRetrievingServerVersion,
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.error),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     textAlign: TextAlign.center,
                   );
                 }
@@ -94,8 +91,8 @@ class SettingsPage extends StatelessWidget {
                       '${S.of(context)!.paperlessServerVersion}'
                       ' ${serverData.version} (API v${serverData.apiVersion})',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     if (serverData.isUpdateAvailable) ...[
@@ -107,9 +104,7 @@ class SettingsPage extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: serverData.latestVersion,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall!
+                              style: Theme.of(context).textTheme.labelSmall!
                                   .copyWith(
                                     decoration: TextDecoration.underline,
                                     color: CupertinoColors.link,
@@ -126,7 +121,7 @@ class SettingsPage extends StatelessWidget {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                    ]
+                    ],
                   ],
                 );
               },
@@ -142,10 +137,9 @@ class SettingsPage extends StatelessWidget {
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .labelLarge
-            ?.copyWith(color: Theme.of(context).colorScheme.primary),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

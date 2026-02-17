@@ -1,5 +1,5 @@
-import 'dart:developer' as dev;
 import 'dart:io';
+import 'dart:developer' as dev;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -25,6 +25,7 @@ import 'package:paperless_mobile/features/document_scan/scan_pdf_assembler.dart'
 import 'package:paperless_mobile/features/document_scan/view/widgets/export_scans_dialog.dart';
 import 'package:paperless_mobile/features/document_search/view/sliver_search_bar.dart';
 import 'package:paperless_mobile/features/document_upload/model/document_upload_result.dart';
+import 'package:paperless_mobile/features/document_upload/util/upload_task_tracker.dart';
 import 'package:paperless_mobile/features/documents/view/pages/document_view.dart';
 import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
 import 'package:paperless_mobile/features/settings/view/widgets/global_settings_builder.dart';
@@ -38,8 +39,188 @@ import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
+typedef ScanAssembler =
+    Future<ScannedAssembledFile> Function(List<File> files, {bool forcePdf});
+typedef ExportFilenameProvider = Future<String?> Function(BuildContext context);
+typedef DocumentUploadRouteProvider =
+    Future<DocumentUploadResult?> Function(
+      BuildContext context,
+      ScannedAssembledFile file,
+    );
+typedef PreviewRouteProvider =
+    Future<void> Function(BuildContext context, List<File> scans);
+typedef PermissionRequestProvider =
+    Future<bool> Function(Permission permission);
+typedef DocumentScannerFactory = Future<DocumentScanner> Function();
+typedef DocumentScannerScanProvider =
+    Future<DocumentScanningResult> Function(DocumentScanner scanner);
+typedef DocumentScannerCloseProvider =
+    Future<void> Function(DocumentScanner scanner);
+typedef FilePickerProvider =
+    Future<String?> Function({required List<String> allowedExtensions});
+typedef FilesystemUploadRouteProvider =
+    Future<DocumentUploadResult?> Function(
+      BuildContext context,
+      Uint8List fileBytes,
+      String filename,
+      String title,
+      String fileExtension,
+    );
+typedef PlatformIsAndroidProvider = bool Function();
+typedef TemporaryScanFileAllocator =
+    Future<File> Function({required String extension, required bool create});
+typedef ScannedFileCopier =
+    Future<void> Function(String sourcePath, String destinationPath);
+
+bool isSupportedUploadExtension(String extension) {
+  return supportedFileExtensions.contains(extension.toLowerCase());
+}
+
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
+
+  @visibleForTesting
+  static ScanAssembler scanAssembler = assembleScannedFiles;
+  @visibleForTesting
+  static PreviewRouteProvider previewRouteProvider =
+      _defaultPreviewRouteProvider;
+  @visibleForTesting
+  static PermissionRequestProvider permissionRequestProvider =
+      _defaultPermissionRequestProvider;
+  @visibleForTesting
+  static DocumentScannerFactory documentScannerFactory =
+      _defaultDocumentScannerFactory;
+  @visibleForTesting
+  static DocumentScannerScanProvider documentScannerScanProvider =
+      _defaultDocumentScannerScanProvider;
+  @visibleForTesting
+  static DocumentScannerCloseProvider documentScannerCloseProvider =
+      _defaultDocumentScannerCloseProvider;
+  @visibleForTesting
+  static PlatformIsAndroidProvider platformIsAndroidProvider =
+      _defaultPlatformIsAndroidProvider;
+  @visibleForTesting
+  static TemporaryScanFileAllocator temporaryScanFileAllocator =
+      _defaultTemporaryScanFileAllocator;
+  @visibleForTesting
+  static ScannedFileCopier scannedFileCopier = _defaultScannedFileCopier;
+  @visibleForTesting
+  static FilePickerProvider filePickerProvider = _defaultFilePickerProvider;
+  @visibleForTesting
+  static FilesystemUploadRouteProvider filesystemUploadRouteProvider =
+      _defaultFilesystemUploadRouteProvider;
+  @visibleForTesting
+  static ExportFilenameProvider exportFilenameProvider =
+      _defaultExportFilenameProvider;
+  @visibleForTesting
+  static DocumentUploadRouteProvider documentUploadRouteProvider =
+      _defaultDocumentUploadRouteProvider;
+
+  static Future<DocumentUploadResult?> _defaultDocumentUploadRouteProvider(
+    BuildContext context,
+    ScannedAssembledFile file,
+  ) {
+    return DocumentUploadRoute(
+      $extra: file.bytes,
+      fileExtension: file.extension,
+    ).push<DocumentUploadResult>(context);
+  }
+
+  static Future<String?> _defaultExportFilenameProvider(BuildContext context) {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => const ExportScansDialog(),
+    );
+  }
+
+  static Future<void> _defaultPreviewRouteProvider(
+    BuildContext context,
+    List<File> scans,
+  ) async {
+    final file = await ScannerPage.scanAssembler(scans, forcePdf: true);
+    if (!context.mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => DocumentView(bytes: Future.value(file.bytes)),
+      ),
+    );
+  }
+
+  static Future<bool> _defaultPermissionRequestProvider(Permission permission) {
+    return askForPermission(permission);
+  }
+
+  static Future<DocumentScanner> _defaultDocumentScannerFactory() async {
+    return DocumentScanner(
+      options: DocumentScannerOptions(
+        documentFormat: DocumentFormat.jpeg,
+        mode: ScannerMode.full,
+        pageLimit: 30,
+        isGalleryImport: true,
+      ),
+    );
+  }
+
+  static Future<DocumentScanningResult> _defaultDocumentScannerScanProvider(
+    DocumentScanner scanner,
+  ) {
+    return scanner.scanDocument();
+  }
+
+  static Future<void> _defaultDocumentScannerCloseProvider(
+    DocumentScanner scanner,
+  ) {
+    return scanner.close();
+  }
+
+  static Future<String?> _defaultFilePickerProvider({
+    required List<String> allowedExtensions,
+  }) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: allowedExtensions,
+      withData: true,
+      allowMultiple: false,
+    );
+    return result?.files.single.path;
+  }
+
+  static Future<DocumentUploadResult?> _defaultFilesystemUploadRouteProvider(
+    BuildContext context,
+    Uint8List fileBytes,
+    String filename,
+    String title,
+    String fileExtension,
+  ) {
+    return DocumentUploadRoute(
+      $extra: fileBytes,
+      filename: filename,
+      title: title,
+      fileExtension: fileExtension,
+    ).push<DocumentUploadResult>(context);
+  }
+
+  static bool _defaultPlatformIsAndroidProvider() {
+    return Platform.isAndroid;
+  }
+
+  static Future<File> _defaultTemporaryScanFileAllocator({
+    required String extension,
+    required bool create,
+  }) {
+    return FileService.instance.allocateTemporaryFile(
+      PaperlessDirectoryType.scans,
+      extension: extension,
+      create: create,
+    );
+  }
+
+  static Future<void> _defaultScannedFileCopier(
+    String sourcePath,
+    String destinationPath,
+  ) async {
+    await File(sourcePath).copy(destinationPath);
+  }
 
   @override
   State<ScannerPage> createState() => _ScannerPageState();
@@ -82,7 +263,9 @@ class _ScannerPageState extends State<ScannerPage>
             builder: (context, state) {
               return switch (state.status) {
                 LoadingStatus.initial => _buildEmptyState(),
-                LoadingStatus.loading => Center(child: Text("Restoring...")),
+                LoadingStatus.loading => Center(
+                  child: Text(S.of(context)!.restoringScans),
+                ),
                 LoadingStatus.loaded => ScannerGrid(
                   scans: state.scans,
                   searchBarHandle: searchBarHandle,
@@ -126,21 +309,13 @@ class _ScannerPageState extends State<ScannerPage>
                 children: [
                   SizedBox(width: 12),
                   TextButton.icon(
+                    key: const Key('scanner_preview_button'),
                     label: Text(S.of(context)!.previewScan),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
                     ),
                     onPressed: state.scans.isNotEmpty
-                        ? () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => DocumentView(
-                                bytes: _assembleFileBytes(
-                                  state.scans,
-                                  forcePdf: true,
-                                ).then((file) => file.bytes),
-                              ),
-                            ),
-                          )
+                        ? () => _onPreviewScans(context, state.scans)
                         : null,
                     icon: const Icon(Icons.visibility_outlined),
                   ),
@@ -153,6 +328,7 @@ class _ScannerPageState extends State<ScannerPage>
                       return ConnectivityAwareActionWrapper(
                         offlineBuilder: (context, child) {
                           return TextButton.icon(
+                            key: const Key('scanner_quick_upload_button'),
                             label: Text(S.of(context)!.quickUpload),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
@@ -163,6 +339,7 @@ class _ScannerPageState extends State<ScannerPage>
                         },
                         disabled: state.scans.isEmpty || _isQuickUploading,
                         child: TextButton.icon(
+                          key: const Key('scanner_quick_upload_button'),
                           label: Text(S.of(context)!.quickUpload),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
@@ -197,6 +374,7 @@ class _ScannerPageState extends State<ScannerPage>
                   ConnectivityAwareActionWrapper(
                     offlineBuilder: (context, child) {
                       return TextButton.icon(
+                        key: const Key('scanner_upload_button'),
                         label: Text(S.of(context)!.upload),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
@@ -207,6 +385,7 @@ class _ScannerPageState extends State<ScannerPage>
                     },
                     disabled: state.scans.isEmpty,
                     child: TextButton.icon(
+                      key: const Key('scanner_upload_button'),
                       label: Text(S.of(context)!.upload),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
@@ -218,6 +397,7 @@ class _ScannerPageState extends State<ScannerPage>
                   ),
                   SizedBox(width: 8),
                   TextButton.icon(
+                    key: const Key('scanner_export_button'),
                     label: Text(S.of(context)!.export),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
@@ -236,18 +416,15 @@ class _ScannerPageState extends State<ScannerPage>
   }
 
   void _onSaveToFile() async {
-    final fileName = await showDialog<String>(
-      context: context,
-      builder: (context) => const ExportScansDialog(),
-    );
+    final fileName = await ScannerPage.exportFilenameProvider(context);
     if (fileName != null) {
       if (!mounted) return;
       final cubit = context.read<DocumentScannerCubit>();
-      final file = await _assembleFileBytes(
-        forcePdf: true,
-        context.read<DocumentScannerCubit>().state.scans,
-      );
       try {
+        final file = await ScannerPage.scanAssembler(
+          context.read<DocumentScannerCubit>().state.scans,
+          forcePdf: true,
+        );
         final globalSettings = Hive.box<GlobalSettings>(
           HiveBoxes.globalSettings,
         ).getValue()!;
@@ -257,9 +434,9 @@ class _ScannerPageState extends State<ScannerPage>
             if (!mounted) return;
             showSnackBar(
               context,
-              "Please grant Paperless Mobile permissions to access your filesystem.",
+              S.of(context)!.grantFilesystemAccessPermission,
               action: SnackBarActionConfig(
-                label: "OK",
+                label: S.of(context)!.ok,
                 onPressed: openAppSettings,
               ),
             );
@@ -271,35 +448,37 @@ class _ScannerPageState extends State<ScannerPage>
           "$fileName.pdf",
           globalSettings.preferredLocaleSubtag,
         );
-      } catch (error) {
+      } catch (error, stackTrace) {
         if (!mounted) return;
-        showGenericError(context, error);
+        showGenericError(context, error, stackTrace);
       }
     }
   }
 
+  void _onPreviewScans(BuildContext context, List<File> scans) async {
+    try {
+      await ScannerPage.previewRouteProvider(context, scans);
+    } catch (error, stackTrace) {
+      if (!context.mounted) return;
+      showGenericError(context, error, stackTrace);
+    }
+  }
+
   void _openDocumentScanner(BuildContext context) async {
-    if (!Platform.isAndroid) {
-      showSnackBar(
-        context,
-        "Document scanning is currently available on Android only.",
-      );
+    if (!ScannerPage.platformIsAndroidProvider()) {
+      showSnackBar(context, S.of(context)!.documentScanningAndroidOnly);
       return;
     }
-    final hasCameraPermission = await askForPermission(Permission.camera);
+    final scannerCubit = context.read<DocumentScannerCubit>();
+    final hasCameraPermission = await ScannerPage.permissionRequestProvider(
+      Permission.camera,
+    );
     if (!hasCameraPermission) {
       return;
     }
-    final scanner = DocumentScanner(
-      options: DocumentScannerOptions(
-        documentFormat: DocumentFormat.jpeg,
-        mode: ScannerMode.full,
-        pageLimit: 30,
-        isGalleryImport: true,
-      ),
-    );
+    final scanner = await ScannerPage.documentScannerFactory();
     try {
-      final result = await scanner.scanDocument();
+      final result = await ScannerPage.documentScannerScanProvider(scanner);
       final images = result.images;
       if (images.isEmpty) {
         if (kDebugMode) {
@@ -311,17 +490,15 @@ class _ScannerPageState extends State<ScannerPage>
         final extension = p.extension(imagePath).isNotEmpty
             ? p.extension(imagePath)
             : '.jpg';
-        final file = await FileService.instance.allocateTemporaryFile(
-          PaperlessDirectoryType.scans,
+        final file = await ScannerPage.temporaryScanFileAllocator(
           extension: extension.replaceFirst('.', ''),
-          create: true,
+          create: false,
         );
-        await File(imagePath).copy(file.path);
+        await ScannerPage.scannedFileCopier(imagePath, file.path);
         if (kDebugMode) {
           dev.log('[ScannerPage] Saved scan to temporary file: ${file.path}');
         }
-        if (!context.mounted) return;
-        context.read<DocumentScannerCubit>().addScan(file);
+        scannerCubit.addScan(file);
       }
     } on PlatformException catch (error, stackTrace) {
       final isCancelled =
@@ -357,7 +534,19 @@ class _ScannerPageState extends State<ScannerPage>
       if (!context.mounted) return;
       showGenericError(context, error);
     } finally {
-      await scanner.close();
+      try {
+        await ScannerPage.documentScannerCloseProvider(scanner);
+      } catch (error, stackTrace) {
+        if (kDebugMode) {
+          dev.log(
+            '[ScannerPage] Failed to close document scanner.',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+        if (!context.mounted) return;
+        showGenericError(context, error, stackTrace);
+      }
     }
   }
 
@@ -387,19 +576,19 @@ class _ScannerPageState extends State<ScannerPage>
     final tasksNotifier = context.read<PendingTasksNotifier>();
     final preset = UploadPreset.fromSettings(settings);
     final now = DateTime.now();
-    final assembled = await _assembleFileBytes(
-      scans,
-      forcePdf: settings.enforceSinglePagePdfUpload,
-    );
-    if (!mounted) return;
-    final title = preset.buildTitle(now);
-    final filename = _padWithExtension(
-      formatFilename(title),
-      assembled.extension,
-    );
-    final uploadService = DocumentUploadService(documentsApi, tasksNotifier);
 
     try {
+      final assembled = await assembleScannedFiles(
+        scans,
+        forcePdf: settings.enforceSinglePagePdfUpload,
+      );
+      if (!mounted) return;
+      final title = preset.buildTitle(now);
+      final filename = _padWithExtension(
+        formatFilename(title),
+        assembled.extension,
+      );
+      final uploadService = DocumentUploadService(documentsApi, tasksNotifier);
       setState(() => _isQuickUploading = true);
       await uploadService.upload(
         assembled.bytes,
@@ -420,6 +609,9 @@ class _ScannerPageState extends State<ScannerPage>
     } on PaperlessApiException catch (error, stackTrace) {
       if (!context.mounted) return;
       showErrorMessage(context, error, stackTrace);
+    } catch (error, stackTrace) {
+      if (!context.mounted) return;
+      showGenericError(context, error, stackTrace);
     } finally {
       if (mounted) {
         setState(() => _isQuickUploading = false);
@@ -432,24 +624,33 @@ class _ScannerPageState extends State<ScannerPage>
   }
 
   void _onPrepareDocumentUpload(BuildContext context, List<File> scans) async {
-    final file = await _assembleFileBytes(
-      scans,
-      forcePdf: Hive.box<GlobalSettings>(
-        HiveBoxes.globalSettings,
-      ).getValue()!.enforceSinglePagePdfUpload,
-    );
-    if (!context.mounted) return;
-    final uploadResult = await DocumentUploadRoute(
-      $extra: file.bytes,
-      fileExtension: file.extension,
-    ).push<DocumentUploadResult>(context);
-    if (uploadResult?.success ?? false) {
+    try {
+      final file = await ScannerPage.scanAssembler(
+        scans,
+        forcePdf: Hive.box<GlobalSettings>(
+          HiveBoxes.globalSettings,
+        ).getValue()!.enforceSinglePagePdfUpload,
+      );
       if (!context.mounted) return;
-      // For paperless version older than 1.11.3, task id will always be null!
-      context.read<DocumentScannerCubit>().reset();
-      // context
-      //     .read<PendingTasksNotifier>()
-      //     .listenToTaskChanges(uploadResult!.taskId!);
+      final uploadResult = await ScannerPage.documentUploadRouteProvider(
+        context,
+        file,
+      );
+      if (uploadResult?.success ?? false) {
+        if (!context.mounted) return;
+        // For paperless version older than 1.11.3, task id will always be null!
+        trackUploadTaskFromResult(
+          trackTaskId: context.read<PendingTasksNotifier>().listenToTaskChanges,
+          result: uploadResult,
+        );
+        context.read<DocumentScannerCubit>().reset();
+      }
+    } on PaperlessApiException catch (error, stackTrace) {
+      if (!context.mounted) return;
+      showErrorMessage(context, error, stackTrace);
+    } catch (error, stackTrace) {
+      if (!context.mounted) return;
+      showGenericError(context, error, stackTrace);
     }
   }
 
@@ -474,10 +675,7 @@ class _ScannerPageState extends State<ScannerPage>
                 onPressed: null,
                 child: Text(S.of(context)!.uploadADocumentFromThisDevice),
               ),
-              child: TextButton(
-                onPressed: _onUploadFromFilesystem,
-                child: Text(S.of(context)!.uploadADocumentFromThisDevice),
-              ),
+              child: _filesystemUploadButtonFromEmptyState(context),
             ),
           ],
         ),
@@ -494,20 +692,20 @@ class _ScannerPageState extends State<ScannerPage>
   }
 
   void _onUploadFromFilesystem() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: supportedFileExtensions
-          .map((e) => e.replaceAll(".", ""))
-          .toList(),
-      withData: true,
-      allowMultiple: false,
-    );
-    if (result?.files.single.path != null) {
-      final path = result!.files.single.path!;
+    try {
+      final pickedPath = await ScannerPage.filePickerProvider(
+        allowedExtensions: supportedFileExtensions
+            .map((e) => e.replaceAll(".", ""))
+            .toList(),
+      );
+      if (pickedPath == null) {
+        return;
+      }
+      final path = pickedPath;
       final extension = p.extension(path);
       final filename = p.basenameWithoutExtension(path);
       File file = File(path);
-      if (!supportedFileExtensions.contains(extension.toLowerCase())) {
+      if (!isSupportedUploadExtension(extension)) {
         if (!mounted) return;
         showErrorMessage(
           context,
@@ -516,44 +714,31 @@ class _ScannerPageState extends State<ScannerPage>
         return;
       }
       if (!mounted) return;
-      DocumentUploadRoute(
-        $extra: file.readAsBytesSync(),
-        filename: filename,
-        title: filename,
-        fileExtension: extension,
-      ).push<DocumentUploadResult>(context);
-      // if (uploadResult.success && uploadResult.taskId != null) {
-      //   context
-      //       .read<PendingTasksNotifier>()
-      //       .listenToTaskChanges(uploadResult.taskId!);
-      // }
+      final uploadResult = await ScannerPage.filesystemUploadRouteProvider(
+        context,
+        file.readAsBytesSync(),
+        filename,
+        filename,
+        extension,
+      );
+      if (!mounted || !(uploadResult?.success ?? false)) {
+        return;
+      }
+      trackUploadTaskFromResult(
+        trackTaskId: context.read<PendingTasksNotifier>().listenToTaskChanges,
+        result: uploadResult,
+      );
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      showGenericError(context, error, stackTrace);
     }
   }
 
-  ///
-  /// Returns the file bytes of either a single file or multiple images concatenated into a single pdf.
-  ///
-  Future<AssembledFile> _assembleFileBytes(
-    final List<File> files, {
-    bool forcePdf = false,
-  }) async {
-    assert(files.isNotEmpty);
-    if (files.length == 1 && !forcePdf) {
-      final ext = p.extension(files.first.path);
-      return AssembledFile(ext, await files.first.readAsBytes());
-    }
-    final imageBytes = <Uint8List>[];
-    for (final file in files) {
-      imageBytes.add(await file.readAsBytes());
-    }
-    final pdfBytes = await buildPdfBytesFromImages(imageBytes);
-    return AssembledFile('.pdf', pdfBytes);
+  Widget _filesystemUploadButtonFromEmptyState(BuildContext context) {
+    return TextButton(
+      key: const Key('scanner_filesystem_upload_button'),
+      onPressed: _onUploadFromFilesystem,
+      child: Text(S.of(context)!.uploadADocumentFromThisDevice),
+    );
   }
-}
-
-class AssembledFile {
-  final String extension;
-  final Uint8List bytes;
-
-  AssembledFile(this.extension, this.bytes);
 }

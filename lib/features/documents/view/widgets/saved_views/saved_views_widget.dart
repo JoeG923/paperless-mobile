@@ -57,7 +57,8 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
             }
           },
         );
-        final selectedViewHasChanged = selectedView != null &&
+        final selectedViewHasChanged =
+            selectedView != null &&
             selectedView.toDocumentFilter() != widget.filter;
         return PageStorage(
           bucket: PageStorageBucket(),
@@ -89,13 +90,12 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
                       if (selectedView != null)
                         Text(
                           selectedView.name,
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withAlpha(128),
-                                  ),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(128),
+                              ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -114,7 +114,7 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
                     },
                     child: Text(S.of(context)!.saveChanges),
                   ),
-                )
+                ),
               ],
             ),
             leading: Icon(
@@ -145,17 +145,18 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
                               ),
                               SliverList.separated(
                                 itemBuilder: (context, index) {
-                                  final view =
-                                      value.savedViews.values.elementAt(index);
+                                  final view = value.savedViews.values
+                                      .elementAt(index);
                                   final isSelected =
                                       (widget.filter.selectedView ?? -1) ==
-                                          view.id;
+                                      view.id;
                                   return ConnectivityAwareActionWrapper(
                                     child: SavedViewChip(
                                       view: view,
                                       onViewSelected: widget.onViewSelected,
                                       selected: isSelected,
-                                      hasChanged: isSelected &&
+                                      hasChanged:
+                                          isSelected &&
                                           view.toDocumentFilter() !=
                                               widget.filter,
                                       onUpdateView: widget.onUpdateView,
@@ -188,8 +189,9 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
                   child: ConnectivityAwareActionWrapper(
                     child: TextButton.icon(
                       onPressed: () {
-                        CreateSavedViewRoute($extra: widget.filter)
-                            .push(context);
+                        CreateSavedViewRoute(
+                          $extra: widget.filter,
+                        ).push(context);
                       },
                       icon: const Icon(Icons.add),
                       label: Text(S.of(context)!.newView),
@@ -214,9 +216,7 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
           child: CustomScrollView(
             scrollDirection: Axis.horizontal,
             slivers: [
-              const SliverToBoxAdapter(
-                child: SizedBox(width: 12),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(width: 12)),
               SliverList.separated(
                 itemBuilder: (context, index) {
                   return Container(
@@ -229,9 +229,7 @@ class _SavedViewsWidgetState extends State<SavedViewsWidget>
                 },
                 separatorBuilder: (context, index) => const SizedBox(width: 8),
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(width: 12),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(width: 12)),
             ],
           ),
         ),

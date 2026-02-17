@@ -50,19 +50,11 @@ class RelativeDateRangeQuery extends DateRangeQuery {
 
   @override
   Map<String, String> toQueryParameter(DateRangeQueryField field) {
-    return {
-      'query': '${field.name}:[-$offset ${unit.name} to now]',
-    };
+    return {'query': '${field.name}:[-$offset ${unit.name} to now]'};
   }
 
-  RelativeDateRangeQuery copyWith({
-    int? offset,
-    DateRangeUnit? unit,
-  }) {
-    return RelativeDateRangeQuery(
-      offset ?? this.offset,
-      unit ?? this.unit,
-    );
+  RelativeDateRangeQuery copyWith({int? offset, DateRangeUnit? unit}) {
+    return RelativeDateRangeQuery(offset ?? this.offset, unit ?? this.unit);
   }
 
   /// Returns the datetime when subtracting the offset given the unit from now.
@@ -107,21 +99,22 @@ class AbsoluteDateRangeQuery extends DateRangeQuery {
 
     // Add/subtract one day in the following because paperless uses gt/lt not gte/lte
     if (after != null) {
-      params.putIfAbsent('${field.name}__date__gt',
-          () => apiDateFormat.format(after!.subtract(const Duration(days: 1))));
+      params.putIfAbsent(
+        '${field.name}__date__gt',
+        () => apiDateFormat.format(after!.subtract(const Duration(days: 1))),
+      );
     }
 
     if (before != null) {
-      params.putIfAbsent('${field.name}__date__lt',
-          () => apiDateFormat.format(before!.add(const Duration(days: 1))));
+      params.putIfAbsent(
+        '${field.name}__date__lt',
+        () => apiDateFormat.format(before!.add(const Duration(days: 1))),
+      );
     }
     return params;
   }
 
-  AbsoluteDateRangeQuery copyWith({
-    DateTime? before,
-    DateTime? after,
-  }) {
+  AbsoluteDateRangeQuery copyWith({DateTime? before, DateTime? after}) {
     return AbsoluteDateRangeQuery(
       before: before ?? this.before,
       after: after ?? this.after,

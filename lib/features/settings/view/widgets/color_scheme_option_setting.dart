@@ -24,41 +24,44 @@ class ColorSchemeOptionSetting extends StatelessWidget {
               settings.preferredColorSchemeOption,
             ),
           ),
-          onTap: () => showDialog<ColorSchemeOption>(
-            context: context,
-            builder: (_) => RadioSettingsDialog<ColorSchemeOption>(
-              titleText: S.of(context)!.colors,
-              descriptionText: S.of(context)!.colorSchemeHint,
-              options: [
-                RadioOption(
-                  value: ColorSchemeOption.classic,
-                  label: translateColorSchemeOption(
-                      context, ColorSchemeOption.classic),
+          onTap: () =>
+              showDialog<ColorSchemeOption>(
+                context: context,
+                builder: (_) => RadioSettingsDialog<ColorSchemeOption>(
+                  titleText: S.of(context)!.colors,
+                  descriptionText: S.of(context)!.colorSchemeHint,
+                  options: [
+                    RadioOption(
+                      value: ColorSchemeOption.classic,
+                      label: translateColorSchemeOption(
+                        context,
+                        ColorSchemeOption.classic,
+                      ),
+                    ),
+                    RadioOption(
+                      value: ColorSchemeOption.dynamic,
+                      label: translateColorSchemeOption(
+                        context,
+                        ColorSchemeOption.dynamic,
+                      ),
+                    ),
+                  ],
+                  footer: _isBelowAndroid12()
+                      ? HintCard(
+                          hintText: S
+                              .of(context)!
+                              .colorSchemeNotSupportedWarning,
+                          hintIcon: Icons.warning_amber,
+                        )
+                      : null,
+                  initialValue: settings.preferredColorSchemeOption,
                 ),
-                RadioOption(
-                  value: ColorSchemeOption.dynamic,
-                  label: translateColorSchemeOption(
-                    context,
-                    ColorSchemeOption.dynamic,
-                  ),
-                ),
-              ],
-              footer: _isBelowAndroid12()
-                  ? HintCard(
-                      hintText: S.of(context)!.colorSchemeNotSupportedWarning,
-                      hintIcon: Icons.warning_amber,
-                    )
-                  : null,
-              initialValue: settings.preferredColorSchemeOption,
-            ),
-          ).then(
-            (value) async {
-              if (value != null) {
-                settings.preferredColorSchemeOption = value;
-                await settings.save();
-              }
-            },
-          ),
+              ).then((value) async {
+                if (value != null) {
+                  settings.preferredColorSchemeOption = value;
+                  await settings.save();
+                }
+              }),
         );
       },
     );

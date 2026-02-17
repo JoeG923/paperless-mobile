@@ -32,52 +32,45 @@ class TextQueryFormField extends StatelessWidget {
               : null,
           fieldViewBuilder:
               (context, textEditingController, focusNode, onFieldSubmitted) {
-            return TextFormField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_outlined),
-                labelText: _buildLabelText(context, field.value!.queryType),
-                suffixIcon: _buildQueryTypeMenu(context, field),
-              ),
-              onChanged: (value) {
-                field.didChange(field.value?.copyWith(queryText: value));
+                return TextFormField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search_outlined),
+                    labelText: _buildLabelText(context, field.value!.queryType),
+                    suffixIcon: _buildQueryTypeMenu(context, field),
+                  ),
+                  onChanged: (value) {
+                    field.didChange(field.value?.copyWith(queryText: value));
+                  },
+                );
               },
-            );
-          },
         );
       },
     );
   }
 
   PopupMenuButton<QueryType> _buildQueryTypeMenu(
-      BuildContext context, FormFieldState<TextQuery> field) {
+    BuildContext context,
+    FormFieldState<TextQuery> field,
+  ) {
     return PopupMenuButton<QueryType>(
       icon: onlyExtendedQueryAllowed
-          ? Icon(
-              Icons.more_vert,
-              color: Theme.of(context).disabledColor,
-            )
+          ? Icon(Icons.more_vert, color: Theme.of(context).disabledColor)
           : null,
       enabled: !onlyExtendedQueryAllowed,
       itemBuilder: (context) => [
         PopupMenuItem(
           value: QueryType.titleAndContent,
-          child: ListTile(
-            title: Text(S.of(context)!.titleAndContent),
-          ),
+          child: ListTile(title: Text(S.of(context)!.titleAndContent)),
         ),
         PopupMenuItem(
           value: QueryType.title,
-          child: ListTile(
-            title: Text(S.of(context)!.title),
-          ),
+          child: ListTile(title: Text(S.of(context)!.title)),
         ),
         PopupMenuItem(
           value: QueryType.extended,
-          child: ListTile(
-            title: Text(S.of(context)!.extended),
-          ),
+          child: ListTile(title: Text(S.of(context)!.extended)),
         ),
       ],
       onSelected: (selection) {

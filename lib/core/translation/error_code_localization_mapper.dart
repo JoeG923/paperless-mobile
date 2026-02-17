@@ -78,12 +78,11 @@ String translateError(BuildContext context, ErrorCode code) {
     ErrorCode.updateSavedViewError => S.of(context)!.couldNotUpdateSavedView,
     ErrorCode.userAlreadyExists => S.of(context)!.userAlreadyExists,
     ErrorCode.customFieldCreateFailed =>
-      'Could not create custom field, please try again.', //TODO: INTL
-    ErrorCode.customFieldLoadFailed =>
-      'Could not load custom field.', //TODO: INTL
+      S.of(context)!.couldNotCreateCustomField,
+    ErrorCode.customFieldLoadFailed => S.of(context)!.couldNotLoadCustomField,
     ErrorCode.customFieldDeleteFailed =>
-      'Could not delete custom field, please try again.', //TODO: INTL
-    ErrorCode.deleteNoteFailed => 'Could not delete note, please try again.',
-    ErrorCode.addNoteFailed => 'Could not create note, please try again.',
+      S.of(context)!.couldNotDeleteCustomField,
+    ErrorCode.deleteNoteFailed => S.of(context)!.couldNotDeleteNote,
+    ErrorCode.addNoteFailed => S.of(context)!.couldNotCreateNote,
   };
 }

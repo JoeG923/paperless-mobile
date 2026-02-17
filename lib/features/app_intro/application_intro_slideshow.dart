@@ -14,11 +14,7 @@ class ApplicationIntroSlideshow extends StatefulWidget {
       _ApplicationIntroSlideshowState();
 }
 
-//TODO: INTL ALL
 class _ApplicationIntroSlideshowState extends State<ApplicationIntroSlideshow> {
-  AssetImage secureImage = AssetImages.secureDocuments.image;
-  AssetImage successImage = AssetImages.success.image;
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -42,21 +38,19 @@ class _ApplicationIntroSlideshowState extends State<ApplicationIntroSlideshow> {
         pages: [
           PageViewModel(
             titleWidget: Text(
-              "Always right at your fingertip",
+              S.of(context)!.introSlideOrganizeTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             image: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Image(
-                image: AssetImages.organizeDocuments.image,
-              ),
+              child: Image(image: AssetImages.organizeDocuments.image),
             ),
-            bodyWidget: const Column(
+            bodyWidget: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Text(
-                  "Organizing documents was never this easy",
+                  S.of(context)!.introSlideOrganizeBody,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -64,19 +58,19 @@ class _ApplicationIntroSlideshowState extends State<ApplicationIntroSlideshow> {
           ),
           PageViewModel(
             titleWidget: Text(
-              "Accessible only by you",
+              S.of(context)!.introSlideSecureTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             image: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Image(image: AssetImages.secureDocuments.image),
             ),
-            bodyWidget: const Column(
+            bodyWidget: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Text(
-                  "Secure your documents with biometric authentication and client certificates",
+                  S.of(context)!.introSlideSecureBody,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -84,7 +78,7 @@ class _ApplicationIntroSlideshowState extends State<ApplicationIntroSlideshow> {
           ),
           PageViewModel(
             titleWidget: Text(
-              "You're almost done",
+              S.of(context)!.introSlideDoneTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             image: Padding(

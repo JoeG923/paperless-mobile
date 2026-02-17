@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paperless_api/paperless_api.dart';
+import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
+import 'package:paperless_mobile/core/repository/group_repository.dart';
+import 'package:paperless_mobile/core/repository/user_repository.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/widgets/form_fields/user_group_multi_select_field.dart';
 import 'package:paperless_mobile/features/documents/cubit/documents_cubit.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/selection/bulk_delete_confirmation_dialog.dart';
 import 'package:paperless_mobile/core/widgets/dialog_utils/dialog_confirm_button.dart';
@@ -69,27 +75,47 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
               PopupMenuItem(
                 value: _BulkSelectionAction.reprocess,
                 enabled: hasSelection,
-                child: const Text('Reprocess'),
+                child: Text(S.of(context)!.bulkActionReprocess),
               ),
               PopupMenuItem(
                 value: _BulkSelectionAction.merge,
                 enabled: canMerge,
-                child: const Text('Merge'),
+                child: Text(S.of(context)!.bulkActionMerge),
               ),
               PopupMenuItem(
                 value: _BulkSelectionAction.rotate,
                 enabled: hasSelection,
-                child: const Text('Rotate'),
+                child: Text(S.of(context)!.bulkActionRotate),
               ),
               PopupMenuItem(
                 value: _BulkSelectionAction.split,
                 enabled: isSingle,
-                child: const Text('Split'),
+                child: Text(S.of(context)!.bulkActionSplit),
               ),
               PopupMenuItem(
                 value: _BulkSelectionAction.deletePages,
                 enabled: isSingle,
-                child: const Text('Delete pages'),
+                child: Text(S.of(context)!.bulkActionDeletePages),
+              ),
+              PopupMenuItem(
+                value: _BulkSelectionAction.editPdf,
+                enabled: hasSelection,
+                child: Text(S.of(context)!.bulkActionEditPdf),
+              ),
+              PopupMenuItem(
+                value: _BulkSelectionAction.modifyCustomFields,
+                enabled: hasSelection,
+                child: Text(S.of(context)!.bulkActionModifyCustomFields),
+              ),
+              PopupMenuItem(
+                value: _BulkSelectionAction.setPermissions,
+                enabled: hasSelection,
+                child: Text(S.of(context)!.bulkActionSetPermissions),
+              ),
+              PopupMenuItem(
+                value: _BulkSelectionAction.removePassword,
+                enabled: hasSelection,
+                child: Text(S.of(context)!.bulkActionRemovePassword),
               ),
             ];
           },
@@ -159,7 +185,17 @@ class DocumentSelectionSliverAppBar extends StatelessWidget {
   }
 }
 
-enum _BulkSelectionAction { reprocess, merge, rotate, split, deletePages }
+enum _BulkSelectionAction {
+  reprocess,
+  merge,
+  rotate,
+  split,
+  deletePages,
+  editPdf,
+  modifyCustomFields,
+  setPermissions,
+  removePassword,
+}
 
 Future<void> _handleBulkAction(
   BuildContext context,
@@ -167,7 +203,7 @@ Future<void> _handleBulkAction(
   List<DocumentModel> selection,
 ) async {
   if (selection.isEmpty) {
-    showSnackBar(context, 'No documents selected.'); // TODO: INTL
+    showSnackBar(context, S.of(context)!.noDocumentsSelected);
     return;
   }
   final documentsCubit = context.read<DocumentsCubit>();
@@ -176,21 +212,20 @@ Future<void> _handleBulkAction(
       case _BulkSelectionAction.reprocess:
         final confirmed = await _showConfirmDialog(
           context,
-          title: 'Reprocess documents', // TODO: INTL
-          message:
-              'The selected documents will be reprocessed on the server.', // TODO: INTL
+          title: S.of(context)!.reprocessDocumentsTitle,
+          message: S.of(context)!.reprocessDocumentsMessage,
         );
         if (!confirmed || !context.mounted) return;
         await documentsCubit.bulkReprocess(selection);
         if (!context.mounted) return;
-        showSnackBar(context, 'Reprocess queued.'); // TODO: INTL
+        showSnackBar(context, S.of(context)!.reprocessQueued);
         documentsCubit.resetSelection();
         break;
       case _BulkSelectionAction.merge:
         if (selection.length < 2) {
           showSnackBar(
             context,
-            'Select at least two documents to merge.', // TODO: INTL
+            S.of(context)!.selectAtLeastTwoDocumentsToMerge,
           );
           return;
         }
@@ -202,7 +237,7 @@ Future<void> _handleBulkAction(
           archiveFallback: options.archiveFallback,
         );
         if (!context.mounted) return;
-        showSnackBar(context, 'Merge queued.'); // TODO: INTL
+        showSnackBar(context, S.of(context)!.mergeQueued);
         documentsCubit.resetSelection();
         break;
       case _BulkSelectionAction.rotate:
@@ -210,15 +245,12 @@ Future<void> _handleBulkAction(
         if (degrees == null || !context.mounted) return;
         await documentsCubit.bulkRotate(selection, degrees: degrees);
         if (!context.mounted) return;
-        showSnackBar(context, 'Rotate queued.'); // TODO: INTL
+        showSnackBar(context, S.of(context)!.rotateQueued);
         documentsCubit.resetSelection();
         break;
       case _BulkSelectionAction.split:
         if (selection.length != 1) {
-          showSnackBar(
-            context,
-            'Select exactly one document to split.', // TODO: INTL
-          );
+          showSnackBar(context, S.of(context)!.selectExactlyOneDocumentToSplit);
           return;
         }
         final options = await _showSplitDialog(context);
@@ -229,14 +261,14 @@ Future<void> _handleBulkAction(
           deleteOriginals: options.deleteOriginals,
         );
         if (!context.mounted) return;
-        showSnackBar(context, 'Split queued.'); // TODO: INTL
+        showSnackBar(context, S.of(context)!.splitQueued);
         documentsCubit.resetSelection();
         break;
       case _BulkSelectionAction.deletePages:
         if (selection.length != 1) {
           showSnackBar(
             context,
-            'Select exactly one document to edit pages.', // TODO: INTL
+            S.of(context)!.selectExactlyOneDocumentToEditPages,
           );
           return;
         }
@@ -244,7 +276,62 @@ Future<void> _handleBulkAction(
         if (pages == null || !context.mounted) return;
         await documentsCubit.bulkDeletePages(selection.first, pages: pages);
         if (!context.mounted) return;
-        showSnackBar(context, 'Pages deleted.'); // TODO: INTL
+        showSnackBar(context, S.of(context)!.pagesDeleted);
+        documentsCubit.resetSelection();
+        break;
+      case _BulkSelectionAction.editPdf:
+        final editResult = await _showEditPdfDialog(context);
+        if (editResult == null || !context.mounted) return;
+        await documentsCubit.bulkEditPdf(
+          selection,
+          operations: editResult.operations,
+          updateDocument: editResult.updateDocument,
+          includeMetadata: editResult.includeMetadata,
+        );
+        if (!context.mounted) return;
+        showSnackBar(context, S.of(context)!.editPdfQueued);
+        documentsCubit.resetSelection();
+        break;
+      case _BulkSelectionAction.modifyCustomFields:
+        final customFieldResult = await _showModifyCustomFieldDialog(context);
+        if (customFieldResult == null || !context.mounted) return;
+        if (customFieldResult.remove) {
+          await documentsCubit.bulkModifyCustomFields(
+            selection,
+            addCustomFields: BulkCustomFieldPayload.ids(const []),
+            removeCustomFields: [customFieldResult.fieldId],
+          );
+        } else {
+          await documentsCubit.bulkModifyCustomFields(
+            selection,
+            addCustomFields: BulkCustomFieldPayload.values({
+              customFieldResult.fieldId: customFieldResult.value,
+            }),
+          );
+        }
+        if (!context.mounted) return;
+        showSnackBar(context, S.of(context)!.customFieldsQueued);
+        documentsCubit.resetSelection();
+        break;
+      case _BulkSelectionAction.setPermissions:
+        final permissionsResult = await _showSetPermissionsDialog(context);
+        if (permissionsResult == null || !context.mounted) return;
+        await documentsCubit.bulkSetPermissions(
+          selection,
+          permissions: permissionsResult.permissions,
+          merge: permissionsResult.merge,
+          owner: permissionsResult.owner,
+        );
+        if (!context.mounted) return;
+        showSnackBar(context, S.of(context)!.setPermissionsQueued);
+        documentsCubit.resetSelection();
+        break;
+      case _BulkSelectionAction.removePassword:
+        final password = await _showRemovePasswordDialog(context);
+        if (password == null || !context.mounted) return;
+        await documentsCubit.bulkRemovePassword(selection, password: password);
+        if (!context.mounted) return;
+        showSnackBar(context, S.of(context)!.removePasswordQueued);
         documentsCubit.resetSelection();
         break;
     }
@@ -295,17 +382,15 @@ Future<_MergeDialogResult?> _showMergeDialog(BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Merge documents'), // TODO: INTL
+            title: Text(S.of(context)!.mergeDocumentsTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'The merged document order follows the selected order.', // TODO: INTL
-                ),
+                Text(S.of(context)!.mergeDocumentsOrderHint),
                 const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Delete originals'), // TODO: INTL
+                  title: Text(S.of(context)!.deleteOriginals),
                   value: deleteOriginals,
                   onChanged: (value) {
                     setState(() => deleteOriginals = value);
@@ -313,7 +398,7 @@ Future<_MergeDialogResult?> _showMergeDialog(BuildContext context) async {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Archive fallback'), // TODO: INTL
+                  title: Text(S.of(context)!.archiveFallback),
                   value: archiveFallback,
                   onChanged: (value) {
                     setState(() => archiveFallback = value);
@@ -348,12 +433,10 @@ Future<int?> _showRotateDialog(BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Rotate documents'), // TODO: INTL
+            title: Text(S.of(context)!.rotateDocumentsTitle),
             content: DropdownButtonFormField<int>(
               initialValue: selectedDegrees,
-              decoration: const InputDecoration(
-                labelText: 'Degrees', // TODO: INTL
-              ),
+              decoration: InputDecoration(labelText: S.of(context)!.degrees),
               items: const [
                 DropdownMenuItem(value: 90, child: Text('90°')),
                 DropdownMenuItem(value: 180, child: Text('180°')),
@@ -399,22 +482,22 @@ Future<_SplitDialogResult?> _showSplitDialog(BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Split document'), // TODO: INTL
+            title: Text(S.of(context)!.splitDocumentTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: controller,
                   decoration: InputDecoration(
-                    labelText: 'Pages', // TODO: INTL
-                    hintText: '1,2-3,4', // TODO: INTL
+                    labelText: S.of(context)!.pages,
+                    hintText: S.of(context)!.pageRangeExample,
                     errorText: errorText,
                   ),
                 ),
                 const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Delete original'), // TODO: INTL
+                  title: Text(S.of(context)!.deleteOriginal),
                   value: deleteOriginals,
                   onChanged: (value) {
                     setState(() => deleteOriginals = value);
@@ -432,7 +515,7 @@ Future<_SplitDialogResult?> _showSplitDialog(BuildContext context) async {
                   final pages = controller.text.trim();
                   if (pages.isEmpty) {
                     setState(() {
-                      errorText = 'Enter page ranges.'; // TODO: INTL
+                      errorText = S.of(context)!.enterPageRanges;
                     });
                     return;
                   }
@@ -461,12 +544,12 @@ Future<List<int>?> _showDeletePagesDialog(BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Delete pages'), // TODO: INTL
+            title: Text(S.of(context)!.deletePagesTitle),
             content: TextField(
               controller: controller,
               decoration: InputDecoration(
-                labelText: 'Pages', // TODO: INTL
-                hintText: '2,3,4', // TODO: INTL
+                labelText: S.of(context)!.pages,
+                hintText: S.of(context)!.pageListExample,
                 errorText: errorText,
               ),
             ),
@@ -480,7 +563,7 @@ Future<List<int>?> _showDeletePagesDialog(BuildContext context) async {
                   final parsed = _parsePageList(controller.text);
                   if (parsed == null || parsed.isEmpty) {
                     setState(() {
-                      errorText = 'Enter valid page numbers.'; // TODO: INTL
+                      errorText = S.of(context)!.enterValidPageNumbers;
                     });
                     return;
                   }
@@ -511,3 +594,452 @@ List<int>? _parsePageList(String input) {
   }
   return pages.isEmpty ? null : pages;
 }
+
+class _EditPdfDialogResult {
+  final List<Map<String, Object?>> operations;
+  final bool updateDocument;
+  final bool includeMetadata;
+
+  const _EditPdfDialogResult({
+    required this.operations,
+    required this.updateDocument,
+    required this.includeMetadata,
+  });
+}
+
+Future<_EditPdfDialogResult?> _showEditPdfDialog(BuildContext context) async {
+  return showDialog<_EditPdfDialogResult>(
+    context: context,
+    builder: (context) {
+      final operationsController = TextEditingController(text: '[]');
+      bool updateDocument = false;
+      bool includeMetadata = true;
+      String? errorText;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(S.of(context)!.editPdfTitle),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: operationsController,
+                    minLines: 4,
+                    maxLines: 8,
+                    decoration: InputDecoration(
+                      labelText: S.of(context)!.editPdfOperationsJson,
+                      hintText: S.of(context)!.editPdfOperationsHint,
+                      errorText: errorText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(S.of(context)!.editPdfUpdateDocument),
+                    value: updateDocument,
+                    onChanged: (value) =>
+                        setState(() => updateDocument = value),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(S.of(context)!.editPdfIncludeMetadata),
+                    value: includeMetadata,
+                    onChanged: (value) =>
+                        setState(() => includeMetadata = value),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(S.of(context)!.cancel),
+              ),
+              DialogConfirmButton(
+                onPressed: () {
+                  final parsedOperations = _parseEditPdfOperations(
+                    operationsController.text,
+                  );
+                  if (parsedOperations == null || parsedOperations.isEmpty) {
+                    setState(() {
+                      errorText = S.of(context)!.enterValidEditPdfOperations;
+                    });
+                    return;
+                  }
+                  Navigator.of(context).pop(
+                    _EditPdfDialogResult(
+                      operations: parsedOperations,
+                      updateDocument: updateDocument,
+                      includeMetadata: includeMetadata,
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+List<Map<String, Object?>>? _parseEditPdfOperations(String raw) {
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) {
+      return null;
+    }
+    final result = <Map<String, Object?>>[];
+    for (final entry in decoded) {
+      if (entry is! Map) {
+        return null;
+      }
+      result.add({for (final kv in entry.entries) kv.key.toString(): kv.value});
+    }
+    return result;
+  } catch (_) {
+    return null;
+  }
+}
+
+Future<String?> _showRemovePasswordDialog(BuildContext context) async {
+  return showDialog<String>(
+    context: context,
+    builder: (context) {
+      final controller = TextEditingController();
+      String? errorText;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(S.of(context)!.removePasswordTitle),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: S.of(context)!.password,
+                errorText: errorText,
+              ),
+              obscureText: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(S.of(context)!.cancel),
+              ),
+              DialogConfirmButton(
+                onPressed: () {
+                  final password = controller.text.trim();
+                  if (password.isEmpty) {
+                    setState(() {
+                      errorText = S.of(context)!.passwordMustNotBeEmpty;
+                    });
+                    return;
+                  }
+                  Navigator.of(context).pop(password);
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+class _ModifyCustomFieldDialogResult {
+  final int fieldId;
+  final Object? value;
+  final bool remove;
+
+  const _ModifyCustomFieldDialogResult({
+    required this.fieldId,
+    required this.value,
+    required this.remove,
+  });
+}
+
+Future<_ModifyCustomFieldDialogResult?> _showModifyCustomFieldDialog(
+  BuildContext context,
+) async {
+  final customFields =
+      context
+          .read<CustomFieldRepository>()
+          .customFields
+          .values
+          .where((field) => field.id != null)
+          .toList()
+        ..sort(
+          (a, b) => (a.name ?? 'Custom field ${a.id}').toLowerCase().compareTo(
+            (b.name ?? 'Custom field ${b.id}').toLowerCase(),
+          ),
+        );
+  if (customFields.isEmpty) {
+    showSnackBar(context, S.of(context)!.noCustomFieldsAvailable);
+    return null;
+  }
+
+  return showDialog<_ModifyCustomFieldDialogResult>(
+    context: context,
+    builder: (context) {
+      int selectedFieldId = customFields.first.id!;
+      final valueController = TextEditingController();
+      bool boolValue = false;
+      bool remove = false;
+      String? errorText;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final selectedField = customFields.firstWhere(
+            (field) => field.id == selectedFieldId,
+          );
+          final isBoolean =
+              selectedField.dataType == CustomFieldDataType.boolean;
+          return AlertDialog(
+            title: Text(S.of(context)!.modifyCustomFieldTitle),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedFieldId,
+                    decoration: InputDecoration(
+                      labelText: S.of(context)!.selectCustomField,
+                    ),
+                    items: [
+                      for (final field in customFields)
+                        DropdownMenuItem<int>(
+                          value: field.id!,
+                          child: Text(field.name ?? 'Custom field ${field.id}'),
+                        ),
+                    ],
+                    onChanged: (newId) {
+                      if (newId == null) {
+                        return;
+                      }
+                      setState(() {
+                        selectedFieldId = newId;
+                        errorText = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  if (isBoolean)
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(S.of(context)!.customFieldValue),
+                      value: boolValue,
+                      onChanged: remove
+                          ? null
+                          : (value) => setState(() => boolValue = value),
+                    )
+                  else
+                    TextField(
+                      controller: valueController,
+                      enabled: !remove,
+                      keyboardType: _keyboardTypeFor(selectedField.dataType),
+                      decoration: InputDecoration(
+                        labelText: S.of(context)!.customFieldValue,
+                        errorText: errorText,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(S.of(context)!.clearCustomFieldValue),
+                    value: remove,
+                    onChanged: (value) => setState(() {
+                      remove = value;
+                      errorText = null;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(S.of(context)!.cancel),
+              ),
+              DialogConfirmButton(
+                onPressed: () {
+                  if (remove) {
+                    Navigator.of(context).pop(
+                      _ModifyCustomFieldDialogResult(
+                        fieldId: selectedFieldId,
+                        value: null,
+                        remove: true,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final value = isBoolean
+                      ? boolValue
+                      : _parseCustomFieldValue(
+                          selectedField.dataType,
+                          valueController.text,
+                        );
+                  if (!isBoolean && value == null) {
+                    setState(() {
+                      errorText = S.of(context)!.enterCustomFieldValue;
+                    });
+                    return;
+                  }
+                  Navigator.of(context).pop(
+                    _ModifyCustomFieldDialogResult(
+                      fieldId: selectedFieldId,
+                      value: value,
+                      remove: false,
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+TextInputType _keyboardTypeFor(CustomFieldDataType dataType) {
+  switch (dataType) {
+    case CustomFieldDataType.integer:
+      return TextInputType.number;
+    case CustomFieldDataType.float:
+    case CustomFieldDataType.monetary:
+      return const TextInputType.numberWithOptions(decimal: true, signed: true);
+    default:
+      return TextInputType.text;
+  }
+}
+
+Object? _parseCustomFieldValue(CustomFieldDataType dataType, String rawValue) {
+  final value = rawValue.trim();
+  if (value.isEmpty) {
+    return null;
+  }
+  switch (dataType) {
+    case CustomFieldDataType.integer:
+      return int.tryParse(value);
+    case CustomFieldDataType.float:
+    case CustomFieldDataType.monetary:
+      return double.tryParse(value);
+    default:
+      return value;
+  }
+}
+
+class _SetPermissionsDialogResult {
+  final Map<String, dynamic> permissions;
+  final bool merge;
+  final int? owner;
+
+  const _SetPermissionsDialogResult({
+    required this.permissions,
+    required this.merge,
+    required this.owner,
+  });
+}
+
+Future<_SetPermissionsDialogResult?> _showSetPermissionsDialog(
+  BuildContext context,
+) async {
+  final users = context.read<UserRepository>().state.users;
+  final groups = context.read<GroupRepository>().state.groups;
+
+  return showDialog<_SetPermissionsDialogResult>(
+    context: context,
+    builder: (context) {
+      int? owner;
+      List<int> viewUsers = [];
+      List<int> viewGroups = [];
+      List<int> changeUsers = [];
+      List<int> changeGroups = [];
+      bool merge = false;
+
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(S.of(context)!.setPermissionsTitle),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  OwnerSelectField(
+                    label: S.of(context)!.ownerIdOptional,
+                    selectedId: owner,
+                    availableUsers: users,
+                    onChanged: (value) => setState(() => owner = value),
+                  ),
+                  const SizedBox(height: 16),
+                  UserMultiSelectField(
+                    label: S.of(context)!.permissionViewUsers,
+                    selectedIds: viewUsers,
+                    availableUsers: users,
+                    onChanged: (value) => setState(() => viewUsers = value),
+                  ),
+                  const SizedBox(height: 12),
+                  GroupMultiSelectField(
+                    label: S.of(context)!.permissionViewGroups,
+                    selectedIds: viewGroups,
+                    availableGroups: groups,
+                    onChanged: (value) => setState(() => viewGroups = value),
+                  ),
+                  const SizedBox(height: 12),
+                  UserMultiSelectField(
+                    label: S.of(context)!.permissionChangeUsers,
+                    selectedIds: changeUsers,
+                    availableUsers: users,
+                    onChanged: (value) => setState(() => changeUsers = value),
+                  ),
+                  const SizedBox(height: 12),
+                  GroupMultiSelectField(
+                    label: S.of(context)!.permissionChangeGroups,
+                    selectedIds: changeGroups,
+                    availableGroups: groups,
+                    onChanged: (value) => setState(() => changeGroups = value),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(S.of(context)!.setPermissionsMergeExisting),
+                    value: merge,
+                    onChanged: (value) => setState(() => merge = value),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(S.of(context)!.cancel),
+              ),
+              DialogConfirmButton(
+                onPressed: () {
+                  Navigator.of(context).pop(
+                    _SetPermissionsDialogResult(
+                      permissions: {
+                        'view': {
+                          'users': viewUsers,
+                          'groups': viewGroups,
+                        },
+                        'change': {
+                          'users': changeUsers,
+                          'groups': changeGroups,
+                        },
+                      },
+                      merge: merge,
+                      owner: owner,
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+

@@ -80,8 +80,8 @@ assets/changelogs/*.md
 .fvm/
 
 # Local Flutter SDKs
-flutter-sdk/
-flutter/
+/flutter-sdk/
+/flutter/
 
-# Local artifact sharing (e.g., APK via tailscale serve)
-.tailscale-share/
+# Coverage artifacts
+coverage/

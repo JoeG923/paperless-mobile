@@ -9,10 +9,7 @@ import 'package:paperless_mobile/helpers/connectivity_aware_action_wrapper.dart'
 
 class SortDocumentsButton extends StatelessWidget {
   final bool enabled;
-  const SortDocumentsButton({
-    super.key,
-    this.enabled = true,
-  });
+  const SortDocumentsButton({super.key, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +18,15 @@ class SortDocumentsButton extends StatelessWidget {
         if (state.filter.sortField == null) {
           return const SizedBox.shrink();
         }
-        final icon = Icon(state.filter.sortOrder == SortOrder.ascending
-            ? Icons.arrow_upward
-            : Icons.arrow_downward);
+        final icon = Icon(
+          state.filter.sortOrder == SortOrder.ascending
+              ? Icons.arrow_upward
+              : Icons.arrow_downward,
+        );
         final label = Text(translateSortField(context, state.filter.sortField));
         return ConnectivityAwareActionWrapper(
           offlineBuilder: (context, child) {
-            return TextButton.icon(
-              icon: icon,
-              label: label,
-              onPressed: null,
-            );
+            return TextButton.icon(icon: icon, label: label, onPressed: null);
           },
           child: TextButton.icon(
             icon: icon,

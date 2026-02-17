@@ -28,6 +28,7 @@ class FilterRule with EquatableMixin {
   static const int titleAndContentRule = 19;
   static const int extendedRule = 20;
   static const int storagePathRule = 25;
+  static const int customFieldQueryRule = 42;
   // Currently unsupported view options:
   static const int _content = 1;
   static const int _isInInbox = 5;
@@ -83,9 +84,9 @@ class FilterRule with EquatableMixin {
         return filter.copyWith(
           tags: switch (filter.tags) {
             IdsTagsQuery(include: var i, exclude: var e) => IdsTagsQuery(
-                include: [...i, int.parse(value!)],
-                exclude: e,
-              ),
+              include: [...i, int.parse(value!)],
+              exclude: e,
+            ),
             _ => filter.tags,
           },
         );
@@ -94,88 +95,106 @@ class FilterRule with EquatableMixin {
         return filter.copyWith(
           tags: switch (filter.tags) {
             IdsTagsQuery(include: var i, exclude: var e) => IdsTagsQuery(
-                include: i,
-                exclude: [...e, int.parse(value!)],
-              ),
+              include: i,
+              exclude: [...e, int.parse(value!)],
+            ),
             _ => filter.tags,
           },
         );
       case createdBeforeRule:
         if (filter.created is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            created: (filter.created as AbsoluteDateRangeQuery)
-                .copyWith(before: _dateTimeConverter.fromJson(value!)),
+            created: (filter.created as AbsoluteDateRangeQuery).copyWith(
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
             created: AbsoluteDateRangeQuery(
-                before: _dateTimeConverter.fromJson(value!)),
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case createdAfterRule:
         if (filter.created is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            created: (filter.created as AbsoluteDateRangeQuery)
-                .copyWith(after: _dateTimeConverter.fromJson(value!)),
+            created: (filter.created as AbsoluteDateRangeQuery).copyWith(
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
             created: AbsoluteDateRangeQuery(
-                after: _dateTimeConverter.fromJson(value!)),
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case addedBeforeRule:
         if (filter.added is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            added: (filter.added as AbsoluteDateRangeQuery)
-                .copyWith(before: _dateTimeConverter.fromJson(value!)),
+            added: (filter.added as AbsoluteDateRangeQuery).copyWith(
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
             added: AbsoluteDateRangeQuery(
-                before: _dateTimeConverter.fromJson(value!)),
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case addedAfterRule:
         if (filter.added is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            added: (filter.added as AbsoluteDateRangeQuery)
-                .copyWith(after: _dateTimeConverter.fromJson(value!)),
+            added: (filter.added as AbsoluteDateRangeQuery).copyWith(
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
             added: AbsoluteDateRangeQuery(
-                after: _dateTimeConverter.fromJson(value!)),
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case modifiedBeforeRule:
         if (filter.modified is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            modified: (filter.modified as AbsoluteDateRangeQuery)
-                .copyWith(before: _dateTimeConverter.fromJson(value!)),
+            modified: (filter.modified as AbsoluteDateRangeQuery).copyWith(
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
             modified: AbsoluteDateRangeQuery(
-                before: _dateTimeConverter.fromJson(value!)),
+              before: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case modifiedAfterRule:
         if (filter.modified is AbsoluteDateRangeQuery) {
           return filter.copyWith(
-            modified: (filter.modified as AbsoluteDateRangeQuery)
-                .copyWith(after: _dateTimeConverter.fromJson(value!)),
+            modified: (filter.modified as AbsoluteDateRangeQuery).copyWith(
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         } else {
           return filter.copyWith(
-            added: AbsoluteDateRangeQuery(
-                after: _dateTimeConverter.fromJson(value!)),
+            modified: AbsoluteDateRangeQuery(
+              after: _dateTimeConverter.fromJson(value!),
+            ),
           );
         }
       case titleAndContentRule:
         return filter.copyWith(query: TextQuery.titleAndContent(value));
       case extendedRule:
         return _parseExtendedRule(filter);
+      case customFieldQueryRule:
+        final parsedValue = value?.trim();
+        return filter.copyWith(
+          customFieldQuery: () =>
+              (parsedValue?.isEmpty ?? true) ? null : parsedValue,
+        );
       default:
         return filter;
     }
@@ -217,10 +236,7 @@ class FilterRule with EquatableMixin {
           break;
         case 'added':
           newFilter = newFilter.copyWith(
-            added: RelativeDateRangeQuery(
-              n,
-              DateRangeUnit.values.byName(unit),
-            ),
+            added: RelativeDateRangeQuery(n, DateRangeUnit.values.byName(unit)),
             query: newFilter.query.copyWith(queryType: QueryType.extended),
           );
           break;
@@ -245,8 +261,10 @@ class FilterRule with EquatableMixin {
     List<FilterRule> filterRules = [];
     final corrRule = switch (filter.correspondent) {
       NotAssignedIdQueryParameter() => FilterRule(correspondentRule, null),
-      SetIdQueryParameter(id: var id) =>
-        FilterRule(correspondentRule, id.toString()),
+      SetIdQueryParameter(id: var id) => FilterRule(
+        correspondentRule,
+        id.toString(),
+      ),
       _ => null,
     };
     if (corrRule != null) {
@@ -255,8 +273,10 @@ class FilterRule with EquatableMixin {
 
     final docTypeRule = switch (filter.documentType) {
       NotAssignedIdQueryParameter() => FilterRule(documentTypeRule, null),
-      SetIdQueryParameter(id: var id) =>
-        FilterRule(documentTypeRule, id.toString()),
+      SetIdQueryParameter(id: var id) => FilterRule(
+        documentTypeRule,
+        id.toString(),
+      ),
       _ => null,
     };
 
@@ -266,8 +286,10 @@ class FilterRule with EquatableMixin {
 
     final sPathRule = switch (filter.storagePath) {
       NotAssignedIdQueryParameter() => FilterRule(storagePathRule, null),
-      SetIdQueryParameter(id: var id) =>
-        FilterRule(storagePathRule, id.toString()),
+      SetIdQueryParameter(id: var id) => FilterRule(
+        storagePathRule,
+        id.toString(),
+      ),
       _ => null,
     };
 
@@ -278,9 +300,9 @@ class FilterRule with EquatableMixin {
       NotAssignedTagsQuery() => [FilterRule(hasAnyTag, 'false')],
       AnyAssignedTagsQuery() => [FilterRule(hasAnyTag, 'true')],
       IdsTagsQuery(include: var i, exclude: var e) => [
-          ...i.map((id) => FilterRule(includeTagsRule, id.toString())),
-          ...e.map((id) => FilterRule(excludeTagsRule, id.toString())),
-        ],
+        ...i.map((id) => FilterRule(includeTagsRule, id.toString())),
+        ...e.map((id) => FilterRule(excludeTagsRule, id.toString())),
+      ],
     };
 
     filterRules.addAll(tagRules);
@@ -291,8 +313,9 @@ class FilterRule with EquatableMixin {
           filterRules.add(FilterRule(titleRule, filter.query.queryText!));
           break;
         case QueryType.titleAndContent:
-          filterRules
-              .add(FilterRule(titleAndContentRule, filter.query.queryText!));
+          filterRules.add(
+            FilterRule(titleAndContentRule, filter.query.queryText!),
+          );
           break;
         case QueryType.extended:
           filterRules.add(FilterRule(extendedRule, filter.query.queryText!));
@@ -301,6 +324,11 @@ class FilterRule with EquatableMixin {
           filterRules.add(FilterRule(asnRule, filter.query.queryText!));
           break;
       }
+    }
+    if (filter.customFieldQuery?.isNotEmpty ?? false) {
+      filterRules.add(
+        FilterRule(customFieldQueryRule, filter.customFieldQuery!),
+      );
     }
 
     // Parse created at
@@ -318,8 +346,10 @@ class FilterRule with EquatableMixin {
       }
     } else if (created is RelativeDateRangeQuery) {
       filterRules.add(
-        FilterRule(extendedRule,
-            created.toQueryParameter(DateRangeQueryField.created).values.first),
+        FilterRule(
+          extendedRule,
+          created.toQueryParameter(DateRangeQueryField.created).values.first,
+        ),
       );
     }
 
@@ -338,8 +368,10 @@ class FilterRule with EquatableMixin {
       }
     } else if (added is RelativeDateRangeQuery) {
       filterRules.add(
-        FilterRule(extendedRule,
-            added.toQueryParameter(DateRangeQueryField.added).values.first),
+        FilterRule(
+          extendedRule,
+          added.toQueryParameter(DateRangeQueryField.added).values.first,
+        ),
       );
     }
 
@@ -354,17 +386,17 @@ class FilterRule with EquatableMixin {
       if (modified.before != null) {
         filterRules.add(
           FilterRule(
-              modifiedBeforeRule, apiDateFormat.format(modified.before!)),
+            modifiedBeforeRule,
+            apiDateFormat.format(modified.before!),
+          ),
         );
       }
     } else if (modified is RelativeDateRangeQuery) {
       filterRules.add(
         FilterRule(
-            extendedRule,
-            modified
-                .toQueryParameter(DateRangeQueryField.modified)
-                .values
-                .first),
+          extendedRule,
+          modified.toQueryParameter(DateRangeQueryField.modified).values.first,
+        ),
       );
     }
 
@@ -384,10 +416,7 @@ class FilterRule with EquatableMixin {
   }
 
   FilterRule copyWith({int? ruleType, String? value}) {
-    return FilterRule(
-      ruleType ?? this.ruleType,
-      value ?? this.value,
-    );
+    return FilterRule(ruleType ?? this.ruleType, value ?? this.value);
   }
 
   @override

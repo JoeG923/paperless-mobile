@@ -23,8 +23,9 @@ class HintCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedCrossFade(
       sizeCurve: Curves.elasticOut,
-      crossFadeState:
-          show ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      crossFadeState: show
+          ? CrossFadeState.showFirst
+          : CrossFadeState.showSecond,
       secondChild: const SizedBox.shrink(),
       duration: 500.milliseconds.accessible(),
       firstChild: Card(
@@ -33,10 +34,7 @@ class HintCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              hintIcon,
-              color: Theme.of(context).hintColor,
-            ).padded(),
+            Icon(hintIcon, color: Theme.of(context).hintColor).padded(),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Align(

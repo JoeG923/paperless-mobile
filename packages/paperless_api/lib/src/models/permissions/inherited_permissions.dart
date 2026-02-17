@@ -7,7 +7,7 @@ enum InheritedPermissionGroup {
   documents,
   guardian,
   paperlessMail,
-  sessions;
+  sessions,
 }
 
 // @HiveType(typeId: PaperlessApiHiveTypeIds.inheritedPermissions)

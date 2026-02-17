@@ -55,8 +55,10 @@ class _FullscreenBulkEditTagsWidgetState
     _controller.addListener(() {
       setState(() {
         _filteredTags = labels.tags.values
-            .where((e) =>
-                e.name.normalized().contains(_controller.text.normalized()))
+            .where(
+              (e) =>
+                  e.name.normalized().contains(_controller.text.normalized()),
+            )
             .map((e) => e.id!)
             .toList();
       });
@@ -83,10 +85,7 @@ class _FullscreenBulkEditTagsWidgetState
           hintText: S.of(context)!.startTyping,
           leadingIcon: const Icon(Icons.label_outline),
           selectionBuilder: (context, index) {
-            return _buildTagOption(
-              _filteredTags[index],
-              labelRepository.tags,
-            );
+            return _buildTagOption(_filteredTags[index], labelRepository.tags);
           },
           selectionCount: _filteredTags.length,
         );
@@ -161,7 +160,8 @@ class _FullscreenBulkEditTagsWidgetState
       final removeNames = _removeTags
           .map((value) => "\"${labelRepository.tags[value]!.name}\"")
           .toList();
-      final shouldPerformAction = await showDialog<bool>(
+      final shouldPerformAction =
+          await showDialog<bool>(
             context: context,
             builder: (context) => ConfirmBulkModifyTagsDialog(
               selectionCount: bloc.state.selection.length,
@@ -171,10 +171,7 @@ class _FullscreenBulkEditTagsWidgetState
           ) ??
           false;
       if (shouldPerformAction) {
-        bloc.bulkModifyTags(
-          removeTagIds: _removeTags,
-          addTagIds: _addTags,
-        );
+        bloc.bulkModifyTags(removeTagIds: _removeTags, addTagIds: _addTags);
         if (mounted) context.pop();
       }
     }

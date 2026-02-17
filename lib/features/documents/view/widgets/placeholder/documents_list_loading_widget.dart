@@ -44,10 +44,7 @@ class DocumentsListLoadingWidget extends StatelessWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const TextPlaceholder(
-              length: 120,
-              fontSize: fontSize,
-            ),
+            const TextPlaceholder(length: 120, fontSize: fontSize),
             const SizedBox(height: 2),
             TextPlaceholder(
               length: 220,

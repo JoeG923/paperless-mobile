@@ -36,7 +36,8 @@ class LabelItem<T extends Label> extends StatelessWidget {
   }
 
   Widget _buildReferencedDocumentsWidget(BuildContext context) {
-    final canOpen = (label.documentCount ?? 0) > 0 &&
+    final canOpen =
+        (label.documentCount ?? 0) > 0 &&
         context.watch<LocalUserAccount>().paperlessUser.canViewDocuments;
     return TextButton.icon(
       label: const Icon(Icons.link),

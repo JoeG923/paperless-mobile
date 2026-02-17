@@ -49,7 +49,7 @@ class _SavedViewChipState extends State<SavedViewChip>
     var colorScheme = Theme.of(context).colorScheme;
     final effectiveBackgroundColor = widget.selected
         ? colorScheme.secondaryContainer
-        : colorScheme.surfaceContainerHighest ;
+        : colorScheme.surfaceContainerHighest;
     final effectiveForegroundColor = widget.selected
         ? colorScheme.onSecondaryContainer
         : colorScheme.onSurfaceVariant;
@@ -58,20 +58,14 @@ class _SavedViewChipState extends State<SavedViewChip>
       children: [
         IconButton(
           padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.edit,
-            color: effectiveForegroundColor,
-          ),
+          icon: Icon(Icons.edit, color: effectiveForegroundColor),
           onPressed: () {
             EditSavedViewRoute($extra: widget.view).push(context);
           },
         ),
         IconButton(
           padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.delete,
-            color: colorScheme.error,
-          ),
+          icon: Icon(Icons.delete, color: colorScheme.error),
           onPressed: () async {
             widget.onDeleteView(widget.view);
           },
@@ -83,9 +77,7 @@ class _SavedViewChipState extends State<SavedViewChip>
       color: effectiveBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: colorScheme.outline,
-        ),
+        side: BorderSide(color: colorScheme.outline),
       ),
       child: InkWell(
         enableFeedback: true,
@@ -99,10 +91,10 @@ class _SavedViewChipState extends State<SavedViewChip>
               Row(
                 children: [
                   _buildCheckmark(effectiveForegroundColor),
-                  _buildLabel(context, effectiveForegroundColor)
-                      .paddedSymmetrically(
-                    horizontal: 12,
-                  ),
+                  _buildLabel(
+                    context,
+                    effectiveForegroundColor,
+                  ).paddedSymmetrically(horizontal: 12),
                 ],
               ).paddedOnly(left: 8),
               AnimatedSwitcher(
@@ -148,10 +140,9 @@ class _SavedViewChipState extends State<SavedViewChip>
   Widget _buildLabel(BuildContext context, Color effectiveForegroundColor) {
     return Text(
       widget.view.name,
-      style: Theme.of(context)
-          .textTheme
-          .labelLarge
-          ?.copyWith(color: effectiveForegroundColor),
+      style: Theme.of(
+        context,
+      ).textTheme.labelLarge?.copyWith(color: effectiveForegroundColor),
     );
   }
 

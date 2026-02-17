@@ -10,8 +10,9 @@ class GlobalSettingsBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable:
-          Hive.box<GlobalSettings>(HiveBoxes.globalSettings).listenable(),
+      valueListenable: Hive.box<GlobalSettings>(
+        HiveBoxes.globalSettings,
+      ).listenable(),
       builder: (context, value, _) {
         final settings = value.getValue()!;
         return builder(context, settings);

@@ -6,8 +6,9 @@ class SavedViewState with _$SavedViewState {
 
   const factory SavedViewState.loading() = _Loading;
 
-  const factory SavedViewState.loaded(
-      {required Map<int, SavedView> savedViews}) = _Loaded;
+  const factory SavedViewState.loaded({
+    required Map<int, SavedView> savedViews,
+  }) = _Loaded;
 
   const factory SavedViewState.error() = _Error;
 }

@@ -12,10 +12,7 @@ const _fkShowInSidebar = 'show_in_sidebar';
 
 class EditSavedViewPage extends StatefulWidget {
   final SavedView savedView;
-  const EditSavedViewPage({
-    super.key,
-    required this.savedView,
-  });
+  const EditSavedViewPage({super.key, required this.savedView});
 
   @override
   State<EditSavedViewPage> createState() => _EditSavedViewPageState();
@@ -26,9 +23,7 @@ class _EditSavedViewPageState extends State<EditSavedViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context)!.editView),
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.editView)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: "fab_edit_saved_view_page",
         icon: const Icon(Icons.save),

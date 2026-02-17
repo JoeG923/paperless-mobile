@@ -19,14 +19,23 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
   }
 
   @override
-  PaperlessSavedViewsApi createSavedViewsApi(Dio dio,
-      {required int apiVersion}) {
+  CustomFieldsApi createCustomFieldsApi(Dio dio, {required int apiVersion}) {
+    return CustomFieldsApiImpl(dio);
+  }
+
+  @override
+  PaperlessSavedViewsApi createSavedViewsApi(
+    Dio dio, {
+    required int apiVersion,
+  }) {
     return PaperlessSavedViewsApiImpl(dio);
   }
 
   @override
-  PaperlessServerStatsApi createServerStatsApi(Dio dio,
-      {required int apiVersion}) {
+  PaperlessServerStatsApi createServerStatsApi(
+    Dio dio, {
+    required int apiVersion,
+  }) {
     return PaperlessServerStatsApiImpl(dio);
   }
 
@@ -46,5 +55,10 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
       return PaperlessUserApiV3Impl(dio);
     }
     return PaperlessUserApiV2Impl(dio);
+  }
+
+  @override
+  PaperlessGroupsApi createGroupsApi(Dio dio, {required int apiVersion}) {
+    return PaperlessGroupsApiImpl(dio);
   }
 }

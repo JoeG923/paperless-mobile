@@ -7,10 +7,7 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 
 class BulkDeleteConfirmationDialog extends StatelessWidget {
   final DocumentsState state;
-  const BulkDeleteConfirmationDialog({
-    super.key,
-    required this.state,
-  });
+  const BulkDeleteConfirmationDialog({super.key, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +18,11 @@ class BulkDeleteConfirmationDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            S.of(context)!.areYouSureYouWantToDeleteTheFollowingDocuments(
-                state.selection.length),
+            S
+                .of(context)!
+                .areYouSureYouWantToDeleteTheFollowingDocuments(
+                  state.selection.length,
+                ),
           ),
           const SizedBox(height: 16),
           ...state.selection.map(_buildBulletPoint),
@@ -47,9 +47,7 @@ class BulkDeleteConfirmationDialog extends StatelessWidget {
         doc.title.isEmpty ? '-' : doc.title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }

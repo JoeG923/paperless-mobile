@@ -37,13 +37,13 @@ class SavedView with EquatableMixin {
 
   @override
   List<Object?> get props => [
-        name,
-        showOnDashboard,
-        showInSidebar,
-        sortField,
-        sortReverse,
-        filterRules
-      ];
+    name,
+    showOnDashboard,
+    showInSidebar,
+    sortField,
+    sortReverse,
+    filterRules,
+  ];
 
   factory SavedView.fromJson(Map<String, dynamic> json) =>
       _$SavedViewFromJson(json);
@@ -87,12 +87,12 @@ class SavedView with EquatableMixin {
     required bool showInSidebar,
     required bool showOnDashboard,
   }) : this(
-          id: null,
-          name: name,
-          filterRules: FilterRule.fromFilter(filter),
-          sortField: filter.sortField,
-          showInSidebar: showInSidebar,
-          showOnDashboard: showOnDashboard,
-          sortReverse: filter.sortOrder == SortOrder.descending,
-        );
+         id: null,
+         name: name,
+         filterRules: FilterRule.fromFilter(filter),
+         sortField: filter.sortField,
+         showInSidebar: showInSidebar,
+         showOnDashboard: showOnDashboard,
+         sortReverse: filter.sortOrder == SortOrder.descending,
+       );
 }

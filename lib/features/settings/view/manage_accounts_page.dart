@@ -66,9 +66,9 @@ class ManageAccountsPage extends StatelessWidget {
                       onSelected: (value) async {
                         if (value == 0) {
                           Navigator.of(context).pop();
-                          await context
-                              .read<AuthenticationCubit>()
-                              .logout(true);
+                          await context.read<AuthenticationCubit>().logout(
+                            true,
+                          );
                         }
                       },
                     ),
@@ -87,8 +87,9 @@ class ManageAccountsPage extends StatelessWidget {
                                 value: 0,
                                 child: ListTile(
                                   title: Text(S.of(context)!.switchAccount),
-                                  leading:
-                                      const Icon(Icons.switch_account_rounded),
+                                  leading: const Icon(
+                                    Icons.switch_account_rounded,
+                                  ),
                                 ),
                               ),
                               PopupMenuItem(
@@ -100,7 +101,7 @@ class ManageAccountsPage extends StatelessWidget {
                                     color: Colors.red,
                                   ),
                                 ),
-                              )
+                              ),
                             ];
                           },
                           onSelected: (value) async {

@@ -16,8 +16,9 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitleStyle =
-        Theme.of(context).textTheme.labelMedium?.apply(color: Colors.grey);
+    final subtitleStyle = Theme.of(
+      context,
+    ).textTheme.labelMedium?.apply(color: Colors.grey);
     final labelRepository = context.watch<LabelRepository>();
     final documentType = document.documentType == null
         ? null
@@ -26,8 +27,9 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(
-        text: DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-            .format(document.created),
+        text: DateFormat.yMMMMd(
+          Localizations.localeOf(context).toString(),
+        ).format(document.created),
         style: subtitleStyle,
         children: documentType != null
             ? [
@@ -40,10 +42,7 @@ class DateAndDocumentTypeLabelWidget extends StatelessWidget {
                       onTap: onDocumentTypeSelected != null
                           ? () => onDocumentTypeSelected!(document.documentType)
                           : null,
-                      child: Text(
-                        documentType.name,
-                        style: subtitleStyle,
-                      ),
+                      child: Text(documentType.name, style: subtitleStyle),
                     ),
                   ),
                 ),

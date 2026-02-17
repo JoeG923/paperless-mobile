@@ -31,14 +31,16 @@ class DocumentMetaDataWidget extends StatelessWidget {
             document: document,
           ).paddedOnly(bottom: itemSpacing),
         DetailsItem.text(
-          DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-              .format(document.modified),
+          DateFormat.yMMMMd(
+            Localizations.localeOf(context).toString(),
+          ).format(document.modified),
           context: context,
           label: S.of(context)!.modifiedAt,
         ).paddedOnly(bottom: itemSpacing),
         DetailsItem.text(
-          DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-              .format(document.added),
+          DateFormat.yMMMMd(
+            Localizations.localeOf(context).toString(),
+          ).format(document.added),
           context: context,
           label: S.of(context)!.addedAt,
         ).paddedOnly(bottom: itemSpacing),

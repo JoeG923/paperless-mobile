@@ -5,24 +5,15 @@ import 'package:paperless_mobile/features/settings/model/color_scheme_option.dar
 
 const _classicThemeColorSeed = Colors.lightGreen;
 
-const _defaultListTileTheme = ListTileThemeData(
-  tileColor: Colors.transparent,
-);
+const _defaultListTileTheme = ListTileThemeData(tileColor: Colors.transparent);
 
 final _defaultCardTheme = CardThemeData(
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
-  ),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
 );
 
 final _defaultInputDecorationTheme = InputDecorationTheme(
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(16),
-  ),
-  contentPadding: const EdgeInsets.symmetric(
-    horizontal: 16.0,
-    vertical: 16.0,
-  ),
+  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
 );
 
 ThemeData buildTheme({
@@ -57,9 +48,7 @@ ThemeData buildTheme({
     inputDecorationTheme: _defaultInputDecorationTheme,
     listTileTheme: _defaultListTileTheme,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    appBarTheme: const AppBarTheme(
-      scrolledUnderElevation: 0,
-    ),
+    appBarTheme: const AppBarTheme(scrolledUnderElevation: 0),
     chipTheme: ChipThemeData(
       backgroundColor: colorScheme.surfaceContainerHighest,
       checkmarkColor: colorScheme.onSurfaceVariant,
@@ -72,7 +61,8 @@ SystemUiOverlayStyle buildOverlayStyle(
   ThemeData theme, {
   Color? systemNavigationBarColor,
 }) {
-  final color = systemNavigationBarColor ??
+  final color =
+      systemNavigationBarColor ??
       ElevationOverlay.applySurfaceTint(
         theme.colorScheme.surface,
         theme.colorScheme.surfaceTint,
@@ -80,18 +70,18 @@ SystemUiOverlayStyle buildOverlayStyle(
       );
   return switch (theme.brightness) {
     Brightness.light => SystemUiOverlayStyle.dark.copyWith(
-        systemNavigationBarColor: color,
-        systemNavigationBarDividerColor: color,
-        statusBarColor: theme.colorScheme.surface,
-        // statusBarColor: theme.colorScheme.background,
-        // systemNavigationBarDividerColor: theme.colorScheme.surface,
-      ),
+      systemNavigationBarColor: color,
+      systemNavigationBarDividerColor: color,
+      statusBarColor: theme.colorScheme.surface,
+      // statusBarColor: theme.colorScheme.background,
+      // systemNavigationBarDividerColor: theme.colorScheme.surface,
+    ),
     Brightness.dark => SystemUiOverlayStyle.light.copyWith(
-        systemNavigationBarColor: color,
-        systemNavigationBarDividerColor: color,
-        statusBarColor: theme.colorScheme.surface,
-        // statusBarColor: theme.colorScheme.background,
-        // systemNavigationBarDividerColor: theme.colorScheme.surface,
-      ),
+      systemNavigationBarColor: color,
+      systemNavigationBarDividerColor: color,
+      statusBarColor: theme.colorScheme.surface,
+      // statusBarColor: theme.colorScheme.background,
+      // systemNavigationBarDividerColor: theme.colorScheme.surface,
+    ),
   };
 }

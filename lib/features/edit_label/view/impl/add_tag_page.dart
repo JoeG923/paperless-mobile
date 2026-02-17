@@ -16,9 +16,7 @@ class AddTagPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: AddLabelPage<Tag>(
         pageTitle: Text(S.of(context)!.addTag),
         fromJsonT: Tag.fromJson,
@@ -28,12 +26,11 @@ class AddTagPage extends StatelessWidget {
           FormBuilderColorPickerField(
             name: Tag.colorKey,
             valueTransformer: (color) => color?.toHex(),
-            decoration: InputDecoration(
-              label: Text(S.of(context)!.color),
-            ),
+            decoration: InputDecoration(label: Text(S.of(context)!.color)),
             colorPickerType: ColorPickerType.materialPicker,
-            initialValue: Color((Random().nextDouble() * 0xFFFFFF).toInt())
-                .withAlpha(255),
+            initialValue: Color(
+              (Random().nextDouble() * 0xFFFFFF).toInt(),
+            ).withAlpha(255),
             readOnly: true,
           ),
           FormBuilderField<bool>(

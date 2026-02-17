@@ -19,17 +19,25 @@ class HiveBoxes {
   static const localUserCredentials = 'localUserCredentials';
   static const localUserAccount = 'localUserAccount';
   static const localUserAppState = 'localUserAppState';
+  static const documentListCache = 'documentListCache';
+  static const labelCache = 'labelCache';
+  static const customFieldCache = 'customFieldCache';
+  static const pendingUploadTaskIds = 'pendingUploadTaskIds';
   static const hosts = 'hosts';
   static const hintStateBox = 'hintStateBox';
 
   static List<String> get all => [
-        globalSettings,
-        localUserCredentials,
-        localUserAccount,
-        localUserAppState,
-        hintStateBox,
-        hosts,
-      ];
+    globalSettings,
+    localUserCredentials,
+    localUserAccount,
+    localUserAppState,
+    documentListCache,
+    labelCache,
+    customFieldCache,
+    hintStateBox,
+    pendingUploadTaskIds,
+    hosts,
+  ];
 }
 
 class HiveTypeIds {

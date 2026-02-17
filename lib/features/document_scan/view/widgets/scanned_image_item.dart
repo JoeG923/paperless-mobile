@@ -30,6 +30,15 @@ class ScannedImageItem extends StatefulWidget {
 }
 
 class _ScannedImageItemState extends State<ScannedImageItem> {
+  String _localizedText(
+    BuildContext context,
+    String Function(S localizations) extractor,
+    String fallback,
+  ) {
+    final localizations = S.of(context);
+    return localizations == null ? fallback : extractor(localizations);
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -42,9 +51,7 @@ class _ScannedImageItemState extends State<ScannedImageItem> {
     final borderRadius = BorderRadius.circular(12);
     return ClipRRect(
       child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: borderRadius,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
         clipBehavior: Clip.antiAliasWithSaveLayer,
         child: Stack(
           clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -64,9 +71,7 @@ class _ScannedImageItemState extends State<ScannedImageItem> {
                           fit: BoxFit.cover,
                           clipBehavior: Clip.antiAliasWithSaveLayer,
                           alignment: Alignment.center,
-                          child: Image.file(
-                            widget.file,
-                          ),
+                          child: Image.file(widget.file),
                         ),
                       ),
                       Positioned(
@@ -98,7 +103,9 @@ class _ScannedImageItemState extends State<ScannedImageItem> {
               alignment: Alignment.bottomCenter,
               child: TextButton(
                 onPressed: widget.onDelete,
-                child: const Text("Remove"),
+                child: Text(
+                  _localizedText(context, (l10n) => l10n.remove, 'Remove'),
+                ),
               ),
             ),
           ],
@@ -113,7 +120,8 @@ class _ScannedImageItemState extends State<ScannedImageItem> {
         builder: (context) => Scaffold(
           appBar: AppBar(
             title: Text(
-                "${S.of(context)!.scan} ${widget.index + 1}/${widget.totalNumberOfFiles}"),
+              "${_localizedText(context, (l10n) => l10n.scan, 'Scan')} ${widget.index + 1}/${widget.totalNumberOfFiles}",
+            ),
           ),
           body: PhotoView(imageProvider: FileImage(widget.file)),
         ),

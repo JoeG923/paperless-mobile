@@ -12,9 +12,7 @@ class PaperlessUserApiV2Impl implements PaperlessUserApi {
     try {
       final response = await client.get(
         "/api/ui_settings/",
-        options: Options(
-          validateStatus: (status) => status == 200,
-        ),
+        options: Options(validateStatus: (status) => status == 200),
       );
       return response.data['user_id'];
     } on DioException catch (exception) {

@@ -4,8 +4,11 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/features/paged_document_view/cubit/document_paging_bloc_mixin.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 
-mixin DocumentPagingViewMixin<T extends StatefulWidget,
-    Bloc extends DocumentPagingBlocMixin> on State<T> {
+mixin DocumentPagingViewMixin<
+  T extends StatefulWidget,
+  Bloc extends DocumentPagingBlocMixin
+>
+    on State<T> {
   ScrollController get pagingScrollController;
 
   @override

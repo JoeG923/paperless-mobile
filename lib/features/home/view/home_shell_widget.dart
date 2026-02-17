@@ -6,6 +6,8 @@ import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/hive/hive_extensions.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_app_state.dart';
 import 'package:paperless_mobile/core/factory/paperless_api_factory.dart';
+import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
+import 'package:paperless_mobile/core/repository/group_repository.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/repository/saved_view_repository.dart';
 import 'package:paperless_mobile/core/repository/user_repository.dart';
@@ -18,6 +20,7 @@ import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/features/labels/cubit/label_cubit.dart';
 import 'package:paperless_mobile/features/saved_view/cubit/saved_view_cubit.dart';
 import 'package:paperless_mobile/features/settings/view/widgets/global_settings_builder.dart';
+import 'package:paperless_mobile/features/tasks/model/pending_upload_task_store.dart';
 import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
 import 'package:provider/provider.dart';
 
@@ -48,8 +51,9 @@ class HomeShellWidget extends StatelessWidget {
         final currentUserId = settings.loggedInUserId;
         final apiVersion = ApiVersion(paperlessApiVersion);
         return ValueListenableBuilder(
-          valueListenable:
-              Hive.localUserAccountBox.listenable(keys: [currentUserId]),
+          valueListenable: Hive.localUserAccountBox.listenable(
+            keys: [currentUserId],
+          ),
           builder: (context, box, _) {
             if (currentUserId == null) {
               //This only happens during logout...
@@ -67,17 +71,18 @@ class HomeShellWidget extends StatelessWidget {
                     Config(
                       // Isolated cache per user.
                       localUserId,
-                      fileService:
-                          DioFileService(context.read<SessionManager>().client),
+                      fileService: DioFileService(
+                        context.read<SessionManager>().client,
+                      ),
                     ),
                   ),
                 ),
                 Provider(
                   create: (context) =>
                       paperlessProviderFactory.createDocumentsApi(
-                    context.read<SessionManager>().client,
-                    apiVersion: paperlessApiVersion,
-                  ),
+                        context.read<SessionManager>().client,
+                        apiVersion: paperlessApiVersion,
+                      ),
                 ),
                 Provider(
                   create: (context) => paperlessProviderFactory.createLabelsApi(
@@ -87,17 +92,24 @@ class HomeShellWidget extends StatelessWidget {
                 ),
                 Provider(
                   create: (context) =>
+                      paperlessProviderFactory.createCustomFieldsApi(
+                        context.read<SessionManager>().client,
+                        apiVersion: paperlessApiVersion,
+                      ),
+                ),
+                Provider(
+                  create: (context) =>
                       paperlessProviderFactory.createSavedViewsApi(
-                    context.read<SessionManager>().client,
-                    apiVersion: paperlessApiVersion,
-                  ),
+                        context.read<SessionManager>().client,
+                        apiVersion: paperlessApiVersion,
+                      ),
                 ),
                 Provider(
                   create: (context) =>
                       paperlessProviderFactory.createServerStatsApi(
-                    context.read<SessionManager>().client,
-                    apiVersion: paperlessApiVersion,
-                  ),
+                        context.read<SessionManager>().client,
+                        apiVersion: paperlessApiVersion,
+                      ),
                 ),
                 Provider(
                   create: (context) => paperlessProviderFactory.createTasksApi(
@@ -112,23 +124,35 @@ class HomeShellWidget extends StatelessWidget {
                       apiVersion: paperlessApiVersion,
                     ),
                   ),
+                if (currentLocalUser.hasMultiUserSupport)
+                  Provider(
+                    create: (context) =>
+                        paperlessProviderFactory.createGroupsApi(
+                          context.read<SessionManager>().client,
+                          apiVersion: paperlessApiVersion,
+                        ),
+                  ),
               ],
               builder: (context, _) {
                 return MultiProvider(
                   providers: [
                     ChangeNotifierProvider(
                       create: (context) {
-                        return LabelRepository(context.read())
-                          ..initialize(
-                            loadCorrespondents: currentLocalUser
-                                .paperlessUser.canViewCorrespondents,
-                            loadDocumentTypes: currentLocalUser
-                                .paperlessUser.canViewDocumentTypes,
-                            loadStoragePaths: currentLocalUser
-                                .paperlessUser.canViewStoragePaths,
-                            loadTags:
-                                currentLocalUser.paperlessUser.canViewTags,
-                          );
+                        return LabelRepository(
+                          context.read(),
+                          userId: currentLocalUser.id,
+                        )..initialize(
+                          loadCorrespondents: currentLocalUser
+                              .paperlessUser
+                              .canViewCorrespondents,
+                          loadDocumentTypes: currentLocalUser
+                              .paperlessUser
+                              .canViewDocumentTypes,
+                          loadStoragePaths: currentLocalUser
+                              .paperlessUser
+                              .canViewStoragePaths,
+                          loadTags: currentLocalUser.paperlessUser.canViewTags,
+                        );
                       },
                     ),
                     ChangeNotifierProvider(
@@ -142,10 +166,28 @@ class HomeShellWidget extends StatelessWidget {
                     ),
                     if (currentLocalUser.hasMultiUserSupport)
                       Provider(
-                        create: (context) => UserRepository(
-                          context.read(),
-                        )..initialize(),
+                        create: (context) =>
+                            UserRepository(context.read())..initialize(),
                       ),
+                    if (currentLocalUser.hasMultiUserSupport)
+                      Provider(
+                        create: (context) =>
+                            GroupRepository(context.read())..initialize(),
+                      ),
+                    ChangeNotifierProvider(
+                      create: (context) {
+                        final repository = CustomFieldRepository(
+                          context.read(),
+                          userId: currentLocalUser.id,
+                        );
+                        if (currentLocalUser
+                            .paperlessUser
+                            .canViewCustomFields) {
+                          repository.initialize();
+                        }
+                        return repository;
+                      },
+                    ),
                   ],
                   builder: (context, _) {
                     return MultiProvider(
@@ -156,8 +198,8 @@ class HomeShellWidget extends StatelessWidget {
                             context.read(),
                             context.read(),
                             Hive.box<LocalUserAppState>(
-                                    HiveBoxes.localUserAppState)
-                                .get(currentUserId)!,
+                              HiveBoxes.localUserAppState,
+                            ).get(currentUserId)!,
                             context.read(),
                           )..initialize(),
                         ),
@@ -174,6 +216,7 @@ class HomeShellWidget extends StatelessWidget {
                               context.read(),
                               context.read(),
                               context.read(),
+                              userId: currentLocalUser.id,
                             );
                             if (currentLocalUser.paperlessUser.canViewInbox) {
                               inboxCubit.initialize();
@@ -182,18 +225,16 @@ class HomeShellWidget extends StatelessWidget {
                           },
                         ),
                         Provider(
-                          create: (context) => SavedViewCubit(
-                            context.read(),
-                          ),
+                          create: (context) => SavedViewCubit(context.read()),
                         ),
                         Provider(
-                          create: (context) => LabelCubit(
-                            context.read(),
-                          ),
+                          create: (context) => LabelCubit(context.read()),
                         ),
                         ChangeNotifierProvider(
                           create: (context) => PendingTasksNotifier(
                             context.read(),
+                            userId: currentLocalUser.id,
+                            taskStore: HivePendingUploadTaskStore(),
                           ),
                         ),
                       ],

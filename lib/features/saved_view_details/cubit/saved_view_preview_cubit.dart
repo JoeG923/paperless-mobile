@@ -61,8 +61,8 @@ class SavedViewPreviewCubit extends Cubit<SavedViewPreviewState> {
   }
 
   Future<void> initialize() async {
-    final isConnected =
-        await _connectivityStatusService.isConnectedToInternet();
+    final isConnected = await _connectivityStatusService
+        .isConnectedToInternet();
     if (!isConnected) {
       emit(const OfflineSavedViewPreviewState());
       return;
@@ -70,10 +70,7 @@ class SavedViewPreviewCubit extends Cubit<SavedViewPreviewState> {
     emit(const LoadingSavedViewPreviewState());
     try {
       final documents = await _api.findAll(
-        view.toDocumentFilter().copyWith(
-              page: 1,
-              pageSize: 5,
-            ),
+        view.toDocumentFilter().copyWith(page: 1, pageSize: 5),
       );
       emit(LoadedSavedViewPreviewState(documents: documents.results));
     } catch (e) {

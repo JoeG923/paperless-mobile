@@ -18,7 +18,8 @@ Page<T> accessiblePlatformPage<T>({
   bool maintainState = true,
   String? title,
 }) {
-  final shouldDisableAnimations = WidgetsBinding.instance.disableAnimations ||
+  final shouldDisableAnimations =
+      WidgetsBinding.instance.disableAnimations ||
       Hive.globalSettingsBox.getValue()!.disableAnimations;
   if (shouldDisableAnimations) {
     return NoTransitionPage(

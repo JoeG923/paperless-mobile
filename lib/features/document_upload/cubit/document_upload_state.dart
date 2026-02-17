@@ -5,9 +5,7 @@ class DocumentUploadState {
   static const _uploadProgressSentinel = Object();
 
   final double? uploadProgress;
-  const DocumentUploadState({
-    this.uploadProgress,
-  });
+  const DocumentUploadState({this.uploadProgress});
 
   DocumentUploadState copyWith({
     Object? uploadProgress = _uploadProgressSentinel,

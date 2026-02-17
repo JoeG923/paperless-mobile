@@ -27,11 +27,9 @@ import 'package:paperless_mobile/routing/routes/app_logs_route.dart';
 class AddAccountPage extends StatefulWidget {
   final FutureOr<void> Function(
     BuildContext context,
-    String username,
-    String password,
+    LoginFormCredentials credentials,
     String serverUrl,
     ClientCertificate? clientCertificate,
-    String? mfaCode,
   )
   onSubmit;
 
@@ -88,7 +86,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                   height: 150,
                 ),
                 Text(
-                  'Paperless Mobile',
+                  S.of(context)!.paperlessMobileAppName,
                   style: Theme.of(context).textTheme.displaySmall,
                 ).padded(),
                 SizedBox(height: 24),
@@ -496,11 +494,9 @@ class _AddAccountPageState extends State<AddAccountPage> {
       try {
         await widget.onSubmit(
           context,
-          credentials.username!,
-          credentials.password!,
+          credentials,
           form[ServerAddressFormField.fkServerAddress],
           clientCertFormModel,
-          credentials.mfaCode,
         );
       } on PaperlessApiException catch (error) {
         if (mounted) showErrorMessage(context, error);

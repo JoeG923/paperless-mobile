@@ -7,6 +7,7 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/interceptor/api_version_interceptor.dart';
 import 'package:paperless_mobile/core/interceptor/dio_offline_interceptor.dart';
 import 'package:paperless_mobile/core/interceptor/dio_unauthorized_interceptor.dart';
+import 'package:paperless_mobile/core/security/auth_header_configuration.dart';
 import 'package:paperless_mobile/core/interceptor/retry_on_connection_change_interceptor.dart';
 import 'package:paperless_mobile/core/security/session_manager.dart';
 import 'package:paperless_mobile/core/security/trusted_certificate_store.dart';
@@ -18,9 +19,11 @@ import 'package:paperless_mobile/features/login/model/client_certificate.dart';
 class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
   @override
   Dio get client => value;
+  AuthHeaderConfiguration _authHeaderConfiguration =
+      const AuthHeaderConfiguration.standard();
 
   SessionManagerImpl([List<Interceptor> interceptors = const []])
-      : super(_initDio(interceptors));
+    : super(_initDio(interceptors));
 
   static Dio _initDio(List<Interceptor> interceptors) {
     //en- and decoded by utf8 by default
@@ -42,7 +45,7 @@ class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
       DioUnauthorizedInterceptor(),
       DioHttpErrorInterceptor(),
       DioOfflineInterceptor(),
-      RetryOnConnectionChangeInterceptor(dio: dio)
+      RetryOnConnectionChangeInterceptor(dio: dio),
     ]);
     return dio;
   }
@@ -52,7 +55,19 @@ class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
     String? baseUrl,
     String? authToken,
     ClientCertificate? clientCertificate,
+    AuthHeaderConfiguration? authHeaderConfiguration,
   }) {
+    if (authHeaderConfiguration != null) {
+      final normalizedConfiguration = _normalizeAuthHeaderConfiguration(
+        authHeaderConfiguration,
+      );
+      if (_authHeaderConfiguration.headerName !=
+          normalizedConfiguration.headerName) {
+        client.options.headers.remove(_authHeaderConfiguration.headerName);
+      }
+      _authHeaderConfiguration = normalizedConfiguration;
+    }
+
     if (clientCertificate != null) {
       final context = SecurityContext()
         ..usePrivateKeyBytes(
@@ -75,8 +90,14 @@ class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
     }
 
     if (authToken != null) {
+      final formattedToken = _authHeaderConfiguration.format(authToken);
+      if (formattedToken.isEmpty) {
+        client.options.headers.remove(_authHeaderConfiguration.headerName);
+        notifyListeners();
+        return;
+      }
       client.options.headers.addAll({
-        HttpHeaders.authorizationHeader: 'Token $authToken',
+        _authHeaderConfiguration.headerName: formattedToken,
       });
     }
 
@@ -87,7 +108,8 @@ class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
   void resetSettings() {
     client.httpClientAdapter = _buildAdapter();
     client.options.baseUrl = '';
-    client.options.headers.remove(HttpHeaders.authorizationHeader);
+    client.options.headers.remove(_authHeaderConfiguration.headerName);
+    _authHeaderConfiguration = const AuthHeaderConfiguration.standard();
     notifyListeners();
   }
 
@@ -97,11 +119,31 @@ class SessionManagerImpl extends ValueNotifier<Dio> implements SessionManager {
   }
 
   static HttpClient _buildHttpClient({SecurityContext? context}) {
-    final client = context == null ? HttpClient() : HttpClient(context: context);
+    final client = context == null
+        ? HttpClient()
+        : HttpClient(context: context);
     client.badCertificateCallback = (cert, host, port) {
       TrustedCertificateStore.rememberUntrustedCertificate(cert, host, port);
       return TrustedCertificateStore.isCertificateTrusted(cert, host, port);
     };
     return client;
+  }
+
+  AuthHeaderConfiguration _normalizeAuthHeaderConfiguration(
+    AuthHeaderConfiguration configuration,
+  ) {
+    final normalizedHeaderName = configuration.headerName.trim().toLowerCase();
+    if (!AuthHeaderConfiguration.isValidHeaderName(normalizedHeaderName)) {
+      return const AuthHeaderConfiguration.standard();
+    }
+    final normalizedPrefix = configuration.valuePrefix == null
+        ? null
+        : AuthHeaderConfiguration.sanitizeHeaderValue(
+            configuration.valuePrefix!,
+          );
+    return AuthHeaderConfiguration(
+      headerName: normalizedHeaderName,
+      valuePrefix: normalizedPrefix?.isEmpty ?? true ? null : normalizedPrefix,
+    );
   }
 }

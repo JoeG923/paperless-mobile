@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/model/info_message_exception.dart';
 import 'package:paperless_mobile/features/login/cubit/authentication_cubit.dart';
-import 'package:paperless_mobile/features/login/model/login_form_credentials.dart';
 import 'package:paperless_mobile/features/login/view/add_account_page.dart';
 import 'package:paperless_mobile/features/settings/view/dialogs/switch_account_dialog.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
@@ -15,10 +14,7 @@ import 'package:paperless_mobile/routing/routes.dart';
 
 part 'add_account_route.g.dart';
 
-@TypedGoRoute<AddAccountRoute>(
-  path: '/add-account',
-  name: R.addAccount,
-)
+@TypedGoRoute<AddAccountRoute>(path: '/add-account', name: R.addAccount)
 class AddAccountRoute extends GoRouteData with $AddAccountRoute {
   const AddAccountRoute();
 
@@ -29,22 +25,18 @@ class AddAccountRoute extends GoRouteData with $AddAccountRoute {
     return NoTransitionPage(
       child: AddAccountPage(
         titleText: S.of(context)!.addAccount,
-        onSubmit: (context, username, password, serverUrl, clientCertificate,
-            mfaCode) async {
+        onSubmit: (context, credentials, serverUrl, clientCertificate) async {
           try {
             final userId = await context.read<AuthenticationCubit>().addAccount(
-                  credentials: LoginFormCredentials(
-                    username: username,
-                    password: password,
-                    mfaCode: mfaCode,
-                  ),
-                  clientCertificate: clientCertificate,
-                  serverUrl: serverUrl,
-                  enableBiometricAuthentication: false,
-                  locale: Intl.getCurrentLocale(),
-                );
+              credentials: credentials,
+              clientCertificate: clientCertificate,
+              serverUrl: serverUrl,
+              enableBiometricAuthentication: false,
+              locale: Intl.getCurrentLocale(),
+            );
             if (!context.mounted) return;
-            final shouldSwitch = await showDialog<bool>(
+            final shouldSwitch =
+                await showDialog<bool>(
                   context: context,
                   builder: (context) => const SwitchAccountDialog(),
                 ) ??
@@ -62,7 +54,9 @@ class AddAccountRoute extends GoRouteData with $AddAccountRoute {
             if (exception.hasUnspecificErrorMessage()) {
               if (context.mounted) {
                 showLocalizedError(
-                    context, exception.unspecificErrorMessage()!);
+                  context,
+                  exception.unspecificErrorMessage()!,
+                );
               }
               // context.pop();
             } else {

@@ -53,10 +53,7 @@ class LabelTabView<T extends Label> extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    emptyStateDescription,
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(emptyStateDescription, textAlign: TextAlign.center),
                   TextButton(
                     onPressed: canAddNew ? onAddNew : null,
                     child: Text(emptyStateActionButtonLabel),
@@ -67,26 +64,26 @@ class LabelTabView<T extends Label> extends StatelessWidget {
           );
         }
         return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final l = sortedLabels.elementAt(index);
-              return LabelItem<T>(
-                name: l.name,
-                content: contentBuilder?.call(l) ??
-                    Text(
-                      translateMatchingAlgorithmName(
-                              context, l.matchingAlgorithm) +
-                          (l.match.isNotEmpty ? ": ${l.match}" : ""),
-                      maxLines: 2,
-                    ),
-                onOpenEditPage: canEdit ? onEdit : null,
-                filterBuilder: filterBuilder,
-                leading: leadingBuilder?.call(l),
-                label: l,
-              );
-            },
-            childCount: labels.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final l = sortedLabels.elementAt(index);
+            return LabelItem<T>(
+              name: l.name,
+              content:
+                  contentBuilder?.call(l) ??
+                  Text(
+                    translateMatchingAlgorithmName(
+                          context,
+                          l.matchingAlgorithm,
+                        ) +
+                        (l.match.isNotEmpty ? ": ${l.match}" : ""),
+                    maxLines: 2,
+                  ),
+              onOpenEditPage: canEdit ? onEdit : null,
+              filterBuilder: filterBuilder,
+              leading: leadingBuilder?.call(l),
+              label: l,
+            );
+          }, childCount: labels.length),
         );
       },
     );

@@ -18,13 +18,13 @@ class DocumentMetaData {
   });
 
   DocumentMetaData.fromJson(Map<String, dynamic> json)
-      : originalChecksum = json['original_checksum'],
-        originalSize = json['original_size'],
-        originalMimeType = json['original_mime_type'],
-        mediaFilename = json['media_filename'],
-        hasArchiveVersion = json['has_archive_version'],
-        archiveChecksum = json['archive_checksum'],
-        archiveSize = json['archive_size'];
+    : originalChecksum = json['original_checksum'],
+      originalSize = json['original_size'],
+      originalMimeType = json['original_mime_type'],
+      mediaFilename = json['media_filename'],
+      hasArchiveVersion = json['has_archive_version'],
+      archiveChecksum = json['archive_checksum'],
+      archiveSize = json['archive_size'];
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};

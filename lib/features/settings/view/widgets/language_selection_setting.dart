@@ -32,31 +32,34 @@ class _LanguageSelectionSettingState extends State<LanguageSelectionSetting> {
       builder: (context, settings) {
         return ListTile(
           title: Text(S.of(context)!.language),
-          subtitle:
-              Text(_languageOptions[settings.preferredLocaleSubtag]!.name),
-          onTap: () => showDialog<String>(
-            context: context,
-            builder: (_) => RadioSettingsDialog<String>(
-              // footer: const Text(
-              //   "* Not fully translated yet. Some words may be displayed in English!",
-              // ),
-              titleText: S.of(context)!.language,
-              options: [
-                for (var language in _languageOptions.entries)
-                  RadioOption(
-                    value: language.key,
-                    label: language.value.name +
-                        (language.value.isComplete ? '' : '*'),
-                  ),
-              ],
-              initialValue: settings.preferredLocaleSubtag,
-            ),
-          ).then((value) {
-            if (value != null) {
-              settings.preferredLocaleSubtag = value;
-              settings.save();
-            }
-          }),
+          subtitle: Text(
+            _languageOptions[settings.preferredLocaleSubtag]!.name,
+          ),
+          onTap: () =>
+              showDialog<String>(
+                context: context,
+                builder: (_) => RadioSettingsDialog<String>(
+                  // footer: const Text(
+                  //   "* Not fully translated yet. Some words may be displayed in English!",
+                  // ),
+                  titleText: S.of(context)!.language,
+                  options: [
+                    for (var language in _languageOptions.entries)
+                      RadioOption(
+                        value: language.key,
+                        label:
+                            language.value.name +
+                            (language.value.isComplete ? '' : '*'),
+                      ),
+                  ],
+                  initialValue: settings.preferredLocaleSubtag,
+                ),
+              ).then((value) {
+                if (value != null) {
+                  settings.preferredLocaleSubtag = value;
+                  settings.save();
+                }
+              }),
         );
       },
     );

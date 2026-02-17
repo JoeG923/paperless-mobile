@@ -12,10 +12,7 @@ import 'package:paperless_mobile/helpers/message_helpers.dart';
 
 class ArchiveSerialNumberField extends StatefulWidget {
   final DocumentModel document;
-  const ArchiveSerialNumberField({
-    super.key,
-    required this.document,
-  });
+  const ArchiveSerialNumberField({super.key, required this.document});
 
   @override
   State<ArchiveSerialNumberField> createState() =>
@@ -40,15 +37,18 @@ class _ArchiveSerialNumberFieldState extends State<ArchiveSerialNumberField> {
   void _clearButtonListener() {
     setState(() {
       _showClearButton = _asnEditingController.text.isNotEmpty;
-      _canUpdate = int.tryParse(_asnEditingController.text) !=
+      _canUpdate =
+          int.tryParse(_asnEditingController.text) !=
           widget.document.archiveSerialNumber;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final userCanEditDocument =
-        context.watch<LocalUserAccount>().paperlessUser.canEditDocuments;
+    final userCanEditDocument = context
+        .watch<LocalUserAccount>()
+        .paperlessUser
+        .canEditDocuments;
     return BlocListener<DocumentDetailsCubit, DocumentDetailsState>(
       listenWhen: (previous, current) =>
           previous.status == LoadingStatus.loaded &&
@@ -72,9 +72,7 @@ class _ArchiveSerialNumberFieldState extends State<ArchiveSerialNumberField> {
             onChanged: (value) {
               setState(() => _errors = {});
             },
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onFieldSubmitted: (_) => _onSubmitted(),
             decoration: InputDecoration(
               suffixIcon: Row(
@@ -93,8 +91,8 @@ class _ArchiveSerialNumberFieldState extends State<ArchiveSerialNumberField> {
                     color: Theme.of(context).colorScheme.primary,
                     onPressed:
                         context.watchInternetConnection && !_showClearButton
-                            ? _onAutoAssign
-                            : null,
+                        ? _onAutoAssign
+                        : null,
                   ).paddedOnly(right: 8),
                 ],
               ),
@@ -123,33 +121,26 @@ class _ArchiveSerialNumberFieldState extends State<ArchiveSerialNumberField> {
         .read<DocumentDetailsCubit>()
         .assignAsn(widget.document, asn: asn)
         .then((value) => _onAsnUpdated())
-        .onError<PaperlessApiException>(
-      (error, stackTrace) {
-        if (mounted) showErrorMessage(context, error, stackTrace);
-      },
-    ).onError<PaperlessFormValidationException>(
-      (error, stackTrace) {
-        setState(() => _errors = error.validationMessages);
-      },
-    );
+        .onError<PaperlessApiException>((error, stackTrace) {
+          if (mounted) showErrorMessage(context, error, stackTrace);
+        })
+        .onError<PaperlessFormValidationException>((error, stackTrace) {
+          setState(() => _errors = error.validationMessages);
+        });
     if (mounted) FocusScope.of(context).unfocus();
   }
 
   Future<void> _onAutoAssign() async {
     await context
         .read<DocumentDetailsCubit>()
-        .assignAsn(
-          widget.document,
-          autoAssign: true,
-        )
+        .assignAsn(widget.document, autoAssign: true)
         .then((value) => _onAsnUpdated())
-        .onError<PaperlessApiException>(
-      (error, stackTrace) {
-        if (mounted) showErrorMessage(context, error, stackTrace);
-      },
-    ).catchError((error) {
-      if (mounted) showGenericError(context, error);
-    });
+        .onError<PaperlessApiException>((error, stackTrace) {
+          if (mounted) showErrorMessage(context, error, stackTrace);
+        })
+        .catchError((error) {
+          if (mounted) showGenericError(context, error);
+        });
   }
 
   void _onAsnUpdated() {

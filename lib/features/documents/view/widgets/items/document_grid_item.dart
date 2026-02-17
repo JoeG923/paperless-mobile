@@ -40,8 +40,9 @@ class DocumentGridItem extends DocumentItem {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: _onTap,
-            onLongPress:
-                onSelected != null ? () => onSelected!(document) : null,
+            onLongPress: onSelected != null
+                ? () => onSelected!(document)
+                : null,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -132,15 +133,13 @@ class DocumentGridItem extends DocumentItem {
                             if (document.archiveSerialNumber != null)
                               Text(
                                 '#${document.archiveSerialNumber!}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
                                     ),
-                              )
+                              ),
                           ],
                         ),
                       ],

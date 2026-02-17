@@ -25,9 +25,7 @@ class AddLabelPage<T extends Label> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read<LabelRepository>(),
-      ),
+      create: (context) => LabelCubit(context.read<LabelRepository>()),
       child: AddLabelFormWidget(
         pageTitle: pageTitle,
         label: initialName != null ? fromJsonT({'name': initialName}) : null,
@@ -58,9 +56,7 @@ class AddLabelFormWidget<T extends Label> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: pageTitle,
-      ),
+      appBar: AppBar(title: pageTitle),
       body: LabelForm<T>(
         autofocusNameField: true,
         initialValue: label,

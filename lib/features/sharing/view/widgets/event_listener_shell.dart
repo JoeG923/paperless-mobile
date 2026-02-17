@@ -16,6 +16,7 @@ import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/service/document_upload_service.dart';
 import 'package:paperless_mobile/features/document_upload/model/document_upload_result.dart';
+import 'package:paperless_mobile/features/document_upload/util/upload_task_tracker.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/features/notifications/services/local_notification_service.dart';
 import 'package:paperless_mobile/features/sharing/cubit/receive_share_cubit.dart';
@@ -182,7 +183,7 @@ Future<void> consumeLocalFile(
     if (!context.mounted) return;
     showSnackBar(
       context,
-      "Could not consume $filename", //TODO: INTL
+      S.of(context)!.couldNotConsumeFile(filename),
       details: S.of(context)!.youreOffline,
     );
     return;
@@ -190,15 +191,20 @@ Future<void> consumeLocalFile(
   if (!context.mounted) return;
   final consumptionNotifier = context.read<ConsumptionChangeNotifier>();
   final uploadService = DocumentUploadService(context.read(), context.read());
+  final taskNotifier = context.read<PendingTasksNotifier>();
   final shouldDirectlyUpload = Hive.globalSettingsBox
       .getValue()!
       .skipDocumentPreprarationOnUpload;
   if (shouldDirectlyUpload) {
     try {
-      await uploadService.uploadFile(
+      final taskId = await uploadService.uploadFile(
         file.path,
         filename: filename,
         title: p.basenameWithoutExtension(file.path),
+      );
+      trackUploadTaskFromResult(
+        trackTaskId: taskNotifier.listenToTaskChanges,
+        result: DocumentUploadResult.success(taskId),
       );
       consumptionNotifier.discardFile(file, userId: userId);
     } on PaperlessApiException catch (error) {
@@ -220,8 +226,7 @@ Future<void> consumeLocalFile(
       if (!context.mounted) return;
       showSnackBar(
         context,
-        'The shared file is too large to open in preparation mode. '
-        'Enable direct upload or share a smaller file.',
+        S.of(context)!.sharedFileTooLargeForPreparationMode,
       );
       return;
     }
@@ -245,9 +250,10 @@ Future<void> consumeLocalFile(
       }
       await consumptionNotifier.discardFile(file, userId: userId);
 
-      // if (result.taskId != null) {
-      //   taskNotifier.listenToTaskChanges(result.taskId!);
-      // }
+      trackUploadTaskFromResult(
+        trackTaskId: taskNotifier.listenToTaskChanges,
+        result: result,
+      );
       if (exitAppAfterConsumed) {
         SystemNavigator.pop();
       }

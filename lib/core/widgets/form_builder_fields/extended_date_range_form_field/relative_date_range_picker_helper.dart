@@ -50,30 +50,30 @@ class _RelativeDateRangePickerHelperState
               );
             },
           ),
-          SliverToBoxAdapter(child: SizedBox(width: widget.padding.right))
+          SliverToBoxAdapter(child: SizedBox(width: widget.padding.right)),
         ],
       ),
     );
   }
 
   List<_ExtendedDateRangeQueryOption> get _options => [
-        _ExtendedDateRangeQueryOption(
-          S.of(context)!.lastNWeeks(1),
-          const RelativeDateRangeQuery(1, DateRangeUnit.week),
-        ),
-        _ExtendedDateRangeQueryOption(
-          S.of(context)!.lastNMonths(1),
-          const RelativeDateRangeQuery(1, DateRangeUnit.month),
-        ),
-        _ExtendedDateRangeQueryOption(
-          S.of(context)!.lastNMonths(3),
-          const RelativeDateRangeQuery(3, DateRangeUnit.month),
-        ),
-        _ExtendedDateRangeQueryOption(
-          S.of(context)!.lastNYears(1),
-          const RelativeDateRangeQuery(1, DateRangeUnit.year),
-        ),
-      ];
+    _ExtendedDateRangeQueryOption(
+      S.of(context)!.lastNWeeks(1),
+      const RelativeDateRangeQuery(1, DateRangeUnit.week),
+    ),
+    _ExtendedDateRangeQueryOption(
+      S.of(context)!.lastNMonths(1),
+      const RelativeDateRangeQuery(1, DateRangeUnit.month),
+    ),
+    _ExtendedDateRangeQueryOption(
+      S.of(context)!.lastNMonths(3),
+      const RelativeDateRangeQuery(3, DateRangeUnit.month),
+    ),
+    _ExtendedDateRangeQueryOption(
+      S.of(context)!.lastNYears(1),
+      const RelativeDateRangeQuery(1, DateRangeUnit.year),
+    ),
+  ];
 }
 
 class _ExtendedDateRangeQueryOption {

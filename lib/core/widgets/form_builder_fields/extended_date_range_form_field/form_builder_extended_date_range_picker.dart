@@ -44,8 +44,9 @@ class _FormBuilderExtendedDateRangePickerState
       name: widget.name,
       initialValue: widget.initialValue,
       onChanged: (query) {
-        _textEditingController.text =
-            _dateRangeQueryToString(query ?? const UnsetDateRangeQuery());
+        _textEditingController.text = _dateRangeQueryToString(
+          query ?? const UnsetDateRangeQuery(),
+        );
         widget.onChanged?.call(query);
       },
       builder: (field) {
@@ -74,7 +75,7 @@ class _FormBuilderExtendedDateRangePickerState
             RelativeDateRangePickerHelper(
               field: field,
               padding: widget.padding,
-            )
+            ),
             // MediaQuery.removePadding(
             //context: context,
             //removeLeft: true,

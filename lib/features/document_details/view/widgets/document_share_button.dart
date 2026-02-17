@@ -36,10 +36,8 @@ class _DocumentShareButtonState extends State<DocumentShareButton> {
   @override
   Widget build(BuildContext context) {
     return ConnectivityAwareActionWrapper(
-      offlineBuilder: (context, child) => const IconButton(
-        icon: Icon(Icons.share),
-        onPressed: null,
-      ),
+      offlineBuilder: (context, child) =>
+          const IconButton(icon: Icon(Icons.share), onPressed: null),
       child: IconButton(
         tooltip: S.of(context)!.shareTooltip,
         icon: _isDownloadPending
@@ -58,8 +56,9 @@ class _DocumentShareButtonState extends State<DocumentShareButton> {
 
   Future<void> _onShare(DocumentModel document) async {
     try {
-      final globalSettings =
-          Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+      final globalSettings = Hive.box<GlobalSettings>(
+        HiveBoxes.globalSettings,
+      ).getValue()!;
       bool original;
 
       switch (globalSettings.defaultShareType) {
@@ -96,8 +95,8 @@ class _DocumentShareButtonState extends State<DocumentShareButton> {
       setState(() => _isDownloadPending = true);
       if (mounted) {
         await context.read<DocumentDetailsCubit>().shareDocument(
-              shareOriginal: original,
-            );
+          shareOriginal: original,
+        );
       }
     } on PaperlessApiException catch (error, stackTrace) {
       if (mounted) showErrorMessage(context, error, stackTrace);

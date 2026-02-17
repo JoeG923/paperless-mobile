@@ -42,17 +42,17 @@ class Task extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        taskId,
-        taskFileName,
-        dateCreated,
-        dateDone,
-        type,
-        status,
-        result,
-        acknowledged,
-        relatedDocument,
-      ];
+    id,
+    taskId,
+    taskFileName,
+    dateCreated,
+    dateDone,
+    type,
+    status,
+    result,
+    acknowledged,
+    relatedDocument,
+  ];
 
   Task copyWith({
     int? id,

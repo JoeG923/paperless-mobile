@@ -1,9 +1,6 @@
 part of 'document_search_cubit.dart';
 
-enum SearchView {
-  suggestions,
-  results;
-}
+enum SearchView { suggestions, results }
 
 @JsonSerializable(ignoreUnannotated: true)
 class DocumentSearchState extends DocumentPagingState {
@@ -26,12 +23,12 @@ class DocumentSearchState extends DocumentPagingState {
 
   @override
   List<Object?> get props => [
-        ...super.props,
-        searchHistory,
-        suggestions,
-        view,
-        viewType,
-      ];
+    ...super.props,
+    searchHistory,
+    suggestions,
+    view,
+    viewType,
+  ];
 
   @override
   DocumentSearchState copyWithPaged({

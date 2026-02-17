@@ -95,6 +95,32 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
     }
   }
 
+  Future<void> updatePermissions({
+    required Map<String, dynamic> permissions,
+    bool merge = false,
+    int? owner,
+  }) async {
+    assert(state.status == LoadingStatus.loaded);
+    final document = state.document;
+    if (document == null) {
+      return;
+    }
+    try {
+      await _api.bulkAction(
+        BulkSetPermissionsAction(
+          [document.id],
+          setPermissions: permissions,
+          merge: merge,
+          owner: owner,
+        ),
+      );
+      final refreshed = await _api.find(document.id, fullPermissions: true);
+      _notifier.notifyUpdated(refreshed);
+    } on PaperlessApiException catch (e) {
+      addError(TransientPaperlessApiError(code: e.code, details: e.details));
+    }
+  }
+
   Future<void> deleteNote(NoteModel note) async {
     assert(
       state.status == LoadingStatus.loaded,

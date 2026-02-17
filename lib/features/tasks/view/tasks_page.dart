@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dart';
+import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/routing/routes/documents_route.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +44,7 @@ class _TasksPageState extends State<TasksPage> {
         await pendingTasksNotifier.acknowledgeTasks([taskId]);
       }
       if (!mounted) return;
-      showSnackBar(context, 'Task acknowledged.'); // TODO: INTL
+      showSnackBar(context, S.of(context)!.taskAcknowledged);
       await _refresh();
     } on PaperlessApiException catch (error, stackTrace) {
       if (!mounted) return;
@@ -55,7 +56,7 @@ class _TasksPageState extends State<TasksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'), // TODO: INTL
+        title: Text(S.of(context)!.tasksTitle),
         actions: [
           IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh)),
         ],
@@ -80,13 +81,9 @@ class _TasksPageState extends State<TasksPage> {
                 if (snapshot.hasError) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
+                    children: [
                       SizedBox(height: 120),
-                      Center(
-                        child: Text(
-                          'Failed to load tasks.', // TODO: INTL
-                        ),
-                      ),
+                      Center(child: Text(S.of(context)!.couldNotLoadTasks)),
                     ],
                   );
                 }
@@ -94,11 +91,9 @@ class _TasksPageState extends State<TasksPage> {
                 if (tasks.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
+                    children: [
                       SizedBox(height: 120),
-                      Center(
-                        child: Text('No pending tasks.'), // TODO: INTL
-                      ),
+                      Center(child: Text(S.of(context)!.noPendingTasks)),
                     ],
                   );
                 }
@@ -121,7 +116,8 @@ class _TasksPageState extends State<TasksPage> {
                     return ListTile(
                       leading: Icon(_statusIcon(status)),
                       title: Text(
-                        task.taskFileName ?? 'Task ${task.id}', // TODO: INTL
+                        task.taskFileName ??
+                            S.of(context)!.taskFallbackTitle(task.id),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -160,15 +156,15 @@ class _TasksPageState extends State<TasksPage> {
   String _statusLabel(TaskStatus? status) {
     switch (status) {
       case TaskStatus.pending:
-        return 'Pending'; // TODO: INTL
+        return S.of(context)!.taskStatusPending;
       case TaskStatus.started:
-        return 'Processing'; // TODO: INTL
+        return S.of(context)!.taskStatusProcessing;
       case TaskStatus.success:
-        return 'Completed'; // TODO: INTL
+        return S.of(context)!.taskStatusCompleted;
       case TaskStatus.failure:
-        return 'Failed'; // TODO: INTL
+        return S.of(context)!.taskStatusFailed;
       default:
-        return 'Unknown'; // TODO: INTL
+        return S.of(context)!.taskStatusUnknown;
     }
   }
 

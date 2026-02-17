@@ -8,11 +8,7 @@ class SearchHit {
   final String? highlights;
   final int? rank;
 
-  SearchHit({
-    this.score,
-    required this.highlights,
-    required this.rank,
-  });
+  SearchHit({this.score, required this.highlights, required this.rank});
 
   factory SearchHit.fromJson(Map<String, dynamic> json) =>
       _$SearchHitFromJson(json);

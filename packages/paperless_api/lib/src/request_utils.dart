@@ -18,10 +18,7 @@ Future<T?> getSingleResult<T>(
         validateStatus: (status) => status == 200,
       ),
     );
-    return compute(
-      fromJson,
-      response.data as Map<String, dynamic>,
-    );
+    return compute(fromJson, response.data as Map<String, dynamic>);
   } on DioException catch (exception) {
     throw exception.unravel(orElse: PaperlessApiException(errorCode));
   }

@@ -244,7 +244,8 @@ class FileService {
         type: StorageDirectory.downloads,
       );
       final directory =
-          downloadsDirs?.firstOrNull ?? await getApplicationDocumentsDirectory();
+          downloadsDirs?.firstOrNull ??
+          await getApplicationDocumentsDirectory();
       _downloadsDirectory = await directory.create(recursive: true);
       return;
     } else if (Platform.isIOS) {

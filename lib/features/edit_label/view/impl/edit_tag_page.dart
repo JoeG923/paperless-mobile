@@ -16,9 +16,7 @@ class EditTagPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: EditLabelPage<Tag>(
         label: tag,
         fromJsonT: Tag.fromJson,
@@ -26,15 +24,15 @@ class EditTagPage extends StatelessWidget {
             context.read<LabelCubit>().replaceTag(label),
         onDelete: (context, label) =>
             context.read<LabelCubit>().removeTag(label),
-        canDelete:
-            context.watch<LocalUserAccount>().paperlessUser.canDeleteTags,
+        canDelete: context
+            .watch<LocalUserAccount>()
+            .paperlessUser
+            .canDeleteTags,
         additionalFields: [
           FormBuilderColorPickerField(
             initialValue: tag.color,
             name: Tag.colorKey,
-            decoration: InputDecoration(
-              label: Text(S.of(context)!.color),
-            ),
+            decoration: InputDecoration(label: Text(S.of(context)!.color)),
             colorPickerType: ColorPickerType.materialPicker,
             readOnly: true,
           ),

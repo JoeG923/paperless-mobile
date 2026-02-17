@@ -37,9 +37,9 @@ class SliverSearchBar extends StatelessWidget {
               icon: GlobalSettingsBuilder(
                 builder: (context, settings) {
                   return ValueListenableBuilder(
-                    valueListenable:
-                        Hive.box<LocalUserAccount>(HiveBoxes.localUserAccount)
-                            .listenable(),
+                    valueListenable: Hive.box<LocalUserAccount>(
+                      HiveBoxes.localUserAccount,
+                    ).listenable(),
                     builder: (context, box, _) {
                       final account = box.get(settings.loggedInUserId!)!;
                       return UserAvatar(account: account);

@@ -12,10 +12,15 @@ Future<void> initHive(Directory directory, String defaultLocale) async {
   registerHiveAdapters();
   await Hive.openBox<LocalUserAccount>(HiveBoxes.localUserAccount);
   await Hive.openBox<LocalUserAppState>(HiveBoxes.localUserAppState);
+  await Hive.openBox<String>(HiveBoxes.documentListCache);
+  await Hive.openBox<String>(HiveBoxes.labelCache);
+  await Hive.openBox<String>(HiveBoxes.customFieldCache);
   await Hive.openBox<bool>(HiveBoxes.hintStateBox);
+  await Hive.openBox<String>(HiveBoxes.pendingUploadTaskIds);
   await Hive.openBox<String>(HiveBoxes.hosts);
-  final globalSettingsBox =
-      await Hive.openBox<GlobalSettings>(HiveBoxes.globalSettings);
+  final globalSettingsBox = await Hive.openBox<GlobalSettings>(
+    HiveBoxes.globalSettings,
+  );
 
   if (!globalSettingsBox.hasValue) {
     await globalSettingsBox.setValue(

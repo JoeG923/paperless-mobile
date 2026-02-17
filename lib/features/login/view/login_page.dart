@@ -50,22 +50,16 @@ class LoginPage extends StatelessWidget {
 
   void _onLogin(
     BuildContext context,
-    String username,
-    String password,
+    LoginFormCredentials credentials,
     String serverUrl,
     ClientCertificate? clientCertificate,
-    String? mfaCode,
   ) async {
     try {
       await context.read<AuthenticationCubit>().login(
-            credentials: LoginFormCredentials(
-              username: username,
-              password: password,
-              mfaCode: mfaCode,
-            ),
-            serverUrl: serverUrl,
-            clientCertificate: clientCertificate,
-          );
+        credentials: credentials,
+        serverUrl: serverUrl,
+        clientCertificate: clientCertificate,
+      );
 
       // DocumentsRoute().go(context);
     } on PaperlessApiException catch (error, stackTrace) {

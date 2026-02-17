@@ -42,6 +42,15 @@ class DocumentsPage extends StatefulWidget {
   State<DocumentsPage> createState() => _DocumentsPageState();
 }
 
+@visibleForTesting
+bool shouldPromptSavedViewReset({
+  required DocumentFilter currentFilter,
+  required SavedView? activeSavedView,
+}) {
+  return activeSavedView != null &&
+      activeSavedView.toDocumentFilter() != currentFilter;
+}
+
 class _DocumentsPageState extends State<DocumentsPage> {
   final SliverOverlapAbsorberHandle searchBarHandle =
       SliverOverlapAbsorberHandle();
@@ -184,7 +193,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                         children: [
                                           if (_showExtendedFab)
                                             Text(
-                                              "Reset (${state.filter.appliedFiltersCount})",
+                                              S
+                                                  .of(context)!
+                                                  .resetWithCount(
+                                                    state
+                                                        .filter
+                                                        .appliedFiltersCount,
+                                                  ),
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .labelLarge
@@ -657,9 +672,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
         return null;
       },
     );
-    final viewHasChanged =
-        activeView != null &&
-        activeView.toDocumentFilter() != cubit.state.filter;
+    final viewHasChanged = shouldPromptSavedViewReset(
+      currentFilter: cubit.state.filter,
+      activeSavedView: activeView,
+    );
     if (viewHasChanged) {
       final discardChanges =
           await showDialog<bool>(

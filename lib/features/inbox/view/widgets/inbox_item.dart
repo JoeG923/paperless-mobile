@@ -29,9 +29,7 @@ class InboxItemPlaceholder extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const TextPlaceholder(length: 150, fontSize: 12),
-          const SizedBox(
-            height: 16,
-          ),
+          const SizedBox(height: 16),
           SizedBox(
             height: 200,
             child: Column(
@@ -47,9 +45,7 @@ class InboxItemPlaceholder extends StatelessWidget {
                         width: 90,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: const ColoredBox(
-                            color: Colors.white,
-                          ),
+                          child: const ColoredBox(color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -83,14 +79,9 @@ class InboxItemPlaceholder extends StatelessWidget {
                           const SizedBox(
                             width: 50,
                             height: 40,
-                            child: ColoredBox(
-                              color: Colors.white,
-                            ),
+                            child: ColoredBox(color: Colors.white),
                           ).padded(),
-                          const VerticalDivider(
-                            indent: 12,
-                            endIndent: 12,
-                          ),
+                          const VerticalDivider(indent: 12, endIndent: 12),
                           SizedBox(
                             height: 40,
                             child: Row(
@@ -132,10 +123,7 @@ class InboxItemPlaceholder extends StatelessWidget {
 class InboxItem extends StatefulWidget {
   static const a4AspectRatio = 1 / 1.4142;
   final DocumentModel document;
-  const InboxItem({
-    super.key,
-    required this.document,
-  });
+  const InboxItem({super.key, required this.document});
 
   @override
   State<InboxItem> createState() => _InboxItemState();
@@ -188,14 +176,15 @@ class _InboxItemState extends State<InboxItem> {
                             _buildTextWithLeadingIcon(
                               Icon(
                                 Icons.person_outline,
-                                size: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.fontSize,
+                                size: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.fontSize,
                               ),
                               LabelText<Correspondent>(
-                                label: labelRepository.correspondents[
-                                    widget.document.correspondent],
+                                label:
+                                    labelRepository.correspondents[widget
+                                        .document
+                                        .correspondent],
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 placeholder: "-",
                               ),
@@ -203,14 +192,15 @@ class _InboxItemState extends State<InboxItem> {
                             _buildTextWithLeadingIcon(
                               Icon(
                                 Icons.description_outlined,
-                                size: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.fontSize,
+                                size: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.fontSize,
                               ),
                               LabelText<DocumentType>(
-                                label: labelRepository.documentTypes[
-                                    widget.document.documentType],
+                                label:
+                                    labelRepository.documentTypes[widget
+                                        .document
+                                        .documentType],
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 placeholder: "-",
                               ),
@@ -262,10 +252,12 @@ class _InboxItemState extends State<InboxItem> {
             shape: chipShape,
             label: Text(S.of(context)!.deleteDocument),
             onPressed: () async {
-              final shouldDelete = await showDialog<bool>(
+              final shouldDelete =
+                  await showDialog<bool>(
                     context: context,
                     builder: (context) => DeleteDocumentConfirmationDialog(
-                        document: widget.document),
+                      document: widget.document,
+                    ),
                   ) ??
                   false;
               if (shouldDelete && context.mounted) {
@@ -286,9 +278,7 @@ class _InboxItemState extends State<InboxItem> {
           children: [
             const Icon(Icons.auto_awesome),
             ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 50,
-              ),
+              constraints: const BoxConstraints(maxWidth: 50),
               child: Text(
                 S.of(context)!.quickAction,
                 textAlign: TextAlign.center,
@@ -296,10 +286,7 @@ class _InboxItemState extends State<InboxItem> {
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
-            const VerticalDivider(
-              indent: 16,
-              endIndent: 16,
-            ),
+            const VerticalDivider(indent: 16, endIndent: 16),
           ],
         ),
         const SizedBox(width: 4.0),
@@ -328,8 +315,8 @@ class _InboxItemState extends State<InboxItem> {
         avatar: _isAsnAssignLoading
             ? const CircularProgressIndicator()
             : hasAsn
-                ? null
-                : const Icon(Icons.archive_outlined),
+            ? null
+            : const Icon(Icons.archive_outlined),
         shape: chipShape,
         label: hasAsn
             ? Text(
@@ -370,9 +357,7 @@ class _InboxItemState extends State<InboxItem> {
       children: [
         icon,
         const SizedBox(width: 2),
-        Flexible(
-          child: child,
-        ),
+        Flexible(child: child),
       ],
     );
   }

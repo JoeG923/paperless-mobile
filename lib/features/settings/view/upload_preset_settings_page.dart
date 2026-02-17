@@ -34,8 +34,7 @@ class _UploadPresetSettingsPageState extends State<UploadPresetSettingsPage> {
   @override
   void initState() {
     super.initState();
-    _settings =
-        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    _settings = Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
     _previewTitle = buildTitleFromTemplate(
       _settings.uploadPresetTitleTemplate,
       DateTime.now(),
@@ -51,10 +50,10 @@ class _UploadPresetSettingsPageState extends State<UploadPresetSettingsPage> {
         values[_fieldEnabled] as bool? ?? _settings.uploadPresetEnabled;
     _settings.uploadPresetTitleTemplate =
         (values[_fieldTitleTemplate] as String?) ??
-            _settings.uploadPresetTitleTemplate;
+        _settings.uploadPresetTitleTemplate;
     _settings.uploadPresetUseCurrentDate =
         values[_fieldUseCurrentDate] as bool? ??
-            _settings.uploadPresetUseCurrentDate;
+        _settings.uploadPresetUseCurrentDate;
     if (values.containsKey(DocumentModel.correspondentKey)) {
       _settings.uploadPresetCorrespondentId = _extractId(
         values[DocumentModel.correspondentKey] as IdQueryParameter?,
@@ -79,10 +78,7 @@ class _UploadPresetSettingsPageState extends State<UploadPresetSettingsPage> {
     _settings.save();
     final template = _settings.uploadPresetTitleTemplate;
     setState(() {
-      _previewTitle = buildTitleFromTemplate(
-        template,
-        DateTime.now(),
-      );
+      _previewTitle = buildTitleFromTemplate(template, DateTime.now());
     });
   }
 
@@ -108,9 +104,7 @@ class _UploadPresetSettingsPageState extends State<UploadPresetSettingsPage> {
   Widget build(BuildContext context) {
     final labelRepository = context.watch<LabelRepository>();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context)!.uploadPresets),
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.uploadPresets)),
       body: FormBuilder(
         key: _formKey,
         onChanged: _applyForm,
@@ -148,8 +142,7 @@ class _UploadPresetSettingsPageState extends State<UploadPresetSettingsPage> {
               name: _fieldUseCurrentDate,
               initialValue: _settings.uploadPresetUseCurrentDate,
               title: Text(S.of(context)!.createdAt),
-              subtitle:
-                  Text(S.of(context)!.uploadPresetUseCurrentDateSubtitle),
+              subtitle: Text(S.of(context)!.uploadPresetUseCurrentDateSubtitle),
             ),
             const SizedBox(height: 16),
             if (context

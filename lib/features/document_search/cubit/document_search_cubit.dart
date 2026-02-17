@@ -1,9 +1,13 @@
+import 'dart:collection';
+
 import 'package:collection/collection.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_app_state.dart';
 import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
+import 'package:paperless_mobile/core/repository/document_list_cache_coordinator.dart';
+import 'package:paperless_mobile/core/repository/document_list_cache_store.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/features/paged_document_view/cubit/document_paging_bloc_mixin.dart';
 import 'package:paperless_mobile/features/paged_document_view/cubit/paged_documents_state.dart';
@@ -23,25 +27,32 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
   final DocumentChangedNotifier notifier;
 
   final LocalUserAppState _userAppState;
+  final DocumentListCacheCoordinator _documentListCache;
+  final LinkedHashMap<String, List<String>> _suggestionCache =
+      LinkedHashMap<String, List<String>>();
   int _suggestionRequestId = 0;
+  int _searchRequestId = 0;
   static const int _minSuggestionLength = 2;
+  static const int _maxSuggestionCacheEntries = 100;
   DocumentSearchCubit(
     this.api,
     this.notifier,
     this._userAppState,
-    this.connectivityStatusService,
-  ) : super(
-          DocumentSearchState(
-              searchHistory: _userAppState.documentSearchHistory),
-        ) {
-    notifier.addListener(
-      this,
-      onDeleted: remove,
-      onUpdated: replace,
-    );
+    this.connectivityStatusService, {
+    DocumentListCacheStore? documentListCacheStore,
+  }) : _documentListCache = DocumentListCacheCoordinator(
+         documentListCacheStore ?? HiveDocumentListCacheStore(),
+       ),
+       super(
+         DocumentSearchState(
+           searchHistory: _userAppState.documentSearchHistory,
+         ),
+       ) {
+    notifier.addListener(this, onDeleted: remove, onUpdated: replace);
   }
 
   Future<void> search(String query) async {
+    final requestId = ++_searchRequestId;
     final normalizedQuery = query.trim();
     emit(
       state.copyWith(
@@ -54,13 +65,18 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
       query: TextQuery.extended(normalizedQuery),
     );
 
-    await updateFilter(filter: searchFilter);
+    await _restoreCachedPage(searchFilter);
+    await updateFilter(filter: searchFilter, emitLoading: state.value.isEmpty);
+    if (requestId != _searchRequestId) {
+      return;
+    }
     emit(
       state.copyWith(
         searchHistory: [
           normalizedQuery,
-          ...state.searchHistory
-              .whereNot((previousQuery) => previousQuery == normalizedQuery)
+          ...state.searchHistory.whereNot(
+            (previousQuery) => previousQuery == normalizedQuery,
+          ),
         ],
       ),
     );
@@ -110,30 +126,34 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
       );
       return;
     }
-    emit(
-      state.copyWith(
-        isLoading: true,
-        view: SearchView.suggestions,
-      ),
-    );
+    emit(state.copyWith(isLoading: true, view: SearchView.suggestions));
+    final cachedSuggestions = _suggestionCache.remove(normalizedQuery);
+    if (cachedSuggestions != null) {
+      _suggestionCache[normalizedQuery] = cachedSuggestions;
+      emit(
+        state.copyWith(
+          suggestions: cachedSuggestions,
+          isLoading: false,
+          hasLoaded: true,
+        ),
+      );
+      return;
+    }
     final requestId = ++_suggestionRequestId;
     try {
-      final hasConnection =
-          await connectivityStatusService.isConnectedToInternet();
+      final hasConnection = await connectivityStatusService
+          .isConnectedToInternet();
       if (!hasConnection || requestId != _suggestionRequestId) {
         if (requestId == _suggestionRequestId) {
           emit(
-            state.copyWith(
-              suggestions: [],
-              isLoading: false,
-              hasLoaded: true,
-            ),
+            state.copyWith(suggestions: [], isLoading: false, hasLoaded: true),
           );
         }
         return;
       }
       final suggestions = await api.autocomplete(normalizedQuery);
       if (requestId != _suggestionRequestId) return;
+      _rememberSuggestions(normalizedQuery, suggestions);
       emit(
         state.copyWith(
           suggestions: suggestions,
@@ -143,13 +163,14 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
       );
     } catch (_) {
       if (requestId != _suggestionRequestId) return;
-      emit(
-        state.copyWith(
-          suggestions: [],
-          isLoading: false,
-          hasLoaded: true,
-        ),
-      );
+      emit(state.copyWith(suggestions: [], isLoading: false, hasLoaded: true));
+    }
+  }
+
+  void _rememberSuggestions(String query, Iterable<String> suggestions) {
+    _suggestionCache[query] = suggestions.toList(growable: false);
+    while (_suggestionCache.length > _maxSuggestionCacheEntries) {
+      _suggestionCache.remove(_suggestionCache.keys.first);
     }
   }
 
@@ -171,4 +192,38 @@ class DocumentSearchCubit extends Cubit<DocumentSearchState>
 
   @override
   Future<void> onFilterUpdated(DocumentFilter filter) async {}
+
+  @override
+  Future<void> updateFilter({
+    DocumentFilter filter = const DocumentFilter(),
+    bool emitLoading = true,
+  }) async {
+    await super.updateFilter(filter: filter, emitLoading: emitLoading);
+    await _persistFirstPage();
+  }
+
+  @override
+  Future<void> reload() async {
+    await super.reload();
+    await _persistFirstPage();
+  }
+
+  Future<void> _restoreCachedPage(DocumentFilter filter) async {
+    final cachedPage = await _documentListCache.restore(
+      userId: _userAppState.userId,
+      filter: filter,
+    );
+    if (cachedPage == null || isClosed) {
+      return;
+    }
+    emit(state.copyWith(filter: filter, hasLoaded: true, value: [cachedPage]));
+  }
+
+  Future<void> _persistFirstPage() async {
+    await _documentListCache.persistFirstPage(
+      userId: _userAppState.userId,
+      filter: state.filter,
+      pages: state.value,
+    );
+  }
 }

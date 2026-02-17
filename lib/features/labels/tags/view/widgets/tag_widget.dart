@@ -26,8 +26,9 @@ class TagWidget extends StatelessWidget {
         absorbing: !isClickable,
         child: ColoredChipWrapper(
           child: FilterChip(
-            labelPadding:
-                dense ? const EdgeInsets.symmetric(horizontal: 2) : null,
+            labelPadding: dense
+                ? const EdgeInsets.symmetric(horizontal: 2)
+                : null,
             padding: dense ? const EdgeInsets.all(4) : null,
             selectedColor: tag.color,
             onSelected: (_) => onSelected(),

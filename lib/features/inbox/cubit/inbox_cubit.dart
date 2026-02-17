@@ -5,6 +5,8 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/features/logging/data/logger.dart';
 import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
+import 'package:paperless_mobile/core/repository/document_list_cache_coordinator.dart';
+import 'package:paperless_mobile/core/repository/document_list_cache_store.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/features/paged_document_view/cubit/document_paging_bloc_mixin.dart';
@@ -26,6 +28,8 @@ class InboxCubit extends HydratedCubit<InboxState>
   final DocumentChangedNotifier notifier;
 
   final PaperlessServerStatsApi _statsApi;
+  final String _userId;
+  final DocumentListCacheCoordinator _documentListCache;
 
   @override
   PaperlessDocumentsApi get api => _documentsApi;
@@ -35,8 +39,14 @@ class InboxCubit extends HydratedCubit<InboxState>
     this._statsApi,
     this._labelRepository,
     this.notifier,
-    this.connectivityStatusService,
-  ) : super(const InboxState()) {
+    this.connectivityStatusService, {
+    required String userId,
+    DocumentListCacheStore? documentListCacheStore,
+  }) : _userId = userId,
+       _documentListCache = DocumentListCacheCoordinator(
+         documentListCacheStore ?? HiveDocumentListCacheStore(),
+       ),
+       super(const InboxState()) {
     notifier.addListener(
       this,
       onDeleted: remove,
@@ -45,8 +55,9 @@ class InboxCubit extends HydratedCubit<InboxState>
             .toSet()
             .intersection(state.inboxTags.toSet())
             .isNotEmpty;
-        final wasInInboxBeforeUpdate =
-            state.documents.map((e) => e.id).contains(document.id);
+        final wasInInboxBeforeUpdate = state.documents
+            .map((e) => e.id)
+            .contains(document.id);
         if (!hasInboxTag && wasInInboxBeforeUpdate) {
           remove(document);
           emit(state.copyWith(itemsInInboxCount: state.itemsInInboxCount - 1));
@@ -56,7 +67,8 @@ class InboxCubit extends HydratedCubit<InboxState>
           } else {
             _addDocument(document);
             emit(
-                state.copyWith(itemsInInboxCount: state.itemsInInboxCount + 1));
+              state.copyWith(itemsInInboxCount: state.itemsInInboxCount + 1),
+            );
           }
         }
       },
@@ -100,42 +112,34 @@ class InboxCubit extends HydratedCubit<InboxState>
   Future<void> loadInbox() async {
     if (!isClosed) {
       final inboxTags = await _labelRepository.findAllTags().then(
-            (tags) => tags.where((t) => t.isInboxTag).map((t) => t.id!),
-          );
+        (tags) => tags.where((t) => t.isInboxTag).map((t) => t.id!),
+      );
 
       if (inboxTags.isEmpty) {
         // no inbox tags = no inbox items.
-        return emit(
-          state.copyWith(
-            hasLoaded: true,
-            value: [],
-            inboxTags: [],
-          ),
-        );
+        return emit(state.copyWith(hasLoaded: true, value: [], inboxTags: []));
       }
       if (!isClosed) {
         emit(state.copyWith(inboxTags: inboxTags));
-
-        updateFilter(
-          filter: DocumentFilter(
-            sortField: SortField.added,
-            tags: IdsTagsQuery(include: inboxTags.toList()),
-          ),
+        final filter = DocumentFilter(
+          sortField: SortField.added,
+          tags: IdsTagsQuery(include: inboxTags.toList()),
         );
+        await _restoreCachedPage(filter);
+        await updateFilter(filter: filter, emitLoading: state.value.isEmpty);
       }
     }
   }
 
   Future<void> _addDocument(DocumentModel document) async {
-    emit(state.copyWith(
-      value: [
-        ...state.value,
-        PagedSearchResult(
-          count: 1,
-          results: [document],
-        ),
-      ],
-    ));
+    emit(
+      state.copyWith(
+        value: [
+          ...state.value,
+          PagedSearchResult(count: 1, results: [document]),
+        ],
+      ),
+    );
   }
 
   ///
@@ -143,27 +147,20 @@ class InboxCubit extends HydratedCubit<InboxState>
   ///
   Future<void> reloadInbox() async {
     final inboxTags = await _labelRepository.findAllTags().then(
-          (tags) => tags.where((t) => t.isInboxTag).map((t) => t.id!),
-        );
+      (tags) => tags.where((t) => t.isInboxTag).map((t) => t.id!),
+    );
 
     if (inboxTags.isEmpty) {
       // no inbox tags = no inbox items.
-      return emit(
-        state.copyWith(
-          hasLoaded: true,
-          value: [],
-          inboxTags: [],
-        ),
-      );
+      return emit(state.copyWith(hasLoaded: true, value: [], inboxTags: []));
     }
     emit(state.copyWith(inboxTags: inboxTags));
-    updateFilter(
-      emitLoading: false,
-      filter: DocumentFilter(
-        sortField: SortField.added,
-        tags: IdsTagsQuery(include: inboxTags.toList()),
-      ),
+    final filter = DocumentFilter(
+      sortField: SortField.added,
+      tags: IdsTagsQuery(include: inboxTags.toList()),
     );
+    await _restoreCachedPage(filter);
+    await updateFilter(emitLoading: false, filter: filter);
   }
 
   ///
@@ -171,8 +168,9 @@ class InboxCubit extends HydratedCubit<InboxState>
   /// from the inbox.
   ///
   Future<Iterable<int>> removeFromInbox(DocumentModel document) async {
-    final tagsToRemove =
-        document.tags.toSet().intersection(state.inboxTags.toSet());
+    final tagsToRemove = document.tags.toSet().intersection(
+      state.inboxTags.toSet(),
+    );
 
     final updatedTags = {...document.tags}..removeAll(tagsToRemove);
     final updatedDocument = await api.update(
@@ -192,9 +190,7 @@ class InboxCubit extends HydratedCubit<InboxState>
     Iterable<int> removedTags,
   ) async {
     final updatedDocument = await _documentsApi.update(
-      document.copyWith(
-        tags: {...document.tags, ...removedTags},
-      ),
+      document.copyWith(tags: {...document.tags, ...removedTags}),
     );
     notifier.notifyUpdated(updatedDocument);
     emit(state.copyWith(itemsInInboxCount: state.itemsInInboxCount + 1));
@@ -213,11 +209,12 @@ class InboxCubit extends HydratedCubit<InboxState>
           state.inboxTags,
         ),
       );
-      emit(state.copyWith(
-        hasLoaded: true,
-        value: [],
-        itemsInInboxCount: 0,
-      ));
+      await _documentListCache.persistFirstPage(
+        userId: _userId,
+        filter: state.filter,
+        pages: const [PagedSearchResult(count: 0, results: [])],
+      );
+      emit(state.copyWith(hasLoaded: true, value: [], itemsInInboxCount: 0));
     } finally {
       emit(state.copyWith(isLoading: false));
     }
@@ -226,8 +223,9 @@ class InboxCubit extends HydratedCubit<InboxState>
   Future<void> assignAsn(DocumentModel document) async {
     if (document.archiveSerialNumber == null) {
       final int asn = await _documentsApi.findNextAsn();
-      final updatedDocument = await _documentsApi
-          .update(document.copyWith(archiveSerialNumber: () => asn));
+      final updatedDocument = await _documentsApi.update(
+        document.copyWith(archiveSerialNumber: () => asn),
+      );
 
       replace(updatedDocument);
     }
@@ -249,4 +247,38 @@ class InboxCubit extends HydratedCubit<InboxState>
 
   @override
   Future<void> onFilterUpdated(DocumentFilter filter) async {}
+
+  @override
+  Future<void> updateFilter({
+    DocumentFilter filter = const DocumentFilter(),
+    bool emitLoading = true,
+  }) async {
+    await super.updateFilter(filter: filter, emitLoading: emitLoading);
+    await _persistFirstPage();
+  }
+
+  @override
+  Future<void> reload() async {
+    await super.reload();
+    await _persistFirstPage();
+  }
+
+  Future<void> _restoreCachedPage(DocumentFilter filter) async {
+    final cachedPage = await _documentListCache.restore(
+      userId: _userId,
+      filter: filter,
+    );
+    if (cachedPage == null || isClosed) {
+      return;
+    }
+    emit(state.copyWith(filter: filter, hasLoaded: true, value: [cachedPage]));
+  }
+
+  Future<void> _persistFirstPage() async {
+    await _documentListCache.persistFirstPage(
+      userId: _userId,
+      filter: state.filter,
+      pages: state.value,
+    );
+  }
 }

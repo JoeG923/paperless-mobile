@@ -4,17 +4,15 @@ import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 class UserAvatar extends StatelessWidget {
   final LocalUserAccount account;
 
-  const UserAvatar({
-    super.key,
-    required this.account,
-  });
+  const UserAvatar({super.key, required this.account});
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor =
         Colors.primaries[account.id.hashCode % Colors.primaries.length];
-    final foregroundColor =
-        backgroundColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    final foregroundColor = backgroundColor.computeLuminance() > 0.5
+        ? Colors.black
+        : Colors.white;
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,

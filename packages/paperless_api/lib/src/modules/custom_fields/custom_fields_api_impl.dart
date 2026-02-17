@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_api/src/extensions/dio_exception_extension.dart';
-import 'package:paperless_api/src/models/custom_field_model.dart';
-import 'package:paperless_api/src/modules/custom_fields/custom_fields_api.dart';
 import 'package:paperless_api/src/request_utils.dart';
 
 class CustomFieldsApiImpl implements CustomFieldsApi {
@@ -12,21 +10,18 @@ class CustomFieldsApiImpl implements CustomFieldsApi {
 
   @override
   Future<CustomFieldModel> createCustomField(
-      CustomFieldModel customField) async {
+    CustomFieldModel customField,
+  ) async {
     try {
       final response = await _dio.post(
         "/api/custom_fields/",
         data: customField.toJson(),
-        options: Options(
-          validateStatus: (status) => status == 201,
-        ),
+        options: Options(validateStatus: (status) => status == 201),
       );
       return CustomFieldModel.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.customFieldCreateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.customFieldCreateFailed),
       );
     }
   }
@@ -36,16 +31,12 @@ class CustomFieldsApiImpl implements CustomFieldsApi {
     try {
       await _dio.delete(
         "/api/custom_fields/${customField.id}/",
-        options: Options(
-          validateStatus: (status) => status == 204,
-        ),
+        options: Options(validateStatus: (status) => status == 204),
       );
       return customField.id!;
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.customFieldDeleteFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.customFieldDeleteFailed),
       );
     }
   }

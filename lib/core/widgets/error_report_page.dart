@@ -4,6 +4,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:paperless_mobile/core/model/github_error_report.model.dart';
 import 'package:paperless_mobile/core/widgets/dialog_utils/dialog_cancel_button.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 
 class ErrorReportPage extends StatefulWidget {
   final StackTrace? stackTrace;
@@ -25,12 +26,9 @@ class _ErrorReportPageState extends State<ErrorReportPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text('Report error'),
+        title: Text(S.of(context)!.reportError),
         actions: [
-          TextButton(
-            onPressed: _onSubmit,
-            child: const Text('Submit'),
-          ),
+          TextButton(onPressed: _onSubmit, child: Text(S.of(context)!.submit)),
         ],
       ),
       body: FormBuilder(
@@ -38,31 +36,27 @@ class _ErrorReportPageState extends State<ErrorReportPage> {
         child: ListView(
           children: [
             Text(
-              '''Oops, an error has occurred!
-In order to improve the app and prevent messages like these, it is greatly appreciated if you report this error with a description of what happened and the actions leading up to this window. 
-Please fill the fields below and create a new issue in GitHub. Thanks!
-Note: If you have the GitHub Android app installed, the descriptions will not be taken into account! Skip these here and fill them in the GitHub issues form after submitting this report.''',
+              S.of(context)!.errorReportIntro,
               style: Theme.of(context).textTheme.bodyMedium,
             ).padded(),
             Text(
-              'Description',
+              S.of(context)!.description,
               style: Theme.of(context).textTheme.titleMedium,
             ).padded(),
             FormBuilderTextField(
               name: shortDescriptionKey,
-              decoration: const InputDecoration(
-                  label: Text('Short Description'),
-                  hintText:
-                      'Please provide a brief description of what went wrong.'),
+              decoration: InputDecoration(
+                label: Text(S.of(context)!.shortDescription),
+                hintText: S.of(context)!.shortDescriptionHint,
+              ),
             ).padded(),
             FormBuilderTextField(
-              name: shortDescriptionKey,
+              name: longDescriptionKey,
               maxLines: null,
               keyboardType: TextInputType.multiline,
-              decoration: const InputDecoration(
-                label: Text('Detailled Description'),
-                hintText:
-                    'Please describe the exact actions taken that caused this error. Provide as much details as possible.',
+              decoration: InputDecoration(
+                label: Text(S.of(context)!.detailedDescription),
+                hintText: S.of(context)!.detailedDescriptionHint,
               ),
             ).padded(),
             if (widget.stackTrace != null) ...[
@@ -70,25 +64,25 @@ Note: If you have the GitHub Android app installed, the descriptions will not be
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Stack Trace',
+                    S.of(context)!.stackTrace,
                     style: Theme.of(context).textTheme.titleMedium,
                   ).paddedOnly(top: 8.0, left: 8.0, right: 8.0),
                   TextButton.icon(
-                    label: const Text('Copy'),
+                    label: Text(S.of(context)!.copy),
                     icon: const Icon(Icons.copy),
                     onPressed: _copyStackTrace,
                   ),
                 ],
               ),
               Text(
-                'Since stack traces cannot be attached to the GitHub issue url, please copy the content of the stackTrace and paste it in the issue description. This will greatly increase the chance of quickly resolving the issue!',
+                S.of(context)!.stackTraceCopyHint,
                 style: Theme.of(context).textTheme.bodySmall,
               ).padded(),
               Text(
                 widget.stackTrace.toString(),
                 style: Theme.of(context).textTheme.bodySmall,
               ).padded(),
-            ]
+            ],
           ],
         ),
       ),
@@ -98,41 +92,38 @@ Note: If you have the GitHub Android app installed, the descriptions will not be
   void _copyStackTrace() {
     Clipboard.setData(
       ClipboardData(text: '```${widget.stackTrace.toString()}```'),
-    ).then(
-      (_) {
-        setState(() => _stackTraceCopied = true);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Stack trace copied to clipboard.',
-            ),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-    );
+    ).then((_) {
+      setState(() => _stackTraceCopied = true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(S.of(context)!.stackTraceCopied),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   void _onSubmit() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final fk = _formKey.currentState!.value;
       if (!_stackTraceCopied) {
-        final continueSubmission = await showDialog<bool>(
+        final continueSubmission =
+            await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Continue without stack trace?'),
-                content: const Text(
-                  'It seems you have not yet copied the stack trace. The stack trace provides valuable insights into where an error came from and how it could be fixed. Are you sure you want to continue without providing the stack trace?',
+                title: Text(S.of(context)!.continueWithoutStackTrace),
+                content: Text(
+                  S.of(context)!.continueWithoutStackTraceMessage,
                 ),
                 actionsAlignment: MainAxisAlignment.end,
                 actions: [
                   TextButton(
-                    child: const Text('Yes, continue'),
+                    child: Text(S.of(context)!.yesContinue),
                     onPressed: () => Navigator.pop(context, true),
                   ),
                   TextButton(
-                    child: const Text('No, copy stack trace'),
+                    child: Text(S.of(context)!.noCopyStackTrace),
                     onPressed: () {
                       _copyStackTrace();
                       Navigator.pop(context, true);

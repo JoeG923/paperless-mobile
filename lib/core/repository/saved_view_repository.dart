@@ -45,9 +45,7 @@ class SavedViewRepository extends ChangeNotifier {
 
   Future<Iterable<SavedView>> findAll([Iterable<int>? ids]) async {
     final found = await _api.findAll(ids);
-    savedViews = {
-      for (final view in found) view.id!: view,
-    };
+    savedViews = {for (final view in found) view.id!: view};
     notifyListeners();
     return found;
   }

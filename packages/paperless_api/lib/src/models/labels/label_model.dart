@@ -8,12 +8,7 @@ import 'package:paperless_api/src/models/labels/matching_algorithm.dart';
 
 part 'label_model.g.dart';
 
-enum LabelType {
-  correspondent,
-  documentType,
-  tag,
-  storagePath,
-}
+enum LabelType { correspondent, documentType, tag, storagePath }
 
 sealed class Label extends Equatable implements Comparable {
   static const idKey = "id";
@@ -128,15 +123,15 @@ class Correspondent extends Label {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        slug,
-        isInsensitive,
-        documentCount,
-        lastCorrespondence,
-        matchingAlgorithm,
-        match,
-      ];
+    id,
+    name,
+    slug,
+    isInsensitive,
+    documentCount,
+    lastCorrespondence,
+    matchingAlgorithm,
+    match,
+  ];
 }
 
 @JsonSerializable(includeIfNull: false, fieldRename: FieldRename.snake)
@@ -185,14 +180,14 @@ class DocumentType extends Label {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        slug,
-        isInsensitive,
-        documentCount,
-        matchingAlgorithm,
-        match,
-      ];
+    id,
+    name,
+    slug,
+    isInsensitive,
+    documentCount,
+    matchingAlgorithm,
+    match,
+  ];
 }
 
 @JsonSerializable(includeIfNull: false, fieldRename: FieldRename.snake)
@@ -249,25 +244,22 @@ class StoragePath extends Label {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        slug,
-        isInsensitive,
-        documentCount,
-        path,
-        matchingAlgorithm,
-        match,
-      ];
+    id,
+    name,
+    slug,
+    isInsensitive,
+    documentCount,
+    path,
+    matchingAlgorithm,
+    match,
+  ];
 
   @override
   Map<String, dynamic> toJson() => _$StoragePathToJson(this);
 }
 
 @HexColorJsonConverter()
-@JsonSerializable(
-  fieldRename: FieldRename.snake,
-  explicitToJson: true,
-)
+@JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
 class Tag extends Label {
   static const colorKey = 'color';
   static const isInboxTagKey = 'is_inbox_tag';
@@ -328,17 +320,17 @@ class Tag extends Label {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        slug,
-        isInsensitive,
-        documentCount,
-        matchingAlgorithm,
-        color,
-        textColor,
-        isInboxTag,
-        match,
-      ];
+    id,
+    name,
+    slug,
+    isInsensitive,
+    documentCount,
+    matchingAlgorithm,
+    color,
+    textColor,
+    isInboxTag,
+    match,
+  ];
 
   factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
 

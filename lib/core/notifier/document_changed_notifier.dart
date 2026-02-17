@@ -43,7 +43,7 @@ class DocumentChangedNotifier {
   }
 
   void removeListener(Object subscriber) {
-    _subscribers[subscriber]?.forEach((element) {
+    _subscribers.remove(subscriber)?.forEach((element) {
       element.cancel();
     });
   }

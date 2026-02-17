@@ -41,17 +41,17 @@ class LoginToExistingAccountPage extends StatelessWidget {
                 child: UserAccountListTile(
                   account: account,
                   onTap: () {
-                    context
-                        .read<AuthenticationCubit>()
-                        .switchAccount(account.id);
+                    context.read<AuthenticationCubit>().switchAccount(
+                      account.id,
+                    );
                   },
                   trailing: IconButton(
                     tooltip: S.of(context)!.remove,
                     icon: Icon(Icons.close),
                     onPressed: () {
-                      context
-                          .read<AuthenticationCubit>()
-                          .removeAccount(account.id);
+                      context.read<AuthenticationCubit>().removeAccount(
+                        account.id,
+                      );
                     },
                   ),
                 ),

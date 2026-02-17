@@ -13,15 +13,11 @@ class PendingFilesInfoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final fileCount = pendingFiles.length;
     return AlertDialog(
-      title: Text("Pending Files"),
-      content: Text(
-        "$fileCount files are waiting to be uploaded. Do you want to upload them now?",
-      ),
+      title: Text(S.of(context)!.pendingFiles),
+      content: Text(S.of(context)!.pendingFilesUploadPrompt(fileCount)),
       actions: [
         DialogCancelButton(),
-        DialogConfirmButton(
-          label: S.of(context)!.upload,
-        ),
+        DialogConfirmButton(label: S.of(context)!.upload),
       ],
     );
   }

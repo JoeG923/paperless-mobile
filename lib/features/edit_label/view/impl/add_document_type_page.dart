@@ -7,17 +7,12 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 
 class AddDocumentTypePage extends StatelessWidget {
   final String? initialName;
-  const AddDocumentTypePage({
-    super.key,
-    this.initialName,
-  });
+  const AddDocumentTypePage({super.key, this.initialName});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: AddLabelPage<DocumentType>(
         pageTitle: Text(S.of(context)!.addDocumentType),
         fromJsonT: DocumentType.fromJson,

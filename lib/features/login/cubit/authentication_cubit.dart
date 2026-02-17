@@ -18,6 +18,8 @@ import 'package:paperless_mobile/core/security/session_manager_impl.dart';
 import 'package:paperless_mobile/features/logging/data/logger.dart';
 import 'package:paperless_mobile/features/logging/utils/redaction_utils.dart';
 import 'package:paperless_mobile/core/model/info_message_exception.dart';
+import 'package:paperless_mobile/core/security/auth_header_configuration.dart';
+import 'package:paperless_mobile/core/security/auth_token_resolver.dart';
 import 'package:paperless_mobile/core/security/session_manager.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/service/file_service.dart';
@@ -52,7 +54,10 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     required String serverUrl,
     ClientCertificate? clientCertificate,
   }) async {
-    assert(credentials.username != null && credentials.password != null);
+    if (!_hasSupportedCredentials(credentials)) {
+      throw ArgumentError('Unsupported credentials for login.');
+    }
+    assert(_hasSupportedCredentials(credentials));
     if (state is AuthenticatingState) {
       // Cancel duplicate login requests
       return;
@@ -74,15 +79,21 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         clientCertificate,
         _sessionManager,
         onFetchUserInformation: () async {
-          emit(const AuthenticatingState(
-              AuthenticatingStage.fetchingUserInformation));
+          emit(
+            const AuthenticatingState(
+              AuthenticatingStage.fetchingUserInformation,
+            ),
+          );
         },
         onPerformLogin: () async {
           emit(const AuthenticatingState(AuthenticatingStage.authenticating));
         },
         onPersistLocalUserData: () async {
-          emit(const AuthenticatingState(
-              AuthenticatingStage.persistingLocalUserData));
+          emit(
+            const AuthenticatingState(
+              AuthenticatingStage.persistingLocalUserData,
+            ),
+          );
         },
       );
     } on PaperlessApiException catch (_) {
@@ -90,7 +101,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         AuthenticationErrorState(
           serverUrl: serverUrl,
           username: credentials.username!,
-          password: credentials.password!,
+          password: credentials.password ?? '',
           clientCertificate: clientCertificate,
         ),
       );
@@ -98,8 +109,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     }
 
     // Mark logged in user as currently active user.
-    final globalSettings =
-        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    final globalSettings = Hive.box<GlobalSettings>(
+      HiveBoxes.globalSettings,
+    ).getValue()!;
     globalSettings.loggedInUserId = localUserId;
     await globalSettings.save();
 
@@ -123,8 +135,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       methodName: 'switchAccount',
     );
 
-    final globalSettings =
-        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    final globalSettings = Hive.box<GlobalSettings>(
+      HiveBoxes.globalSettings,
+    ).getValue()!;
 
     final userAccountBox = Hive.localUserAccountBox;
 
@@ -141,8 +154,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     final account = userAccountBox.get(localUserId)!;
 
     if (account.settings.isBiometricAuthenticationEnabled) {
-      final authenticated = await _localAuthService
-          .authenticateLocalUser("Authenticate to switch your account.");
+      final authenticated = await _localAuthService.authenticateLocalUser(
+        "Authenticate to switch your account.",
+      );
       if (!authenticated) {
         logger.fw(
           "User could not be authenticated.",
@@ -158,39 +172,44 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       await _notificationService.cancelUserNotifications(localUserId);
     }
     await withEncryptedBox<UserCredentials, void>(
-        HiveBoxes.localUserCredentials, (credentialsBox) async {
-      if (!credentialsBox.containsKey(localUserId)) {
-        await credentialsBox.close();
-        logger.fw(
-          "Invalid authentication for $redactedId.",
-          className: runtimeType.toString(),
-          methodName: 'switchAccount',
+      HiveBoxes.localUserCredentials,
+      (credentialsBox) async {
+        if (!credentialsBox.containsKey(localUserId)) {
+          await credentialsBox.close();
+          logger.fw(
+            "Invalid authentication for $redactedId.",
+            className: runtimeType.toString(),
+            methodName: 'switchAccount',
+          );
+          return;
+        }
+        final credentials = credentialsBox.get(localUserId);
+        await _resetExternalState();
+
+        _sessionManager.updateSettings(
+          authToken: credentials!.token,
+          authHeaderConfiguration:
+              _authHeaderConfigurationFromStoredCredentials(credentials),
+          clientCertificate: credentials.clientCertificate,
+          baseUrl: account.serverUrl,
         );
-        return;
-      }
-      final credentials = credentialsBox.get(localUserId);
-      await _resetExternalState();
 
-      _sessionManager.updateSettings(
-        authToken: credentials!.token,
-        clientCertificate: credentials.clientCertificate,
-        baseUrl: account.serverUrl,
-      );
+        globalSettings.loggedInUserId = localUserId;
+        await globalSettings.save();
 
-      globalSettings.loggedInUserId = localUserId;
-      await globalSettings.save();
+        final apiVersion = await _getApiVersion(_sessionManager.client);
 
-      final apiVersion = await _getApiVersion(_sessionManager.client);
+        await _updateRemoteUser(
+          _sessionManager,
+          Hive.box<LocalUserAccount>(
+            HiveBoxes.localUserAccount,
+          ).get(localUserId)!,
+          apiVersion,
+        );
 
-      await _updateRemoteUser(
-        _sessionManager,
-        Hive.box<LocalUserAccount>(HiveBoxes.localUserAccount)
-            .get(localUserId)!,
-        apiVersion,
-      );
-
-      emit(AuthenticatedState(localUserId: localUserId));
-    });
+        emit(AuthenticatedState(localUserId: localUserId));
+      },
+    );
   }
 
   Future<String> addAccount({
@@ -200,7 +219,10 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     required bool enableBiometricAuthentication,
     required String locale,
   }) async {
-    assert(credentials.password != null && credentials.username != null);
+    if (!_hasSupportedCredentials(credentials)) {
+      throw ArgumentError('Unsupported credentials for account creation.');
+    }
+    assert(_hasSupportedCredentials(credentials));
     final localUserId = "${credentials.username}@$serverUrl";
     final redactedId = redactUserId(localUserId);
     logger.fd(
@@ -237,9 +259,11 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     await userAccountBox.delete(userId);
     await userAppStateBox.delete(userId);
     await withEncryptedBox<UserCredentials, void>(
-        HiveBoxes.localUserCredentials, (box) {
-      box.delete(userId);
-    });
+      HiveBoxes.localUserCredentials,
+      (box) {
+        box.delete(userId);
+      },
+    );
   }
 
   ///
@@ -252,8 +276,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       className: runtimeType.toString(),
       methodName: 'restoreSession',
     );
-    final globalSettings =
-        Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+    final globalSettings = Hive.box<GlobalSettings>(
+      HiveBoxes.globalSettings,
+    ).getValue()!;
     final restoreSessionForUser = userId ?? globalSettings.loggedInUserId;
     // final localUserId = globalSettings.loggedInUserId;
     if (restoreSessionForUser == null) {
@@ -269,8 +294,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       );
       return;
     }
-    final localUserAccountBox =
-        Hive.box<LocalUserAccount>(HiveBoxes.localUserAccount);
+    final localUserAccountBox = Hive.box<LocalUserAccount>(
+      HiveBoxes.localUserAccount,
+    );
     final localUserAccount = localUserAccountBox.get(restoreSessionForUser)!;
     if (localUserAccount.settings.isBiometricAuthenticationEnabled) {
       logger.fd(
@@ -278,11 +304,12 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         className: runtimeType.toString(),
         methodName: 'restoreSession',
       );
-      final authenticationMesage =
-          (await S.delegate.load(Locale(globalSettings.preferredLocaleSubtag)))
-              .verifyYourIdentity;
-      final localAuthSuccess =
-          await _localAuthService.authenticateLocalUser(authenticationMesage);
+      final authenticationMesage = (await S.delegate.load(
+        Locale(globalSettings.preferredLocaleSubtag),
+      )).verifyYourIdentity;
+      final localAuthSuccess = await _localAuthService.authenticateLocalUser(
+        authenticationMesage,
+      );
       if (!localAuthSuccess) {
         logger.fw(
           "Identity could not be verified.",
@@ -305,9 +332,11 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     );
     final authentication =
         await withEncryptedBox<UserCredentials, UserCredentials>(
-            HiveBoxes.localUserCredentials, (box) {
-      return box.get(restoreSessionForUser);
-    });
+          HiveBoxes.localUserCredentials,
+          (box) {
+            return box.get(restoreSessionForUser);
+          },
+        );
 
     if (authentication == null) {
       logger.fe(
@@ -334,6 +363,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     _sessionManager.updateSettings(
       clientCertificate: authentication.clientCertificate,
       authToken: authentication.token,
+      authHeaderConfiguration: _authHeaderConfigurationFromStoredCredentials(
+        authentication,
+      ),
       baseUrl: localUserAccount.serverUrl,
     );
     logger.fd(
@@ -343,10 +375,10 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     );
     final isPaperlessServerReachable =
         await _connectivityService.isPaperlessServerReachable(
-              localUserAccount.serverUrl,
-              authentication.clientCertificate,
-            ) ==
-            ReachabilityStatus.reachable;
+          localUserAccount.serverUrl,
+          authentication.clientCertificate,
+        ) ==
+        ReachabilityStatus.reachable;
     logger.fd(
       "Trying to update remote paperless user...",
       className: runtimeType.toString(),
@@ -354,11 +386,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     );
     if (isPaperlessServerReachable) {
       final apiVersion = await _getApiVersion(_sessionManager.client);
-      await _updateRemoteUser(
-        _sessionManager,
-        localUserAccount,
-        apiVersion,
-      );
+      await _updateRemoteUser(_sessionManager, localUserAccount, apiVersion);
       logger.fd(
         "Successfully updated remote paperless user.",
         className: runtimeType.toString(),
@@ -448,7 +476,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     _FutureVoidCallback? onPersistLocalUserData,
     _FutureVoidCallback? onFetchUserInformation,
   }) async {
-    assert(credentials.username != null && credentials.password != null);
+    assert(_hasSupportedCredentials(credentials));
     final redactedId = redactUserId(localUserId);
 
     logger.fd(
@@ -462,35 +490,56 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       clientCertificate: clientCert,
     );
 
-    final authApi = _apiFactory.createAuthenticationApi(sessionManager.client);
-
     await onPerformLogin?.call();
-    logger.fd(
-      "Fetching bearer token from the server...",
-      className: runtimeType.toString(),
-      methodName: '_addUser',
-    );
-    final token = await authApi.login(
-      username: credentials.username!,
-      password: credentials.password!,
-      code: credentials.mfaCode,
-    );
+    late final String token;
+    late final AuthHeaderConfiguration authHeaderConfiguration;
+    if (credentials.hasApiToken) {
+      final resolvedToken = resolveAuthToken(
+        credentials.apiToken!,
+        usernameFallback: credentials.username,
+      );
+      token = resolvedToken.token;
+      authHeaderConfiguration = resolvedToken.authHeaderConfiguration;
+      logger.fd(
+        "Using API token provided by the user.",
+        className: runtimeType.toString(),
+        methodName: '_addUser',
+      );
+    } else {
+      logger.fd(
+        "Fetching bearer token from the server...",
+        className: runtimeType.toString(),
+        methodName: '_addUser',
+      );
+      final authApi = _apiFactory.createAuthenticationApi(
+        sessionManager.client,
+      );
+      token = await authApi.login(
+        username: credentials.username!,
+        password: credentials.password!,
+        code: credentials.mfaCode,
+      );
+      authHeaderConfiguration = const AuthHeaderConfiguration.standard();
 
-    logger.fd(
-      "Bearer token successfully retrieved.",
-      className: runtimeType.toString(),
-      methodName: '_addUser',
-    );
+      logger.fd(
+        "Bearer token successfully retrieved.",
+        className: runtimeType.toString(),
+        methodName: '_addUser',
+      );
+    }
 
     sessionManager.updateSettings(
       baseUrl: serverUrl,
       clientCertificate: clientCert,
       authToken: token,
+      authHeaderConfiguration: authHeaderConfiguration,
     );
-    final userAccountBox =
-        Hive.box<LocalUserAccount>(HiveBoxes.localUserAccount);
-    final userStateBox =
-        Hive.box<LocalUserAppState>(HiveBoxes.localUserAppState);
+    final userAccountBox = Hive.box<LocalUserAccount>(
+      HiveBoxes.localUserAccount,
+    );
+    final userStateBox = Hive.box<LocalUserAppState>(
+      HiveBoxes.localUserAppState,
+    );
 
     if (userAccountBox.containsKey(localUserId)) {
       logger.fw(
@@ -511,10 +560,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     late UserModel serverUser;
     try {
       serverUser = await _apiFactory
-          .createUserApi(
-            sessionManager.client,
-            apiVersion: apiVersion,
-          )
+          .createUserApi(sessionManager.client, apiVersion: apiVersion)
           .findCurrentUser();
     } on DioException catch (error, stackTrace) {
       logger.fe(
@@ -562,10 +608,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       methodName: '_addUser',
     );
     // Create user state
-    await userStateBox.put(
-      localUserId,
-      LocalUserAppState(userId: localUserId),
-    );
+    await userStateBox.put(localUserId, LocalUserAppState(userId: localUserId));
     logger.fd(
       "User state successfully persisted.",
       className: runtimeType.toString(),
@@ -584,6 +627,8 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         UserCredentials(
           token: token,
           clientCertificate: clientCert,
+          authHeaderName: authHeaderConfiguration.headerName,
+          authHeaderValuePrefix: authHeaderConfiguration.valuePrefix,
         ),
       );
 
@@ -607,6 +652,21 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     return serverUser.id;
   }
 
+  bool _hasSupportedCredentials(LoginFormCredentials credentials) {
+    final hasUsername = credentials.username?.trim().isNotEmpty ?? false;
+    final hasPassword = credentials.password?.trim().isNotEmpty ?? false;
+    return hasUsername && (credentials.hasApiToken || hasPassword);
+  }
+
+  AuthHeaderConfiguration _authHeaderConfigurationFromStoredCredentials(
+    UserCredentials credentials,
+  ) {
+    return AuthHeaderConfiguration(
+      headerName: credentials.authHeaderName,
+      valuePrefix: credentials.authHeaderValuePrefix,
+    );
+  }
+
   Future<int> _getApiVersion(
     Dio dio, {
     Duration? timeout,
@@ -622,8 +682,9 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         "/api/",
         options: Options(sendTimeout: timeout),
       );
-      int apiVersion =
-          int.parse(response.headers.value('x-api-version') ?? "3");
+      int apiVersion = int.parse(
+        response.headers.value('x-api-version') ?? "3",
+      );
       if (apiVersion > latestSupportedApiVersion) {
         logger.fw(
           "The server is running a newer API version ($apiVersion) than the app supports (v$latestSupportedApiVersion), falling back to latest supported version (v$latestSupportedApiVersion). "

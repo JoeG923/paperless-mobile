@@ -24,9 +24,9 @@ class ColoredChipWrapper extends StatelessWidget {
     if ((brightness == Brightness.dark && applyToDarkTheme) ||
         brightness == Brightness.light) {
       return Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: backgroundColor ?? Colors.lightGreen[50]!,
-        ),
+        data: Theme.of(
+          context,
+        ).copyWith(canvasColor: backgroundColor ?? Colors.lightGreen[50]!),
         child: child,
       );
     }

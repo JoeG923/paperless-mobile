@@ -43,8 +43,9 @@ class SavedViewPreview extends StatelessWidget {
                       Builder(
                         builder: (context) {
                           if (documents.isEmpty) {
-                            return Text(S.of(context)!.noDocumentsFound)
-                                .padded();
+                            return Text(
+                              S.of(context)!.noDocumentsFound,
+                            ).padded();
                           } else {
                             return Column(
                               children: [
@@ -58,8 +59,8 @@ class SavedViewPreview extends StatelessWidget {
                                       DocumentDetailsRoute(
                                         title: document.title,
                                         id: document.id,
-                                        thumbnailUrl:
-                                            document.buildThumbnailUrl(context),
+                                        thumbnailUrl: document
+                                            .buildThumbnailUrl(context),
                                       ).push(context);
                                     },
                                     onSelected: null,
@@ -69,12 +70,16 @@ class SavedViewPreview extends StatelessWidget {
                           }
                         },
                       ),
-                    ErrorSavedViewPreviewState() =>
-                      Text(S.of(context)!.couldNotLoadSavedViews).padded(16),
-                    OfflineSavedViewPreviewState() =>
-                      Text(S.of(context)!.youAreCurrentlyOffline).padded(16),
-                    _ => const CircularProgressIndicator()
-                        .paddedOnly(top: 8, bottom: 24),
+                    ErrorSavedViewPreviewState() => Text(
+                      S.of(context)!.couldNotLoadSavedViews,
+                    ).padded(16),
+                    OfflineSavedViewPreviewState() => Text(
+                      S.of(context)!.youAreCurrentlyOffline,
+                    ).padded(16),
+                    _ => const CircularProgressIndicator().paddedOnly(
+                      top: 8,
+                      bottom: 24,
+                    ),
                   };
                 },
               ),
@@ -86,8 +91,8 @@ class SavedViewPreview extends StatelessWidget {
                     label: Text(S.of(context)!.showAll),
                     onPressed: () {
                       context.read<DocumentsCubit>().updateFilter(
-                            filter: savedView.toDocumentFilter(),
-                          );
+                        filter: savedView.toDocumentFilter(),
+                      );
                       DocumentsRoute().go(context);
                     },
                   ).paddedOnly(bottom: 8),

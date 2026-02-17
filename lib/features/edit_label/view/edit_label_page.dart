@@ -35,9 +35,7 @@ class EditLabelPage<T extends Label> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read<LabelRepository>(),
-      ),
+      create: (context) => LabelCubit(context.read<LabelRepository>()),
       child: EditLabelForm(
         label: label,
         additionalFields: additionalFields,
@@ -103,13 +101,12 @@ class EditLabelForm<T extends Label> extends StatelessWidget {
 
   void _onDelete(BuildContext context) async {
     if ((label.documentCount ?? 0) > 0) {
-      final shouldDelete = await showDialog<bool>(
+      final shouldDelete =
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: Text(S.of(context)!.confirmDeletion),
-              content: Text(
-                S.of(context)!.deleteLabelWarningText,
-              ),
+              content: Text(S.of(context)!.deleteLabelWarningText),
               actions: [
                 const DialogCancelButton(),
                 DialogConfirmButton(

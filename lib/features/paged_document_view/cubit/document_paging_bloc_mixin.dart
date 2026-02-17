@@ -17,19 +17,35 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
   PaperlessDocumentsApi get api;
   DocumentChangedNotifier get notifier;
 
+  int _requestId = 0;
+
   Future<void> onFilterUpdated(DocumentFilter filter);
 
+  int _nextRequestId() {
+    _requestId += 1;
+    return _requestId;
+  }
+
+  bool _isLatestRequest(int requestId) {
+    return requestId == _requestId;
+  }
+
   Future<void> loadMore() async {
-    final hasConnection =
-        await connectivityStatusService.isConnectedToInternet();
+    final hasConnection = await connectivityStatusService
+        .isConnectedToInternet();
     if (state.isLastPageLoaded || !hasConnection || state.isLoading) {
       return;
     }
+
+    final requestId = _nextRequestId();
     emit(state.copyWithPaged(isLoading: true));
     final newFilter = state.filter.copyWith(page: state.filter.page + 1);
     debugPrint("Fetching page ${newFilter.page}");
     try {
       final result = await api.findAll(newFilter);
+      if (!_isLatestRequest(requestId) || isClosed) {
+        return;
+      }
       emit(
         state.copyWithPaged(
           hasLoaded: true,
@@ -38,8 +54,10 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
         ),
       );
     } finally {
-      await onFilterUpdated(newFilter);
-      emit(state.copyWithPaged(isLoading: false));
+      if (_isLatestRequest(requestId) && !isClosed) {
+        await onFilterUpdated(newFilter);
+        emit(state.copyWithPaged(isLoading: false));
+      }
     }
   }
 
@@ -54,14 +72,18 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
     final DocumentFilter filter = const DocumentFilter(),
     bool emitLoading = true,
   }) async {
-    final hasConnection =
-        await connectivityStatusService.isConnectedToInternet();
+    final requestId = _nextRequestId();
+    final hasConnection = await connectivityStatusService
+        .isConnectedToInternet();
     if (!hasConnection) {
       // Just filter currently loaded documents
       final filteredDocuments = state.value
           .expand((page) => page.results)
           .where((doc) => filter.matches(doc))
           .toList();
+      if (!_isLatestRequest(requestId) || isClosed) {
+        return;
+      }
       if (emitLoading) {
         emit(state.copyWithPaged(isLoading: true));
       }
@@ -75,11 +97,14 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
               count: filteredDocuments.length,
               next: null,
               previous: null,
-            )
+            ),
           ],
           hasLoaded: true,
         ),
       );
+      if (_isLatestRequest(requestId) && !isClosed) {
+        await onFilterUpdated(filter);
+      }
       return;
     }
     try {
@@ -87,17 +112,18 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
         emit(state.copyWithPaged(isLoading: true));
       }
       final result = await api.findAll(filter.copyWith(page: 1));
+      if (!_isLatestRequest(requestId) || isClosed) {
+        return;
+      }
 
       emit(
-        state.copyWithPaged(
-          filter: filter,
-          value: [result],
-          hasLoaded: true,
-        ),
+        state.copyWithPaged(filter: filter, value: [result], hasLoaded: true),
       );
     } finally {
-      // await onFilterUpdated(filter);
-      emit(state.copyWithPaged(isLoading: false));
+      if (_isLatestRequest(requestId) && !isClosed) {
+        await onFilterUpdated(filter);
+        emit(state.copyWithPaged(isLoading: false));
+      }
     }
   }
 
@@ -106,8 +132,7 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
   ///
   Future<void> updateCurrentFilter(
     final DocumentFilter Function(DocumentFilter filter) transformFn,
-  ) async =>
-      updateFilter(filter: transformFn(state.filter));
+  ) async => updateFilter(filter: transformFn(state.filter));
 
   Future<void> resetFilter() async {
     final filter = DocumentFilter.initial.copyWith(
@@ -119,20 +144,26 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
 
   Future<void> reload() async {
     // emit(state.copyWithPaged(isLoading: true));
+    final requestId = _nextRequestId();
     final filter = state.filter.copyWith(page: 1);
     try {
       final result = await api.findAll(filter);
+      if (!_isLatestRequest(requestId) || isClosed) {
+        return;
+      }
       if (!isClosed) {
-        emit(state.copyWithPaged(
-          hasLoaded: true,
-          value: [result],
-          isLoading: false,
-          filter: filter,
-        ));
+        emit(
+          state.copyWithPaged(
+            hasLoaded: true,
+            value: [result],
+            isLoading: false,
+            filter: filter,
+          ),
+        );
       }
     } finally {
-      await onFilterUpdated(filter);
-      if (!isClosed) {
+      if (_isLatestRequest(requestId) && !isClosed) {
+        await onFilterUpdated(filter);
         emit(state.copyWithPaged(isLoading: false));
       }
     }
@@ -173,7 +204,8 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
       final foundPage = state.value[index];
       final replacementPage = foundPage.copyWith(
         results: foundPage.results
-          ..removeWhere((element) => element.id == document.id),
+            .where((element) => element.id != document.id)
+            .toList(),
       );
       final newCount = foundPage.count - 1;
       emit(
@@ -181,8 +213,9 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
           value: state.value
               .mapIndexed(
                 (currIndex, element) =>
-                    (currIndex == index ? replacementPage : element)
-                        .copyWith(count: newCount),
+                    (currIndex == index ? replacementPage : element).copyWith(
+                      count: newCount,
+                    ),
               )
               .toList(),
         ),
@@ -211,8 +244,10 @@ mixin DocumentPagingBlocMixin<State extends DocumentPagingState>
       );
       final newState = state.copyWithPaged(
         value: state.value
-            .mapIndexed((currIndex, element) =>
-                currIndex == pageIndex ? replacementPage : element)
+            .mapIndexed(
+              (currIndex, element) =>
+                  currIndex == pageIndex ? replacementPage : element,
+            )
             .toList(),
       );
       emit(newState);

@@ -27,7 +27,7 @@ class TagsWidget extends StatelessWidget {
           onSelected: () => onTagSelected?.call(tag.id!),
           showShortName: showShortNames,
           dense: dense,
-        )
+        ),
     ];
   }
 
@@ -91,8 +91,6 @@ class _SliverTagsWidget extends TagsWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverList.list(
-      children: _children,
-    );
+    return SliverList.list(children: _children);
   }
 }

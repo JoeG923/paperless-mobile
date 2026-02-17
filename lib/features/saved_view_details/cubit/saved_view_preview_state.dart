@@ -15,9 +15,7 @@ class LoadingSavedViewPreviewState extends SavedViewPreviewState {
 class LoadedSavedViewPreviewState extends SavedViewPreviewState {
   final List<DocumentModel> documents;
 
-  const LoadedSavedViewPreviewState({
-    required this.documents,
-  });
+  const LoadedSavedViewPreviewState({required this.documents});
 }
 
 class ErrorSavedViewPreviewState extends SavedViewPreviewState {

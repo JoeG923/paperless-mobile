@@ -105,10 +105,7 @@ class DocumentPreviewRoute extends GoRouteData with $DocumentPreviewRoute {
   final int id;
   final String? title;
 
-  const DocumentPreviewRoute({
-    required this.id,
-    this.title,
-  });
+  const DocumentPreviewRoute({required this.id, this.title});
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
@@ -149,67 +146,72 @@ class BulkEditDocumentsRoute extends GoRouteData with $BulkEditDocumentsRoute {
           return switch ($extra.type) {
             LabelType.tag => const FullscreenBulkEditTagsWidget(),
             _ => FullscreenBulkEditLabelPage(
-                options: switch ($extra.type) {
-                  LabelType.correspondent => labelRepository.correspondents,
-                  LabelType.documentType => labelRepository.documentTypes,
-                  LabelType.storagePath => labelRepository.storagePaths,
+              options: switch ($extra.type) {
+                LabelType.correspondent => labelRepository.correspondents,
+                LabelType.documentType => labelRepository.documentTypes,
+                LabelType.storagePath => labelRepository.storagePaths,
+                _ => throw Exception("Parameter not allowed here."),
+              },
+              selection: state.selection,
+              labelMapper: (document) {
+                return switch ($extra.type) {
+                  LabelType.correspondent => document.correspondent,
+                  LabelType.documentType => document.documentType,
+                  LabelType.storagePath => document.storagePath,
                   _ => throw Exception("Parameter not allowed here."),
-                },
-                selection: state.selection,
-                labelMapper: (document) {
-                  return switch ($extra.type) {
-                    LabelType.correspondent => document.correspondent,
-                    LabelType.documentType => document.documentType,
-                    LabelType.storagePath => document.storagePath,
-                    _ => throw Exception("Parameter not allowed here."),
-                  };
-                },
-                leadingIcon: switch ($extra.type) {
-                  LabelType.correspondent => const Icon(Icons.person_outline),
-                  LabelType.documentType =>
-                    const Icon(Icons.description_outlined),
-                  LabelType.storagePath => const Icon(Icons.folder_outlined),
-                  _ => throw Exception("Parameter not allowed here."),
-                },
-                hintText: S.of(context)!.startTyping,
-                onSubmit: switch ($extra.type) {
-                  LabelType.correspondent => context
+                };
+              },
+              leadingIcon: switch ($extra.type) {
+                LabelType.correspondent => const Icon(Icons.person_outline),
+                LabelType.documentType => const Icon(
+                  Icons.description_outlined,
+                ),
+                LabelType.storagePath => const Icon(Icons.folder_outlined),
+                _ => throw Exception("Parameter not allowed here."),
+              },
+              hintText: S.of(context)!.startTyping,
+              onSubmit: switch ($extra.type) {
+                LabelType.correspondent =>
+                  context
                       .read<DocumentBulkActionCubit>()
                       .bulkModifyCorrespondent,
-                  LabelType.documentType => context
+                LabelType.documentType =>
+                  context
                       .read<DocumentBulkActionCubit>()
                       .bulkModifyDocumentType,
-                  LabelType.storagePath => context
-                      .read<DocumentBulkActionCubit>()
-                      .bulkModifyStoragePath,
-                  _ => throw Exception("Parameter not allowed here."),
-                },
-                assignMessageBuilder: (int count, String name) {
-                  return switch ($extra.type) {
-                    LabelType.correspondent => S
+                LabelType.storagePath =>
+                  context.read<DocumentBulkActionCubit>().bulkModifyStoragePath,
+                _ => throw Exception("Parameter not allowed here."),
+              },
+              assignMessageBuilder: (int count, String name) {
+                return switch ($extra.type) {
+                  LabelType.correspondent =>
+                    S
                         .of(context)!
                         .bulkEditCorrespondentAssignMessage(name, count),
-                    LabelType.documentType => S
+                  LabelType.documentType =>
+                    S
                         .of(context)!
                         .bulkEditDocumentTypeAssignMessage(count, name),
-                    LabelType.storagePath => S
+                  LabelType.storagePath =>
+                    S
                         .of(context)!
                         .bulkEditDocumentTypeAssignMessage(count, name),
-                    _ => throw Exception("Parameter not allowed here."),
-                  };
-                },
-                removeMessageBuilder: (int count) {
-                  return switch ($extra.type) {
-                    LabelType.correspondent =>
-                      S.of(context)!.bulkEditCorrespondentRemoveMessage(count),
-                    LabelType.documentType =>
-                      S.of(context)!.bulkEditDocumentTypeRemoveMessage(count),
-                    LabelType.storagePath =>
-                      S.of(context)!.bulkEditStoragePathRemoveMessage(count),
-                    _ => throw Exception("Parameter not allowed here."),
-                  };
-                },
-              ),
+                  _ => throw Exception("Parameter not allowed here."),
+                };
+              },
+              removeMessageBuilder: (int count) {
+                return switch ($extra.type) {
+                  LabelType.correspondent =>
+                    S.of(context)!.bulkEditCorrespondentRemoveMessage(count),
+                  LabelType.documentType =>
+                    S.of(context)!.bulkEditDocumentTypeRemoveMessage(count),
+                  LabelType.storagePath =>
+                    S.of(context)!.bulkEditStoragePathRemoveMessage(count),
+                  _ => throw Exception("Parameter not allowed here."),
+                };
+              },
+            ),
           };
         },
       ),

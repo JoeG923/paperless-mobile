@@ -19,6 +19,7 @@ enum PermissionTarget {
   paperlesstask("paperlesstask"),
   savedView("savedview"),
   storagePath("storagepath"),
+  customField("customfield"),
   tag("tag"),
   uiSettings("uisettings"),
   user("user"),

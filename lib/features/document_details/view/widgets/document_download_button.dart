@@ -53,8 +53,9 @@ class _DocumentDownloadButtonState extends State<DocumentDownloadButton> {
 
   Future<void> _onDownload(DocumentModel document) async {
     try {
-      final globalSettings =
-          Hive.box<GlobalSettings>(HiveBoxes.globalSettings).getValue()!;
+      final globalSettings = Hive.box<GlobalSettings>(
+        HiveBoxes.globalSettings,
+      ).getValue()!;
       bool original;
 
       switch (globalSettings.defaultDownloadType) {
@@ -94,10 +95,10 @@ class _DocumentDownloadButtonState extends State<DocumentDownloadButton> {
       if (mounted) {
         final userId = context.read<LocalUserAccount>().id;
         await context.read<DocumentDetailsCubit>().downloadDocument(
-              downloadOriginal: original,
-              locale: globalSettings.preferredLocaleSubtag,
-              userId: userId,
-            );
+          downloadOriginal: original,
+          locale: globalSettings.preferredLocaleSubtag,
+          userId: userId,
+        );
         // showSnackBar(context, S.of(context)!.documentSuccessfullyDownloaded);
       }
     } on PaperlessApiException catch (error, stackTrace) {

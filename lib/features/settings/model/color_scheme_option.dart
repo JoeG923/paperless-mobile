@@ -8,5 +8,5 @@ enum ColorSchemeOption {
   @HiveField(0)
   classic,
   @HiveField(1)
-  dynamic;
+  dynamic,
 }

@@ -30,10 +30,10 @@ class CorrespondentWidget extends StatelessWidget {
             correspondent?.name ?? "-",
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style:
-                (textStyle ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
-              color: textColor ?? Theme.of(context).colorScheme.primary,
-            ),
+            style: (textStyle ?? Theme.of(context).textTheme.bodyMedium)
+                ?.copyWith(
+                  color: textColor ?? Theme.of(context).colorScheme.primary,
+                ),
           ),
         ),
       ),

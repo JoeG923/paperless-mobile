@@ -26,13 +26,14 @@ class _StoragePathAutofillFormBuilderFieldState
   @override
   void initState() {
     super.initState();
-    _textEditingController = TextEditingController.fromValue(
-      TextEditingValue(text: widget.initialValue ?? ''),
-    )..addListener(() {
-        setState(() {
-          _showClearIcon = _textEditingController.text.isNotEmpty;
+    _textEditingController =
+        TextEditingController.fromValue(
+          TextEditingValue(text: widget.initialValue ?? ''),
+        )..addListener(() {
+          setState(() {
+            _showClearIcon = _textEditingController.text.isNotEmpty;
+          });
         });
-      });
     _showClearIcon = widget.initialValue?.isNotEmpty ?? false;
   }
 
@@ -53,13 +54,14 @@ class _StoragePathAutofillFormBuilderFieldState
               return null;
             },
             decoration: InputDecoration(
-                label: Text(S.of(context)!.storagePath),
-                suffixIcon: _showClearIcon
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => _resetfield(field),
-                      )
-                    : null),
+              label: Text(S.of(context)!.storagePath),
+              suffixIcon: _showClearIcon
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => _resetfield(field),
+                    )
+                  : null,
+            ),
             onChanged: field.didChange,
           ),
           const SizedBox(height: 8.0),
@@ -100,20 +102,26 @@ class _StoragePathAutofillFormBuilderFieldState
                   onPressed: () => _addParameterToInput("{created}", field),
                 ),
                 InputChip(
-                  label: Text("${S.of(context)!.createdAt}"
-                      " (${S.of(context)!.storagePathYear})"),
+                  label: Text(
+                    "${S.of(context)!.createdAt}"
+                    " (${S.of(context)!.storagePathYear})",
+                  ),
                   onPressed: () =>
                       _addParameterToInput("{created_year}", field),
                 ),
                 InputChip(
-                  label: Text("${S.of(context)!.createdAt}"
-                      " (${S.of(context)!.storagePathMonth})"),
+                  label: Text(
+                    "${S.of(context)!.createdAt}"
+                    " (${S.of(context)!.storagePathMonth})",
+                  ),
                   onPressed: () =>
                       _addParameterToInput("{created_month}", field),
                 ),
                 InputChip(
-                  label: Text("${S.of(context)!.createdAt}"
-                      " (${S.of(context)!.storagePathDay})"),
+                  label: Text(
+                    "${S.of(context)!.createdAt}"
+                    " (${S.of(context)!.storagePathDay})",
+                  ),
                   onPressed: () => _addParameterToInput("{created_day}", field),
                 ),
                 InputChip(
@@ -121,23 +129,28 @@ class _StoragePathAutofillFormBuilderFieldState
                   onPressed: () => _addParameterToInput("{added}", field),
                 ),
                 InputChip(
-                  label: Text("${S.of(context)!.createdAt}"
-                      " (${S.of(context)!.storagePathYear})"),
+                  label: Text(
+                    "${S.of(context)!.createdAt}"
+                    " (${S.of(context)!.storagePathYear})",
+                  ),
                   onPressed: () => _addParameterToInput("{added_year}", field),
                 ),
                 InputChip(
-                  label: Text("${S.of(context)!.createdAt}"
-                      " (${S.of(context)!.storagePathMonth})"),
+                  label: Text(
+                    "${S.of(context)!.createdAt}"
+                    " (${S.of(context)!.storagePathMonth})",
+                  ),
                   onPressed: () => _addParameterToInput("{added_month}", field),
                 ),
                 InputChip(
                   label: Text(
-                      "${S.of(context)!.createdAt} (${S.of(context)!.storagePathDay})"),
+                    "${S.of(context)!.createdAt} (${S.of(context)!.storagePathDay})",
+                  ),
                   onPressed: () => _addParameterToInput("{added_day}", field),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -148,7 +161,8 @@ class _StoragePathAutofillFormBuilderFieldState
     field.didChange(text);
     _textEditingController.text = text;
     _textEditingController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _textEditingController.text.length));
+      TextPosition(offset: _textEditingController.text.length),
+    );
   }
 
   void _resetfield(FormFieldState<String> field) {

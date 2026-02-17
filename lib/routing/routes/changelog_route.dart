@@ -11,8 +11,6 @@ class ChangelogRoute extends GoRouteData with $ChangelogRoute {
   static final $parentNavigatorKey = rootNavigatorKey;
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return DialogPage(
-      builder: (context) => const ChangelogDialog(),
-    );
+    return DialogPage(builder: (context) => const ChangelogDialog());
   }
 }

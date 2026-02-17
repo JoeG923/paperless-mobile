@@ -72,7 +72,7 @@ class _ServerAddressFormFieldState extends State<ServerAddressFormField>
                   controller: textEditingController,
                   focusNode: focusNode,
                   decoration: InputDecoration(
-                    hintText: "http://192.168.1.50:8000",
+                    hintText: S.of(context)!.serverAddressHint,
                     labelText: S.of(context)!.serverAddress,
                     suffixIcon: _canClear
                         ? IconButton(

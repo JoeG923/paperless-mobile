@@ -60,9 +60,11 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
   void initState() {
     super.initState();
     _formKey = widget.formKey ?? GlobalKey<FormBuilderState>();
-    var matchingAlgorithm = (widget.initialValue?.matchingAlgorithm ??
+    var matchingAlgorithm =
+        (widget.initialValue?.matchingAlgorithm ??
         MatchingAlgorithm.defaultValue);
-    _enableMatchFormField = matchingAlgorithm != MatchingAlgorithm.auto &&
+    _enableMatchFormField =
+        matchingAlgorithm != MatchingAlgorithm.auto &&
         matchingAlgorithm != MatchingAlgorithm.none;
   }
 
@@ -70,8 +72,8 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
   Widget build(BuildContext context) {
     List<MatchingAlgorithm> selectableMatchingAlgorithmValues =
         getSelectableMatchingAlgorithmValues(
-      context.watch<LocalUserAccount>().hasMultiUserSupport,
-    );
+          context.watch<LocalUserAccount>().hasMultiUserSupport,
+        );
     return Scaffold(
       resizeToAvoidBottomInset: false,
       floatingActionButton: FloatingActionButton.extended(
@@ -102,9 +104,10 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
             ),
             FormBuilderDropdown<int?>(
               name: Label.matchingAlgorithmKey,
-              initialValue: (widget.initialValue?.matchingAlgorithm ??
-                      MatchingAlgorithm.defaultValue)
-                  .value,
+              initialValue:
+                  (widget.initialValue?.matchingAlgorithm ??
+                          MatchingAlgorithm.defaultValue)
+                      .value,
               decoration: InputDecoration(
                 labelText: S.of(context)!.matchingAlgorithm,
                 errorText: _errors[Label.matchingAlgorithmKey],
@@ -112,7 +115,8 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
               onChanged: (val) {
                 setState(() {
                   _errors = {};
-                  _enableMatchFormField = val != MatchingAlgorithm.auto.value &&
+                  _enableMatchFormField =
+                      val != MatchingAlgorithm.auto.value &&
                       val != MatchingAlgorithm.none.value;
                 });
               },
@@ -156,12 +160,14 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
   }
 
   List<MatchingAlgorithm> getSelectableMatchingAlgorithmValues(
-      bool hasMultiUserSupport) {
+    bool hasMultiUserSupport,
+  ) {
     var selectableMatchingAlgorithmValues = MatchingAlgorithm.values;
     if (!hasMultiUserSupport) {
       selectableMatchingAlgorithmValues = selectableMatchingAlgorithmValues
-          .where((matchingAlgorithm) =>
-              matchingAlgorithm != MatchingAlgorithm.none)
+          .where(
+            (matchingAlgorithm) => matchingAlgorithm != MatchingAlgorithm.none,
+          )
           .toList();
     }
     return selectableMatchingAlgorithmValues;
@@ -172,7 +178,7 @@ class _LabelFormState<T extends Label> extends State<LabelForm<T>> {
       try {
         final mergedJson = {
           ...widget.initialValue?.toJson() ?? {},
-          ..._formKey.currentState!.value
+          ..._formKey.currentState!.value,
         };
         final parsed = widget.fromJsonT(mergedJson);
         final createdLabel = await widget.submitButtonConfig.onSubmit(parsed);

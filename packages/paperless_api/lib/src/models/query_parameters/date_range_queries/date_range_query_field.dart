@@ -1,5 +1,1 @@
-enum DateRangeQueryField {
-  created,
-  added,
-  modified;
-}
+enum DateRangeQueryField { created, added, modified }

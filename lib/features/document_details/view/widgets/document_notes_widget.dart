@@ -78,9 +78,7 @@ class _DocumentNotesWidgetState extends State<DocumentNotesWidget> {
                         ? const SizedBox.square(
                             dimension: 20,
                             child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 3),
                             ),
                           )
                         : const Icon(Icons.note_add_outlined),
@@ -94,9 +92,9 @@ class _DocumentNotesWidgetState extends State<DocumentNotesWidget> {
                           _isNoteSubmitting = true;
                         });
                         try {
-                          await context
-                              .read<DocumentDetailsCubit>()
-                              .addNote(_noteContentController.text.trim());
+                          await context.read<DocumentDetailsCubit>().addNote(
+                            _noteContentController.text.trim(),
+                          );
                           _noteContentController.clear();
                         } catch (error) {
                           if (context.mounted) {
@@ -115,9 +113,7 @@ class _DocumentNotesWidgetState extends State<DocumentNotesWidget> {
             ),
           ),
         ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
         SliverList.separated(
           separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
@@ -143,17 +139,14 @@ class _DocumentNotesWidgetState extends State<DocumentNotesWidget> {
                       if (note.created != null)
                         Text(
                           DateFormat.yMMMd(
-                                  Localizations.localeOf(context).toString())
-                              .addPattern('\u2014')
-                              .add_jm()
-                              .format(note.created!),
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withAlpha(128),
-                                  ),
+                            Localizations.localeOf(context).toString(),
+                          ).addPattern('\u2014').add_jm().format(note.created!),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(128),
+                              ),
                         ),
                       IconButton(
                         tooltip: S.of(context)!.delete,

@@ -43,7 +43,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  "Paperless Mobile",
+                  S.of(context)!.paperlessMobileAppName,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],
@@ -93,7 +93,7 @@ class AppDrawer extends StatelessWidget {
                     content: Text(S.of(context)!.donationDialogContent),
                     actionsAlignment: MainAxisAlignment.spaceBetween,
                     actions: [
-                      const Text("~ Anton"),
+                      Text(S.of(context)!.donationSignature),
                       TextButton(
                         onPressed: Navigator.of(context).pop,
                         child: Text(S.of(context)!.gotIt),
@@ -145,7 +145,7 @@ class AppDrawer extends StatelessWidget {
                 final child = ListTile(
                   dense: true,
                   leading: const Icon(Icons.drive_folder_upload_outlined),
-                  title: const Text("Pending Files"),
+                  title: Text(S.of(context)!.pendingFiles),
                   onTap: () {
                     UploadQueueRoute().push(context);
                   },
@@ -171,7 +171,7 @@ class AppDrawer extends StatelessWidget {
                 return ListTile(
                   dense: true,
                   leading: const Icon(Icons.task_alt_outlined),
-                  title: const Text('Tasks'), // TODO: INTL
+                  title: Text(S.of(context)!.tasksTitle),
                   trailing: count > 0
                       ? Text(
                           '$count',
@@ -267,12 +267,12 @@ class AppDrawer extends StatelessWidget {
       applicationIcon: const ImageIcon(
         AssetImage('assets/logos/paperless_logo_green.png'),
       ),
-      applicationName: 'Paperless Mobile',
+      applicationName: S.of(context)!.paperlessMobileAppName,
       applicationVersion: '${packageInfo.version}+${packageInfo.buildNumber}',
       children: [
         Text(S.of(context)!.developedBy('Anton Stubenbord')),
         const SizedBox(height: 16),
-        Text("Source Code", style: theme.textTheme.titleMedium),
+        Text(S.of(context)!.sourceCode, style: theme.textTheme.titleMedium),
         RichText(
           text: TextSpan(
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -297,7 +297,7 @@ class AppDrawer extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Credits',
+          S.of(context)!.credits,
           style: theme.textTheme.titleMedium?.copyWith(
             color: colorScheme.onSurface,
           ),
@@ -308,7 +308,7 @@ class AppDrawer extends StatelessWidget {
               color: colorScheme.onSurface,
             ),
             children: [
-              const TextSpan(text: 'Onboarding images by '),
+              TextSpan(text: '${S.of(context)!.onboardingImagesBy} '),
               TextSpan(
                 text: 'pch.vector',
                 style: const TextStyle(color: Colors.blue),
@@ -319,7 +319,7 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
               ),
-              const TextSpan(text: ' on Freepik.'),
+              TextSpan(text: ' ${S.of(context)!.onFreepik}'),
             ],
           ),
         ),

@@ -9,10 +9,7 @@ class SnackBarActionConfig {
   final String label;
   final VoidCallback onPressed;
 
-  SnackBarActionConfig({
-    required this.label,
-    required this.onPressed,
-  });
+  SnackBarActionConfig({required this.label, required this.onPressed});
 }
 
 void showSnackBar(
@@ -33,8 +30,8 @@ void showSnackBar(
                 text: TextSpan(
                   text: message,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onInverseSurface,
-                      ),
+                    color: Theme.of(context).colorScheme.onInverseSurface,
+                  ),
                   children: <TextSpan>[
                     TextSpan(
                       text: "\n$details",

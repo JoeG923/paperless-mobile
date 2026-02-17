@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_api/src/converters/local_date_time_json_converter.dart';
-import 'package:paperless_api/src/models/custom_field_model.dart';
 import 'package:paperless_api/src/models/search_hit.dart';
 
 part 'document_model.g.dart';
@@ -39,10 +38,7 @@ class DocumentModel extends Equatable {
   final String? originalFileName;
   final String? archivedFileName;
 
-  @JsonKey(
-    name: '__search_hit__',
-    includeIfNull: false,
-  )
+  @JsonKey(name: '__search_hit__', includeIfNull: false)
   final SearchHit? searchHit;
 
   final int? owner;
@@ -104,8 +100,9 @@ class DocumentModel extends Equatable {
       title: title ?? this.title,
       content: content ?? this.content,
       documentType: documentType != null ? documentType() : this.documentType,
-      correspondent:
-          correspondent != null ? correspondent() : this.correspondent,
+      correspondent: correspondent != null
+          ? correspondent()
+          : this.correspondent,
       storagePath: storagePath != null ? storagePath() : this.storagePath,
       tags: tags ?? this.tags,
       created: created ?? this.created,
@@ -126,23 +123,23 @@ class DocumentModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        content,
-        correspondent,
-        documentType,
-        tags,
-        storagePath,
-        created,
-        modified,
-        added,
-        archiveSerialNumber,
-        originalFileName,
-        archivedFileName,
-        owner,
-        userCanChange,
-        customFields,
-        notes,
-        permissions,
-      ];
+    id,
+    title,
+    content,
+    correspondent,
+    documentType,
+    tags,
+    storagePath,
+    created,
+    modified,
+    added,
+    archiveSerialNumber,
+    originalFileName,
+    archivedFileName,
+    owner,
+    userCanChange,
+    customFields,
+    notes,
+    permissions,
+  ];
 }

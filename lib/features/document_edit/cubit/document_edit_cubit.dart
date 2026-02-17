@@ -21,15 +21,12 @@ class DocumentEditCubit extends Cubit<DocumentEditState> {
     this._docsApi,
     this._notifier, {
     required DocumentModel document,
-  })  : _initialDocument = document,
-        super(DocumentEditState(document: document)) {
+  }) : _initialDocument = document,
+       super(DocumentEditState(document: document)) {
     _notifier.addListener(
       this,
       onUpdated: (doc) {
-        emit(state.copyWith(
-          document: doc,
-          suggestions: null,
-        ));
+        emit(state.copyWith(document: doc, suggestions: null));
         loadFieldSuggestions();
       },
       ids: [document.id],
@@ -72,7 +69,8 @@ class DocumentEditCubit extends Cubit<DocumentEditState> {
         methodName: "updateDocument",
       );
       _labelRepository.findCorrespondent(
-          (document.correspondent ?? _initialDocument.correspondent)!);
+        (document.correspondent ?? _initialDocument.correspondent)!,
+      );
     }
     if (document.storagePath != _initialDocument.storagePath) {
       logger.fd(
@@ -83,10 +81,13 @@ class DocumentEditCubit extends Cubit<DocumentEditState> {
         methodName: "updateDocument",
       );
       _labelRepository.findStoragePath(
-          (document.storagePath ?? _initialDocument.storagePath)!);
+        (document.storagePath ?? _initialDocument.storagePath)!,
+      );
     }
-    if (!const DeepCollectionEquality.unordered()
-        .equals(document.tags.toList(), _initialDocument.tags.toList())) {
+    if (!const DeepCollectionEquality.unordered().equals(
+      document.tags.toList(),
+      _initialDocument.tags.toList(),
+    )) {
       final tagsToReload = {...document.tags, ..._initialDocument.tags};
       logger.fd(
         "Tags assigned to document ${document.id} have changed "

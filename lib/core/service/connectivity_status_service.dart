@@ -40,7 +40,8 @@ class ConnectivityStatusServiceImpl implements ConnectivityStatusService {
   @override
   Future<bool> isConnectedToInternet() async {
     return _hasActiveInternetConnection(
-        await (Connectivity().checkConnectivity()));
+      await (Connectivity().checkConnectivity()),
+    );
   }
 
   @override
@@ -132,8 +133,10 @@ class ConnectivityStatusServiceMock implements ConnectivityStatusService {
   }
 
   @override
-  Future<ReachabilityStatus> isPaperlessServerReachable(String serverAddress,
-      [ClientCertificate? clientCertificate]) async {
+  Future<ReachabilityStatus> isPaperlessServerReachable(
+    String serverAddress, [
+    ClientCertificate? clientCertificate,
+  ]) async {
     return isConnected
         ? ReachabilityStatus.reachable
         : ReachabilityStatus.notReachable;

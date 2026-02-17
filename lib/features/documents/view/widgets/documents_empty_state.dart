@@ -9,11 +9,7 @@ class DocumentsEmptyState extends StatelessWidget {
   final DocumentPagingState state;
   final VoidCallback? onReset;
 
-  const DocumentsEmptyState({
-    super.key,
-    required this.state,
-    this.onReset,
-  });
+  const DocumentsEmptyState({super.key, required this.state, this.onReset});
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +26,7 @@ class DocumentsEmptyState extends StatelessWidget {
                 HapticFeedback.mediumImpact();
                 onReset!();
               },
-              child: Text(
-                S.of(context)!.resetFilter,
-              ),
+              child: Text(S.of(context)!.resetFilter),
             ).padded(),
         ],
       ).padded(24),

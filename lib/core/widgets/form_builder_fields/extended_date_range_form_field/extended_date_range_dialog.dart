@@ -9,10 +9,7 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 class ExtendedDateRangeDialog extends StatefulWidget {
   final DateRangeQuery initialValue;
 
-  const ExtendedDateRangeDialog({
-    super.key,
-    required this.initialValue,
-  });
+  const ExtendedDateRangeDialog({super.key, required this.initialValue});
 
   @override
   State<ExtendedDateRangeDialog> createState() =>
@@ -69,11 +66,11 @@ class _ExtendedDateRangeDialogState extends State<ExtendedDateRangeDialog> {
                       name: _fkRelative,
                       initialValue:
                           widget.initialValue is RelativeDateRangeQuery
-                              ? widget.initialValue as RelativeDateRangeQuery
-                              : const RelativeDateRangeQuery(
-                                  1,
-                                  DateRangeUnit.month,
-                                ),
+                          ? widget.initialValue as RelativeDateRangeQuery
+                          : const RelativeDateRangeQuery(
+                              1,
+                              DateRangeUnit.month,
+                            ),
                     );
                 }
               },
@@ -203,7 +200,4 @@ class _ExtendedDateRangeDialogState extends State<ExtendedDateRangeDialog> {
   }
 }
 
-enum DateRangeType {
-  absolute,
-  relative;
-}
+enum DateRangeType { absolute, relative }

@@ -21,10 +21,7 @@ abstract class DocumentPagingState extends Equatable {
   List<DocumentModel> get documents {
     return value.fold(
       [],
-      (previousValue, element) => [
-        ...previousValue,
-        ...element.results,
-      ],
+      (previousValue, element) => [...previousValue, ...element.results],
     );
   }
 
@@ -73,10 +70,5 @@ abstract class DocumentPagingState extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-        filter,
-        value,
-        hasLoaded,
-        isLoading,
-      ];
+  List<Object?> get props => [filter, value, hasLoaded, isLoading];
 }

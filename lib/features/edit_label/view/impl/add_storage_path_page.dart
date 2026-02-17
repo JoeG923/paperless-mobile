@@ -13,9 +13,7 @@ class AddStoragePathPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: AddLabelPage<StoragePath>(
         pageTitle: Text(S.of(context)!.addStoragePath),
         fromJsonT: StoragePath.fromJson,

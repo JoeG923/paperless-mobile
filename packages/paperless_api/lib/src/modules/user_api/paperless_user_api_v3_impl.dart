@@ -112,11 +112,13 @@ class PaperlessUserApiV3Impl implements PaperlessUserApi, PaperlessUserApiV3 {
     final user = Map<String, dynamic>.from(
       data['user'] as Map<dynamic, dynamic>,
     );
-    final permissions = (data['permissions'] as List<dynamic>?)
+    final permissions =
+        (data['permissions'] as List<dynamic>?)
             ?.map((permission) => permission.toString())
             .toList() ??
         const <String>[];
-    final groups = (user['groups'] as List<dynamic>?)
+    final groups =
+        (user['groups'] as List<dynamic>?)
             ?.map((group) => group as int)
             .toList() ??
         const <int>[];

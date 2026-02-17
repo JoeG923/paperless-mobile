@@ -5,25 +5,21 @@ import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
 
 class UserAccountBuilder extends StatelessWidget {
-  final Widget Function(
-    BuildContext context,
-    LocalUserAccount? settings,
-  ) builder;
+  final Widget Function(BuildContext context, LocalUserAccount? settings)
+  builder;
 
-  const UserAccountBuilder({
-    super.key,
-    required this.builder,
-  });
+  const UserAccountBuilder({super.key, required this.builder});
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Box<LocalUserAccount>>(
-      valueListenable:
-          Hive.box<LocalUserAccount>(HiveBoxes.localUserAccount).listenable(),
+      valueListenable: Hive.box<LocalUserAccount>(
+        HiveBoxes.localUserAccount,
+      ).listenable(),
       builder: (context, accountBox, _) {
-        final currentUser = Hive.box<GlobalSettings>(HiveBoxes.globalSettings)
-            .getValue()!
-            .loggedInUserId;
+        final currentUser = Hive.box<GlobalSettings>(
+          HiveBoxes.globalSettings,
+        ).getValue()!.loggedInUserId;
         if (currentUser != null) {
           final account = accountBox.get(currentUser);
           return builder(context, account);

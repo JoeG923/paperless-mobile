@@ -29,9 +29,7 @@ class NotAssignedTagsQuery extends TagsQuery {
 class AnyAssignedTagsQuery extends TagsQuery {
   @HiveField(0)
   final List<int> tagIds;
-  const AnyAssignedTagsQuery({
-    this.tagIds = const [],
-  });
+  const AnyAssignedTagsQuery({this.tagIds = const []});
 
   @override
   Map<String, String> toQueryParameter() {
@@ -44,12 +42,8 @@ class AnyAssignedTagsQuery extends TagsQuery {
   @override
   bool matches(Iterable<int> ids) => ids.isNotEmpty;
 
-  AnyAssignedTagsQuery copyWith({
-    List<int>? tagIds,
-  }) {
-    return AnyAssignedTagsQuery(
-      tagIds: tagIds ?? this.tagIds,
-    );
+  AnyAssignedTagsQuery copyWith({List<int>? tagIds}) {
+    return AnyAssignedTagsQuery(tagIds: tagIds ?? this.tagIds);
   }
 
   @override
@@ -62,10 +56,7 @@ class IdsTagsQuery extends TagsQuery {
   final List<int> include;
   @HiveField(1)
   final List<int> exclude;
-  const IdsTagsQuery({
-    this.include = const [],
-    this.exclude = const [],
-  });
+  const IdsTagsQuery({this.include = const [], this.exclude = const []});
   @override
   Map<String, String> toQueryParameter() {
     final Map<String, String> params = {};
@@ -84,10 +75,7 @@ class IdsTagsQuery extends TagsQuery {
         exclude.toSet().intersection(ids.toSet()).isEmpty;
   }
 
-  IdsTagsQuery copyWith({
-    List<int>? include,
-    List<int>? exclude,
-  }) {
+  IdsTagsQuery copyWith({List<int>? include, List<int>? exclude}) {
     return IdsTagsQuery(
       include: include ?? this.include,
       exclude: exclude ?? this.exclude,

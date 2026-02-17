@@ -11,5 +11,5 @@ enum DateRangeUnit {
   @HiveField(2)
   month,
   @HiveField(3)
-  year;
+  year,
 }

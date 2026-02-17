@@ -11,6 +11,7 @@ import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/widgets/form_builder_fields/form_builder_localized_date_picker.dart';
 import 'package:paperless_mobile/core/widgets/future_or_builder.dart';
@@ -23,6 +24,7 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/helpers/upload_preset_helper.dart';
 import 'package:paperless_mobile/routing/routes/labels_route.dart';
+import 'package:provider/provider.dart';
 
 class DocumentUploadPreparationPage extends StatefulWidget {
   final FutureOr<Uint8List> fileBytes;
@@ -46,6 +48,7 @@ class DocumentUploadPreparationPage extends StatefulWidget {
 class _DocumentUploadPreparationPageState
     extends State<DocumentUploadPreparationPage> {
   static const fkFileName = "filename";
+  static const _fkCustomFieldPrefix = 'customField_';
 
   final GlobalKey<FormBuilderState> _formKey = GlobalKey();
   Map<String, String> _errors = {};
@@ -60,7 +63,15 @@ class _DocumentUploadPreparationPageState
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<LocalUserAccount>().paperlessUser;
     final labelRepository = context.watch<LabelRepository>();
+    final customFieldRepository = Provider.of<CustomFieldRepository?>(context);
+    final customFieldDefinitions = {
+      for (final field
+          in customFieldRepository?.customFields.values ??
+              const <CustomFieldModel>[])
+        if (field.id != null) field.id!: field,
+    };
     final settings = Hive.box<GlobalSettings>(
       HiveBoxes.globalSettings,
     ).getValue()!;
@@ -171,6 +182,9 @@ class _DocumentUploadPreparationPageState
                               // Title
                               FormBuilderTextField(
                                 autovalidateMode: AutovalidateMode.always,
+                                key: const ValueKey<String>(
+                                  DocumentModel.titleKey,
+                                ),
                                 name: DocumentModel.titleKey,
                                 initialValue: defaultTitle,
                                 validator: (value) {
@@ -213,6 +227,7 @@ class _DocumentUploadPreparationPageState
                                 readOnly: _syncTitleAndFilename,
                                 enabled: !_syncTitleAndFilename,
                                 name: fkFileName,
+                                key: const ValueKey<String>(fkFileName),
                                 decoration: InputDecoration(
                                   labelText: S.of(context)!.fileName,
                                   suffixText: widget.fileExtension,
@@ -262,10 +277,7 @@ class _DocumentUploadPreparationPageState
                                 initialValue: initialCreatedDate,
                               ),
                               // Correspondent
-                              if (context
-                                  .watch<LocalUserAccount>()
-                                  .paperlessUser
-                                  .canViewCorrespondents)
+                              if (user.canViewCorrespondents)
                                 LabelFormField<Correspondent>(
                                   showAnyAssignedOption: false,
                                   showNotAssignedOption: false,
@@ -280,17 +292,12 @@ class _DocumentUploadPreparationPageState
                                   options: labelRepository.correspondents,
                                   prefixIcon: const Icon(Icons.person_outline),
                                   allowSelectUnassigned: true,
-                                  canCreateNewLabel: context
-                                      .watch<LocalUserAccount>()
-                                      .paperlessUser
-                                      .canCreateCorrespondents,
+                                  canCreateNewLabel:
+                                      user.canCreateCorrespondents,
                                   initialValue: initialCorrespondent,
                                 ),
                               // Document type
-                              if (context
-                                  .watch<LocalUserAccount>()
-                                  .paperlessUser
-                                  .canViewDocumentTypes)
+                              if (user.canViewDocumentTypes)
                                 LabelFormField<DocumentType>(
                                   showAnyAssignedOption: false,
                                   showNotAssignedOption: false,
@@ -306,16 +313,11 @@ class _DocumentUploadPreparationPageState
                                     Icons.description_outlined,
                                   ),
                                   allowSelectUnassigned: true,
-                                  canCreateNewLabel: context
-                                      .watch<LocalUserAccount>()
-                                      .paperlessUser
-                                      .canCreateDocumentTypes,
+                                  canCreateNewLabel:
+                                      user.canCreateDocumentTypes,
                                   initialValue: initialDocumentType,
                                 ),
-                              if (context
-                                  .watch<LocalUserAccount>()
-                                  .paperlessUser
-                                  .canViewStoragePaths)
+                              if (user.canViewStoragePaths)
                                 LabelFormField<StoragePath>(
                                   showAnyAssignedOption: false,
                                   showNotAssignedOption: false,
@@ -329,16 +331,10 @@ class _DocumentUploadPreparationPageState
                                   options: labelRepository.storagePaths,
                                   prefixIcon: const Icon(Icons.folder_open),
                                   allowSelectUnassigned: true,
-                                  canCreateNewLabel: context
-                                      .watch<LocalUserAccount>()
-                                      .paperlessUser
-                                      .canCreateStoragePaths,
+                                  canCreateNewLabel: user.canCreateStoragePaths,
                                   initialValue: initialStoragePath,
                                 ),
-                              if (context
-                                  .watch<LocalUserAccount>()
-                                  .paperlessUser
-                                  .canViewTags)
+                              if (user.canViewTags)
                                 TagsFormField(
                                   name: DocumentModel.tagsKey,
                                   allowCreation: true,
@@ -346,6 +342,12 @@ class _DocumentUploadPreparationPageState
                                   allowOnlySelection: true,
                                   options: labelRepository.tags,
                                   initialValue: initialTags,
+                                ),
+                              if (user.canViewCustomFields &&
+                                  customFieldDefinitions.isNotEmpty)
+                                ..._buildCustomFieldInputs(
+                                  context,
+                                  customFieldDefinitions,
                                 ),
                               Text(
                                 "* ${S.of(context)!.uploadInferValuesHint}",
@@ -398,6 +400,23 @@ class _DocumentUploadPreparationPageState
           IdsTagsQuery(include: var ids) => ids,
           _ => const <int>[],
         };
+        final customFieldRepository = Provider.of<CustomFieldRepository?>(
+          context,
+          listen: false,
+        );
+        final customFieldDefinitions = {
+          for (final field
+              in customFieldRepository?.customFields.values ??
+                  const <CustomFieldModel>[])
+            if (field.id != null) field.id!: field,
+        };
+        final customFieldValues = _extractCustomFieldValues(
+          formValues,
+          customFieldDefinitions,
+        );
+        final customFields = customFieldValues.isEmpty
+            ? null
+            : UploadCustomFields.values(customFieldValues);
 
         final asn = formValues[DocumentModel.asnKey] as int?;
         final outcome = await cubit.upload(
@@ -411,6 +430,7 @@ class _DocumentUploadPreparationPageState
           correspondent: correspondent,
           storagePath: storagePath,
           tags: tags,
+          customFields: customFields,
           createdAt: createdAt?.toDateTime(),
           asn: asn,
         );
@@ -469,6 +489,277 @@ class _DocumentUploadPreparationPageState
 
   IdQueryParameter? _buildIdParam(int? id) {
     return id != null ? SetIdQueryParameter(id: id) : null;
+  }
+
+  List<Widget> _buildCustomFieldInputs(
+    BuildContext context,
+    Map<int, CustomFieldModel> customFieldDefinitions,
+  ) {
+    final fields = customFieldDefinitions.values.toList(growable: false)
+      ..sort(
+        (a, b) => (a.name ?? '').toLowerCase().compareTo(
+          (b.name ?? '').toLowerCase(),
+        ),
+      );
+    final children = <Widget>[
+      const SizedBox(height: 8),
+      Text(
+        S.of(context)!.customFields,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      const SizedBox(height: 8),
+    ];
+    for (final definition in fields) {
+      final input = _buildCustomFieldInput(context, definition);
+      if (input == null) {
+        continue;
+      }
+      children.add(input);
+      children.add(const SizedBox(height: 8));
+    }
+    return children;
+  }
+
+  Widget? _buildCustomFieldInput(
+    BuildContext context,
+    CustomFieldModel definition,
+  ) {
+    final fieldId = definition.id;
+    if (fieldId == null) {
+      return null;
+    }
+    final label = definition.name ?? 'Custom field $fieldId';
+    final fieldName = _customFieldFormKey(fieldId);
+
+    switch (definition.dataType) {
+      case CustomFieldDataType.boolean:
+        return FormBuilderDropdown<String>(
+          key: ValueKey<String>(fieldName),
+          name: fieldName,
+          initialValue: null,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          items: [
+            DropdownMenuItem<String>(
+              value: '',
+              child: Text(S.of(context)!.none),
+            ),
+            DropdownMenuItem<String>(
+              value: 'true',
+              child: Text(S.of(context)!.customFieldBooleanTrue),
+            ),
+            DropdownMenuItem<String>(
+              value: 'false',
+              child: Text(S.of(context)!.customFieldBooleanFalse),
+            ),
+          ],
+        );
+      case CustomFieldDataType.select:
+        final options = _selectOptions(definition.extraData);
+        if (options.isEmpty) {
+          return _buildCustomFieldTextInput(
+            context: context,
+            name: fieldName,
+            label: label,
+          );
+        }
+        return FormBuilderDropdown<String>(
+          key: ValueKey<String>(fieldName),
+          name: fieldName,
+          initialValue: null,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          items: [
+            DropdownMenuItem<String>(
+              value: '',
+              child: Text(S.of(context)!.none),
+            ),
+            for (final option in options)
+              DropdownMenuItem<String>(
+                value: option.id,
+                child: Text(option.label),
+              ),
+          ],
+        );
+      case CustomFieldDataType.integer:
+        return _buildCustomFieldTextInput(
+          context: context,
+          name: fieldName,
+          label: label,
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            final trimmed = value?.trim();
+            if (trimmed == null || trimmed.isEmpty) {
+              return null;
+            }
+            return int.tryParse(trimmed) == null
+                ? S.of(context)!.pleaseEnterValidInteger
+                : null;
+          },
+        );
+      case CustomFieldDataType.float:
+      case CustomFieldDataType.monetary:
+        return _buildCustomFieldTextInput(
+          context: context,
+          name: fieldName,
+          label: label,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
+            signed: true,
+          ),
+          validator: (value) {
+            final trimmed = value?.trim();
+            if (trimmed == null || trimmed.isEmpty) {
+              return null;
+            }
+            return double.tryParse(trimmed) == null
+                ? S.of(context)!.pleaseEnterValidNumber
+                : null;
+          },
+        );
+      case CustomFieldDataType.date:
+        return FormBuilderLocalizedDatePicker(
+          name: fieldName,
+          firstDate: DateTime(1970, 1, 1),
+          lastDate: DateTime(2100, 1, 1),
+          locale: Localizations.localeOf(context),
+          labelText: label,
+          allowUnset: true,
+        );
+      case CustomFieldDataType.longText:
+        return _buildCustomFieldTextInput(
+          context: context,
+          name: fieldName,
+          label: label,
+          maxLines: 3,
+        );
+      case CustomFieldDataType.documentLink:
+      case CustomFieldDataType.string:
+      case CustomFieldDataType.url:
+        return _buildCustomFieldTextInput(
+          context: context,
+          name: fieldName,
+          label: label,
+        );
+    }
+  }
+
+  Widget _buildCustomFieldTextInput({
+    required BuildContext context,
+    required String name,
+    required String label,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return FormBuilderTextField(
+      key: ValueKey<String>(name),
+      name: name,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Map<int, Object?> _extractCustomFieldValues(
+    Map<String, dynamic> formValues,
+    Map<int, CustomFieldModel> customFieldDefinitions,
+  ) {
+    final values = <int, Object?>{};
+    for (final entry in customFieldDefinitions.entries) {
+      final fieldId = entry.key;
+      final definition = entry.value;
+      final rawValue = formValues[_customFieldFormKey(fieldId)];
+      final normalizedValue = _normalizeCustomFieldValue(
+        definition.dataType,
+        rawValue,
+      );
+      if (normalizedValue != null) {
+        values[fieldId] = normalizedValue;
+      }
+    }
+    return values;
+  }
+
+  Object? _normalizeCustomFieldValue(
+    CustomFieldDataType type,
+    Object? rawValue,
+  ) {
+    switch (type) {
+      case CustomFieldDataType.boolean:
+        if (rawValue == null) {
+          return null;
+        }
+        final text = rawValue.toString().trim();
+        if (text.isEmpty) {
+          return null;
+        }
+        return text.toLowerCase() == 'true' || text == '1';
+      case CustomFieldDataType.integer:
+        final text = rawValue?.toString().trim();
+        if (text == null || text.isEmpty) {
+          return null;
+        }
+        return int.tryParse(text);
+      case CustomFieldDataType.float:
+      case CustomFieldDataType.monetary:
+        final text = rawValue?.toString().trim();
+        if (text == null || text.isEmpty) {
+          return null;
+        }
+        return double.tryParse(text);
+      case CustomFieldDataType.date:
+        if (rawValue is FormDateTime) {
+          final date = rawValue.toDateTime();
+          if (date == null) {
+            return null;
+          }
+          return date.toIso8601String().split('T').first;
+        }
+        final text = rawValue?.toString().trim();
+        return (text == null || text.isEmpty) ? null : text;
+      case CustomFieldDataType.select:
+      case CustomFieldDataType.documentLink:
+      case CustomFieldDataType.longText:
+      case CustomFieldDataType.string:
+      case CustomFieldDataType.url:
+        final text = rawValue?.toString().trim();
+        return (text == null || text.isEmpty) ? null : text;
+    }
+  }
+
+  String _customFieldFormKey(int fieldId) => '$_fkCustomFieldPrefix$fieldId';
+
+  List<({String id, String label})> _selectOptions(
+    Map<String, dynamic>? extraData,
+  ) {
+    final options = extraData?['select_options'];
+    if (options is! List) {
+      return const [];
+    }
+    if (options.every((entry) => entry is String)) {
+      return options
+          .whereType<String>()
+          .map((label) => (id: label, label: label))
+          .toList(growable: false);
+    }
+    return options
+        .whereType<Map>()
+        .map((entry) => entry.cast<String, dynamic>())
+        .where((entry) => entry['id'] != null && entry['label'] != null)
+        .map(
+          (entry) =>
+              (id: entry['id'].toString(), label: entry['label'].toString()),
+        )
+        .toList(growable: false);
   }
 
   // Future<Color> _computeAverageColor() async {

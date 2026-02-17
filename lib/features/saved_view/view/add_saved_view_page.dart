@@ -31,9 +31,7 @@ class _AddSavedViewPageState extends State<AddSavedViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context)!.newView),
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.newView)),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: "fab_add_saved_view_page",
         icon: const Icon(Icons.add),
@@ -87,14 +85,7 @@ class _AddSavedViewPageState extends State<AddSavedViewPage> {
                 ],
               ),
             ),
-            //TODO: INTL or remove
-            HintCard(
-              hintText:
-                  "Saved views can currently only be edited by changing the "
-                  "document filter. Therefore, go to the documents page, select "
-                  "this view, add the filters you want this view to have and "
-                  "save it by pressing 'Save changes' in the view menu.",
-            ),
+            HintCard(hintText: S.of(context)!.savedViewEditHint),
           ],
         ),
       ),
@@ -113,9 +104,7 @@ class _AddSavedViewPageState extends State<AddSavedViewPage> {
             _savedViewFormKey.currentState?.value[_fkShowInSidebar] as bool,
       );
       final router = GoRouter.of(context);
-      await cubit.add(
-        savedView,
-      );
+      await cubit.add(savedView);
       router.pop();
     }
   }

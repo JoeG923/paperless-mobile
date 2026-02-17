@@ -43,10 +43,7 @@ class ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
           destinations: [
             NavigationDestination(
               icon: const Icon(Icons.home_outlined),
-              selectedIcon: Icon(
-                Icons.home,
-                color: theme.colorScheme.primary,
-              ),
+              selectedIcon: Icon(Icons.home, color: theme.colorScheme.primary),
               label: S.of(context)!.home,
             ),
             _toggleDestination(
@@ -100,7 +97,8 @@ class ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
                 selectedIcon: BlocBuilder<InboxCubit, InboxState>(
                   builder: (context, state) {
                     return Badge.count(
-                      isLabelVisible: state.itemsInInboxCount > 0 &&
+                      isLabelVisible:
+                          state.itemsInInboxCount > 0 &&
                           widget.authenticatedUser.canViewInbox,
                       count: state.itemsInInboxCount,
                       child: Icon(
@@ -121,23 +119,17 @@ class ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
     );
   }
 
-  Widget _toggleDestination(
-    Widget destination, {
-    required bool disableWhen,
-  }) {
+  Widget _toggleDestination(Widget destination, {required bool disableWhen}) {
     final disabledColor = Theme.of(context).disabledColor;
 
     final disabledTheme = Theme.of(context).navigationBarTheme.copyWith(
-          labelTextStyle: WidgetStatePropertyAll(
-            Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: disabledColor),
-          ),
-          iconTheme: WidgetStatePropertyAll(
-            Theme.of(context).iconTheme.copyWith(color: disabledColor),
-          ),
-        );
+      labelTextStyle: WidgetStatePropertyAll(
+        Theme.of(context).textTheme.labelSmall?.copyWith(color: disabledColor),
+      ),
+      iconTheme: WidgetStatePropertyAll(
+        Theme.of(context).iconTheme.copyWith(color: disabledColor),
+      ),
+    );
     if (disableWhen) {
       return AbsorbPointer(
         child: Theme(

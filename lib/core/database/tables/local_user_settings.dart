@@ -8,7 +8,5 @@ class LocalUserSettings with HiveObjectMixin {
   @HiveField(0)
   bool isBiometricAuthenticationEnabled;
 
-  LocalUserSettings({
-    this.isBiometricAuthenticationEnabled = false,
-  });
+  LocalUserSettings({this.isBiometricAuthenticationEnabled = false});
 }

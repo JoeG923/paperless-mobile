@@ -12,9 +12,7 @@ class EditDocumentTypePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LabelCubit(
-        context.read(),
-      ),
+      create: (context) => LabelCubit(context.read()),
       child: EditLabelPage<DocumentType>(
         label: documentType,
         fromJsonT: DocumentType.fromJson,

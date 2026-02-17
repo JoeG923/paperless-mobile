@@ -9,6 +9,26 @@ import 'package:paperless_mobile/features/documents/view/widgets/placeholder/doc
 import 'package:paperless_mobile/features/paged_document_view/cubit/paged_documents_state.dart';
 import 'package:paperless_mobile/features/settings/model/view_type.dart';
 
+@visibleForTesting
+DocumentSelectionLookup documentSelectionLookupOf(
+  Iterable<int> selectedDocumentIds,
+) {
+  return DocumentSelectionLookup._(Set<int>.of(selectedDocumentIds));
+}
+
+@visibleForTesting
+class DocumentSelectionLookup {
+  final Set<int> _selectedDocumentIds;
+
+  const DocumentSelectionLookup._(this._selectedDocumentIds);
+
+  bool get isSelectionActive => _selectedDocumentIds.isNotEmpty;
+
+  bool isSelected(int documentId) {
+    return _selectedDocumentIds.contains(documentId);
+  }
+}
+
 abstract class AdaptiveDocumentsView extends StatelessWidget {
   final List<DocumentModel> documents;
   final bool isLoading;
@@ -59,9 +79,9 @@ abstract class AdaptiveDocumentsView extends StatelessWidget {
     required this.hasInternetConnection,
     this.viewType = ViewType.list,
     this.selectedDocumentIds = const [],
-  })  : documents = state.documents,
-        isLoading = state.isLoading,
-        hasLoaded = state.hasLoaded;
+  }) : documents = state.documents,
+       isLoading = state.isLoading,
+       hasLoaded = state.hasLoaded;
 }
 
 class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
@@ -99,26 +119,27 @@ class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
     if (showLoadingPlaceholder) {
       return const DocumentsListLoadingWidget.sliver();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        childCount: documents.length,
-        (context, index) {
-          final document = documents.elementAt(index);
-          return DocumentListItem(
-            isLabelClickable: isLabelClickable,
-            document: document,
-            onTap: onTap,
-            isSelected: selectedDocumentIds.contains(document.id),
-            onSelected: onSelected,
-            isSelectionActive: selectedDocumentIds.isNotEmpty,
-            onTagSelected: onTagSelected,
-            onCorrespondentSelected: onCorrespondentSelected,
-            onDocumentTypeSelected: onDocumentTypeSelected,
-            onStoragePathSelected: onStoragePathSelected,
-            enableHeroAnimation: enableHeroAnimation,
-          );
-        },
-      ),
+      delegate: SliverChildBuilderDelegate(childCount: documents.length, (
+        context,
+        index,
+      ) {
+        final document = documents.elementAt(index);
+        return DocumentListItem(
+          isLabelClickable: isLabelClickable,
+          document: document,
+          onTap: onTap,
+          isSelected: selectionLookup.isSelected(document.id),
+          onSelected: onSelected,
+          isSelectionActive: selectionLookup.isSelectionActive,
+          onTagSelected: onTagSelected,
+          onCorrespondentSelected: onCorrespondentSelected,
+          onDocumentTypeSelected: onDocumentTypeSelected,
+          onStoragePathSelected: onStoragePathSelected,
+          enableHeroAnimation: enableHeroAnimation,
+        );
+      }),
     );
   }
 
@@ -127,27 +148,28 @@ class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
       //TODO: Build detailed loading animation
       return const DocumentsListLoadingWidget.sliver();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        childCount: documents.length,
-        (context, index) {
-          final document = documents.elementAt(index);
-          return DocumentDetailedItem(
-            isLabelClickable: isLabelClickable,
-            document: document,
-            onTap: onTap,
-            isSelected: selectedDocumentIds.contains(document.id),
-            onSelected: onSelected,
-            isSelectionActive: selectedDocumentIds.isNotEmpty,
-            onTagSelected: onTagSelected,
-            onCorrespondentSelected: onCorrespondentSelected,
-            onDocumentTypeSelected: onDocumentTypeSelected,
-            onStoragePathSelected: onStoragePathSelected,
-            enableHeroAnimation: enableHeroAnimation,
-            highlights: document.searchHit?.highlights,
-          );
-        },
-      ),
+      delegate: SliverChildBuilderDelegate(childCount: documents.length, (
+        context,
+        index,
+      ) {
+        final document = documents.elementAt(index);
+        return DocumentDetailedItem(
+          isLabelClickable: isLabelClickable,
+          document: document,
+          onTap: onTap,
+          isSelected: selectionLookup.isSelected(document.id),
+          onSelected: onSelected,
+          isSelectionActive: selectionLookup.isSelectionActive,
+          onTagSelected: onTagSelected,
+          onCorrespondentSelected: onCorrespondentSelected,
+          onDocumentTypeSelected: onDocumentTypeSelected,
+          onStoragePathSelected: onStoragePathSelected,
+          enableHeroAnimation: enableHeroAnimation,
+          highlights: document.searchHit?.highlights,
+        );
+      }),
     );
   }
 
@@ -155,6 +177,7 @@ class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
     if (showLoadingPlaceholder) {
       return const DocumentGridLoadingWidget.sliver();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
     return SliverGrid.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -168,9 +191,9 @@ class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
         return DocumentGridItem(
           document: document,
           onTap: onTap,
-          isSelected: selectedDocumentIds.contains(document.id),
+          isSelected: selectionLookup.isSelected(document.id),
           onSelected: onSelected,
-          isSelectionActive: selectedDocumentIds.isNotEmpty,
+          isSelectionActive: selectionLookup.isSelectionActive,
           isLabelClickable: isLabelClickable,
           onTagSelected: onTagSelected,
           onCorrespondentSelected: onCorrespondentSelected,
@@ -220,6 +243,7 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
     if (showLoadingPlaceholder) {
       return const DocumentsListLoadingWidget();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
 
     return ListView.builder(
       padding: EdgeInsets.zero,
@@ -232,9 +256,9 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
           isLabelClickable: isLabelClickable,
           document: document,
           onTap: onTap,
-          isSelected: selectedDocumentIds.contains(document.id),
+          isSelected: selectionLookup.isSelected(document.id),
           onSelected: onSelected,
-          isSelectionActive: selectedDocumentIds.isNotEmpty,
+          isSelectionActive: selectionLookup.isSelectionActive,
           onTagSelected: onTagSelected,
           onCorrespondentSelected: onCorrespondentSelected,
           onDocumentTypeSelected: onDocumentTypeSelected,
@@ -249,6 +273,7 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
     if (showLoadingPlaceholder) {
       return const DocumentsListLoadingWidget();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
 
     return ListView.builder(
       padding: EdgeInsets.zero,
@@ -262,9 +287,9 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
           isLabelClickable: isLabelClickable,
           document: document,
           onTap: onTap,
-          isSelected: selectedDocumentIds.contains(document.id),
+          isSelected: selectionLookup.isSelected(document.id),
           onSelected: onSelected,
-          isSelectionActive: selectedDocumentIds.isNotEmpty,
+          isSelectionActive: selectionLookup.isSelectionActive,
           onTagSelected: onTagSelected,
           onCorrespondentSelected: onCorrespondentSelected,
           onDocumentTypeSelected: onDocumentTypeSelected,
@@ -279,6 +304,7 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
     if (showLoadingPlaceholder) {
       return const DocumentGridLoadingWidget();
     }
+    final selectionLookup = documentSelectionLookupOf(selectedDocumentIds);
     return GridView.builder(
       padding: EdgeInsets.zero,
       controller: scrollController,
@@ -295,9 +321,9 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
         return DocumentGridItem(
           document: document,
           onTap: onTap,
-          isSelected: selectedDocumentIds.contains(document.id),
+          isSelected: selectionLookup.isSelected(document.id),
           onSelected: onSelected,
-          isSelectionActive: selectedDocumentIds.isNotEmpty,
+          isSelectionActive: selectionLookup.isSelectionActive,
           isLabelClickable: isLabelClickable,
           onTagSelected: onTagSelected,
           onCorrespondentSelected: onCorrespondentSelected,

@@ -5,10 +5,7 @@ import 'package:paperless_api/paperless_api.dart';
 class MimeTypesPieChart extends StatefulWidget {
   final PaperlessServerStatisticsModel statistics;
 
-  const MimeTypesPieChart({
-    super.key,
-    required this.statistics,
-  });
+  const MimeTypesPieChart({super.key, required this.statistics});
 
   @override
   State<MimeTypesPieChart> createState() => _MimeTypesPieChartState();
@@ -63,9 +60,7 @@ class _MimeTypesPieChartState extends State<MimeTypesPieChart> {
               //     });
               //   },
               // ),
-              borderData: FlBorderData(
-                show: false,
-              ),
+              borderData: FlBorderData(show: false),
               sectionsSpace: 0,
               centerSpaceRadius: 40,
               sections: _buildSections(colorShades).toList(),
@@ -107,8 +102,10 @@ class _MimeTypesPieChartState extends State<MimeTypesPieChart> {
                       height: 20,
                     ),
                     Text(
-                      _mimeTypeNames[
-                          widget.statistics.fileTypeCounts[i].mimeType]!,
+                      _mimeTypeNames[widget
+                          .statistics
+                          .fileTypeCounts[i]
+                          .mimeType]!,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
@@ -144,14 +141,14 @@ class _MimeTypesPieChartState extends State<MimeTypesPieChart> {
 
 extension AllShades on MaterialColor {
   List<Color> get values => [
-        shade200,
-        shade600,
-        shade300,
-        shade100,
-        shade800,
-        shade400,
-        shade900,
-        shade500,
-        shade700,
-      ];
+    shade200,
+    shade600,
+    shade300,
+    shade100,
+    shade800,
+    shade400,
+    shade900,
+    shade500,
+    shade700,
+  ];
 }

@@ -157,6 +157,13 @@
   "@title": {},
   "reset": "Reset",
   "@reset": {},
+  "resetWithCount": "Reset ({count})",
+  "@resetWithCount": {
+    "description": "Reset label with number of active filters on the documents page.",
+    "placeholders": {
+      "count": {}
+    }
+  },
   "filterDocuments": "Filter Documents",
   "@filterDocuments": {
     "description": "Title of the document filter"
@@ -286,6 +293,8 @@
   "@couldNotAssignArchiveSerialNumber": {},
   "couldNotDeleteDocument": "Could not delete document, please try again.",
   "@couldNotDeleteDocument": {},
+  "couldNotLoadDocument": "Could not load document.",
+  "@couldNotLoadDocument": {},
   "couldNotLoadDocuments": "Could not load documents, please try again.",
   "@couldNotLoadDocuments": {},
   "couldNotLoadDocumentPreview": "Could not load document preview.",
@@ -520,6 +529,22 @@
   "@password": {},
   "mfaCodeOptional": "MFA code (if enabled)",
   "@mfaCodeOptional": {},
+  "useApiTokenInsteadOfPassword": "Use API token instead of password",
+  "@useApiTokenInsteadOfPassword": {
+    "description": "Toggle shown in login form to switch from password+MFA auth to API token auth."
+  },
+  "apiToken": "API token",
+  "@apiToken": {
+    "description": "Label for API token input field."
+  },
+  "apiTokenMustNotBeEmpty": "API token must not be empty.",
+  "@apiTokenMustNotBeEmpty": {
+    "description": "Validation message shown if API token login is enabled but no token was provided."
+  },
+  "apiTokenRemoteUserHint": "x-remote-user:",
+  "@apiTokenRemoteUserHint": {
+    "description": "Hint shown in the API token field for remote-user header shorthand."
+  },
   "passwordMustNotBeEmpty": "Password must not be empty.",
   "@passwordMustNotBeEmpty": {},
   "connectionTimedOut": "Connection timed out.",
@@ -542,6 +567,10 @@
   "@trustServerCertificate": {},
   "serverAddress": "Server Address",
   "@serverAddress": {},
+  "serverAddressHint": "https://paperless.example.com",
+  "@serverAddressHint": {
+    "description": "Hint text for entering the Paperless server address."
+  },
   "invalidAddress": "Invalid address.",
   "@invalidAddress": {},
   "serverAddressMustIncludeAScheme": "Server address must include a scheme.",
@@ -777,11 +806,39 @@
     "description": "Content of the dialog shown after adding an account, asking the user whether to switch to the newly added account or not."
   },
   "sourceCode": "Source Code",
+  "paperlessMobileAppName": "Paperless Mobile",
+  "@paperlessMobileAppName": {
+    "description": "Application name used in drawer and about dialog."
+  },
+  "credits": "Credits",
+  "@credits": {
+    "description": "Section title for third-party acknowledgements."
+  },
+  "onboardingImagesBy": "Onboarding images by",
+  "@onboardingImagesBy": {
+    "description": "Credit text shown before the onboarding image author link."
+  },
+  "onFreepik": "on Freepik.",
+  "@onFreepik": {
+    "description": "Credit text shown after the onboarding image author link."
+  },
+  "donationSignature": "~ Anton",
+  "@donationSignature": {
+    "description": "Signature shown in donation dialog."
+  },
   "findTheSourceCodeOn": "Find the source code on",
   "@findTheSourceCodeOn": {
     "description": "Text before link to Paperless Mobile GitHub"
   },
   "rememberDecision": "Remember my decision",
+  "disableAnimations": "Disable animations",
+  "@disableAnimations": {
+    "description": "Settings toggle title for reducing motion inside the app."
+  },
+  "disableAnimationsDescription": "Disables page transitions and most animations. Temporary workaround until system accessibility settings can be used.",
+  "@disableAnimationsDescription": {
+    "description": "Description for the disable animations setting."
+  },
   "defaultDownloadFileType": "Default Download File Type",
   "@defaultDownloadFileType": {
     "description": "Label indicating the default filetype to download (one of archived, original and always ask)"
@@ -878,6 +935,14 @@
   "missingPermissions": "You do not have the necessary permissions to perform this action.",
   "@missingPermissions": {
     "description": "Message shown in a snackbar when a user without the reequired permissions performs an action."
+  },
+  "grantFilesystemAccessPermission": "Please grant Paperless Mobile permissions to access your filesystem.",
+  "@grantFilesystemAccessPermission": {
+    "description": "Snackbar message shown when storage permission is required for exporting scans."
+  },
+  "documentScanningAndroidOnly": "Document scanning is currently available on Android only.",
+  "@documentScanningAndroidOnly": {
+    "description": "Snackbar message shown when trying to open the scanner on unsupported platforms."
   },
   "editView": "Edit View",
   "@editView": {
@@ -1007,6 +1072,10 @@
   "@restoringSession": {
     "description": "Message shown when the user opens the app and the previous user is tried to be authenticated and logged in"
   },
+  "restoringScans": "Restoring scans...",
+  "@restoringScans": {
+    "description": "Message shown on the scanner page while previously captured scans are being restored."
+  },
   "documentsAssigned": "{count, plural, zero{No documents} one{1 document} other{{count} documents}}",
   "@documentsAssigned": {
     "description": "Text shown with a correspondent, document type etc. to indicate the number of documents this filter will maximally yield."
@@ -1118,5 +1187,140 @@
   },
   "certificateChangedWarning": "The server's certificate has changed since it was trusted. Review and trust the new certificate if you control the server.",
   "certificatePreviousFingerprint": "Previous fingerprint",
-  "uploading": "Uploading..."
+  "uploading": "Uploading...",
+  "tasksTitle": "Tasks",
+  "pendingFiles": "Pending files",
+  "pendingFilesUploadPrompt": "{count, plural, one{1 file is waiting to be uploaded. Do you want to upload it now?} other{{count} files are waiting to be uploaded. Do you want to upload them now?}}",
+  "@pendingFilesUploadPrompt": {
+    "description": "Dialog content shown when there are pending files in the upload queue.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "thereAreNoPendingFiles": "There are no pending files.",
+  "taskAcknowledged": "Task acknowledged.",
+  "noPendingTasks": "No pending tasks.",
+  "taskStatusPending": "Pending",
+  "taskStatusProcessing": "Processing",
+  "taskStatusCompleted": "Completed",
+  "taskStatusFailed": "Failed",
+  "taskStatusUnknown": "Unknown",
+  "taskFallbackTitle": "Task {id}",
+  "@taskFallbackTitle": {
+    "description": "Fallback title for a task without a filename.",
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkActionReprocess": "Reprocess",
+  "bulkActionMerge": "Merge",
+  "bulkActionRotate": "Rotate",
+  "bulkActionSplit": "Split",
+  "bulkActionDeletePages": "Delete pages",
+  "bulkActionEditPdf": "Edit PDF",
+  "bulkActionModifyCustomFields": "Modify custom fields",
+  "bulkActionSetPermissions": "Set permissions",
+  "bulkActionRemovePassword": "Remove password",
+  "noDocumentsSelected": "No documents selected.",
+  "reprocessDocumentsTitle": "Reprocess documents",
+  "reprocessDocumentsMessage": "The selected documents will be reprocessed on the server.",
+  "reprocessQueued": "Reprocess queued.",
+  "selectAtLeastTwoDocumentsToMerge": "Select at least two documents to merge.",
+  "mergeQueued": "Merge queued.",
+  "rotateQueued": "Rotate queued.",
+  "selectExactlyOneDocumentToSplit": "Select exactly one document to split.",
+  "splitQueued": "Split queued.",
+  "selectExactlyOneDocumentToEditPages": "Select exactly one document to edit pages.",
+  "pagesDeleted": "Pages deleted.",
+  "editPdfQueued": "Edit PDF queued.",
+  "removePasswordQueued": "Remove password queued.",
+  "setPermissionsQueued": "Set permissions queued.",
+  "customFieldsQueued": "Custom fields update queued.",
+  "mergeDocumentsTitle": "Merge documents",
+  "mergeDocumentsOrderHint": "The merged document order follows the selected order.",
+  "deleteOriginals": "Delete originals",
+  "archiveFallback": "Archive fallback",
+  "rotateDocumentsTitle": "Rotate documents",
+  "editPdfTitle": "Edit PDF operations",
+  "editPdfOperationsJson": "Operations (JSON array)",
+  "editPdfOperationsHint": "Example: JSON array of operation objects",
+  "editPdfUpdateDocument": "Update original document",
+  "editPdfIncludeMetadata": "Include metadata",
+  "enterValidEditPdfOperations": "Enter valid edit PDF operations JSON.",
+  "degrees": "Degrees",
+  "splitDocumentTitle": "Split document",
+  "pages": "Pages",
+  "pageRangeExample": "1,2-3,4",
+  "deleteOriginal": "Delete original",
+  "enterPageRanges": "Enter page ranges.",
+  "deletePagesTitle": "Delete pages",
+  "removePasswordTitle": "Remove password",
+  "setPermissionsTitle": "Set permissions",
+  "setPermissionsMergeExisting": "Merge with existing permissions",
+  "modifyCustomFieldTitle": "Modify custom field",
+  "selectCustomField": "Select custom field",
+  "customFieldValue": "Value",
+  "clearCustomFieldValue": "Clear value",
+  "noCustomFieldsAvailable": "No custom fields available.",
+  "enterCustomFieldValue": "Enter a valid custom field value.",
+  "ownerIdOptional": "Owner id (optional)",
+  "viewUserIds": "View user ids",
+  "viewGroupIds": "View group ids",
+  "changeUserIds": "Change user ids",
+  "changeGroupIds": "Change group ids",
+  "pageListExample": "2,3,4",
+  "enterValidPageNumbers": "Enter valid page numbers.",
+  "enterValidNumericIds": "Enter valid numeric ids.",
+  "sharedFileDiscardPrompt": "The shared file was not yet processed. Do you want to discard the file?",
+  "sharedFileTooLargeForPreparationMode": "The shared file is too large to open in preparation mode. Enable direct upload or share a smaller file.",
+  "couldNotConsumeFile": "Could not consume {filename}",
+  "@couldNotConsumeFile": {
+    "placeholders": {
+      "filename": {}
+    }
+  },
+  "introSlideOrganizeTitle": "Always right at your fingertip",
+  "introSlideOrganizeBody": "Organizing documents was never this easy",
+  "introSlideSecureTitle": "Accessible only by you",
+  "introSlideSecureBody": "Secure your documents with biometric authentication and client certificates",
+  "introSlideDoneTitle": "You're almost done",
+  "savedViewEditHint": "Saved views can currently only be edited by changing the document filter. Go to the documents page, select this view, add the filters you want this view to have, and save it by pressing 'Save changes' in the view menu.",
+  "notificationTaskDocumentReceived": "Document received",
+  "notificationTaskProcessingDocument": "Processing document...",
+  "notificationTaskFailedToProcess": "Failed to process document",
+  "notificationTaskDocumentCreated": "Document successfully created",
+  "notificationTaskRejectedByServer": "Rejected by the server.",
+  "customFields": "Custom fields",
+  "customFieldBooleanTrue": "True",
+  "customFieldBooleanFalse": "False",
+  "customFieldQuery": "Custom field query",
+  "customFieldQueryHint": "JSON expression for advanced custom field filtering",
+  "pleaseEnterValidInteger": "Please enter a valid integer.",
+  "pleaseEnterValidNumber": "Please enter a valid number.",
+  "couldNotCreateCustomField": "Could not create custom field, please try again.",
+  "couldNotLoadCustomField": "Could not load custom field.",
+  "couldNotDeleteCustomField": "Could not delete custom field, please try again.",
+  "couldNotDeleteNote": "Could not delete note, please try again.",
+  "couldNotCreateNote": "Could not create note, please try again.",
+  "accessibility": "Accessibility",
+  "reportError": "Report error",
+  "submit": "Submit",
+  "errorReportIntro": "Oops, an error has occurred!\nIn order to improve the app and prevent messages like these, it is greatly appreciated if you report this error with a description of what happened and the actions leading up to this window.\nPlease fill the fields below and create a new issue in GitHub. Thanks!\nNote: If you have the GitHub Android app installed, the descriptions will not be taken into account! Skip these here and fill them in the GitHub issues form after submitting this report.",
+  "description": "Description",
+  "shortDescription": "Short Description",
+  "shortDescriptionHint": "Please provide a brief description of what went wrong.",
+  "detailedDescription": "Detailed Description",
+  "detailedDescriptionHint": "Please describe the exact actions taken that caused this error. Provide as much details as possible.",
+  "stackTrace": "Stack Trace",
+  "copy": "Copy",
+  "stackTraceCopied": "Stack trace copied to clipboard.",
+  "stackTraceCopyHint": "Since stack traces cannot be attached to the GitHub issue url, please copy the content of the stackTrace and paste it in the issue description. This will greatly increase the chance of quickly resolving the issue!",
+  "continueWithoutStackTrace": "Continue without stack trace?",
+  "continueWithoutStackTraceMessage": "It seems you have not yet copied the stack trace. The stack trace provides valuable insights into where an error came from and how it could be fixed. Are you sure you want to continue without providing the stack trace?",
+  "yesContinue": "Yes, continue",
+  "noCopyStackTrace": "No, copy stack trace"
 }

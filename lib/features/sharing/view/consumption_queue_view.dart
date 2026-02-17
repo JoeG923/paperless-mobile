@@ -14,15 +14,11 @@ class ConsumptionQueueView extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentUser = context.watch<LocalUserAccount>();
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Pending Files"), //TODO: INTL
-      ),
+      appBar: AppBar(title: Text(S.of(context)!.pendingFiles)),
       body: Consumer<ConsumptionChangeNotifier>(
         builder: (context, value, child) {
           if (value.pendingFiles.isEmpty) {
-            return Center(
-              child: Text("There are no pending files."), //TODO: INTL
-            );
+            return Center(child: Text(S.of(context)!.thereAreNoPendingFiles));
           }
           return ListView.builder(
             itemBuilder: (context, index) {
@@ -53,9 +49,9 @@ class ConsumptionQueueView extends StatelessWidget {
                       avatar: const Icon(Icons.delete),
                       onPressed: () {
                         context.read<ConsumptionChangeNotifier>().discardFile(
-                              file,
-                              userId: currentUser.id,
-                            );
+                          file,
+                          userId: currentUser.id,
+                        );
                       },
                     ),
                   ],

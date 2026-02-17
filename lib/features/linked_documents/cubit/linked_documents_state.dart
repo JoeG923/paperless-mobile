@@ -49,10 +49,7 @@ class LinkedDocumentsState extends DocumentPagingState {
   }
 
   @override
-  List<Object?> get props => [
-        viewType,
-        ...super.props,
-      ];
+  List<Object?> get props => [viewType, ...super.props];
 
   factory LinkedDocumentsState.fromJson(Map<String, dynamic> json) =>
       _$LinkedDocumentsStateFromJson(json);

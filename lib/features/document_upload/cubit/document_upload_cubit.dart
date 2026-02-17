@@ -17,9 +17,11 @@ class DocumentUploadCubit extends Cubit<DocumentUploadState> {
 
   DocumentUploadCubit(
     PaperlessDocumentsApi documentApi,
-    PendingTasksNotifier tasksNotifier,
-  ) : _uploadService = DocumentUploadService(documentApi, tasksNotifier),
-      super(const DocumentUploadState());
+    PendingTasksNotifier tasksNotifier, {
+    DocumentUploadService? uploadService,
+  }) : _uploadService =
+           uploadService ?? DocumentUploadService(documentApi, tasksNotifier),
+       super(const DocumentUploadState());
 
   void cancelUpload() {
     final token = _cancelToken;
@@ -43,6 +45,7 @@ class DocumentUploadCubit extends Cubit<DocumentUploadState> {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     DateTime? createdAt,
     int? asn,
     Duration? timeout,
@@ -60,6 +63,7 @@ class DocumentUploadCubit extends Cubit<DocumentUploadState> {
         documentType: documentType,
         storagePath: storagePath,
         tags: tags,
+        customFields: customFields,
         createdAt: createdAt,
         asn: asn,
         timeout: timeout,

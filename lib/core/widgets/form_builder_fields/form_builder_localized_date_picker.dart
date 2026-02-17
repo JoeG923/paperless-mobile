@@ -19,9 +19,9 @@ class FormDateTime {
   FormDateTime({this.day, this.month, this.year});
 
   FormDateTime.fromDateTime(DateTime date)
-      : day = date.day,
-        month = date.month,
-        year = date.year;
+    : day = date.day,
+      month = date.month,
+      year = date.year;
 
   FormDateTime copyWith({int? day, int? month, int? year}) {
     return FormDateTime(
@@ -87,8 +87,9 @@ class _FormBuilderLocalizedDatePickerState
   @override
   void initState() {
     super.initState();
-    final format =
-        DateFormat.yMd(widget.locale.toString()).format(DateTime(1000, 11, 22));
+    final format = DateFormat.yMd(
+      widget.locale.toString(),
+    ).format(DateTime(1000, 11, 22));
     _separator = format.replaceAll(RegExp(r'\d'), '').characters.first;
     _format = format
         .replaceAll("1000", "yyyy")
@@ -102,8 +103,9 @@ class _FormBuilderLocalizedDatePickerState
           ? DateFormat(formatString).format(widget.initialValue!)
           : null;
       final defaultFocusNode = FocusNode(debugLabel: formatString);
-      final focusNode =
-          i == 0 ? (widget.focusNode ?? defaultFocusNode) : defaultFocusNode;
+      final focusNode = i == 0
+          ? (widget.focusNode ?? defaultFocusNode)
+          : defaultFocusNode;
       final controls = _NeighbourAwareDateInputSegmentControls(
         node: focusNode,
         controller: TextEditingController(text: initialText),
@@ -174,8 +176,9 @@ class _FormBuilderLocalizedDatePickerState
           // When the change is requested from external sources, such as calling
           // field.didChange(value), then we want to update the text fields individually
           // without causing the either field to gain focus (as defined above).
-          final isChangeRequestedFromOutside =
-              _textFieldControls.none((element) => element.node.hasFocus);
+          final isChangeRequestedFromOutside = _textFieldControls.none(
+            (element) => element.node.hasFocus,
+          );
 
           if (isChangeRequestedFromOutside) {
             _updateInputsWithDate(value, disableListeners: true);
@@ -214,8 +217,9 @@ class _FormBuilderLocalizedDatePickerState
                           initialEntryMode: DatePickerEntryMode.calendarOnly,
                         );
                         if (selectedDate != null) {
-                          final formDate =
-                              FormDateTime.fromDateTime(selectedDate);
+                          final formDate = FormDateTime.fromDateTime(
+                            selectedDate,
+                          );
                           _temporarilyDisableListeners = true;
                           _updateInputsWithDate(formDate);
                           field.didChange(formDate);
@@ -302,8 +306,9 @@ class _FormBuilderLocalizedDatePickerState
       },
       style: const TextStyle(fontFamily: 'RobotoMono'),
       keyboardType: TextInputType.datetime,
-      textInputAction:
-          controls.position < 2 ? TextInputAction.next : TextInputAction.done,
+      textInputAction: controls.position < 2
+          ? TextInputAction.next
+          : TextInputAction.done,
       controller: controls.controller,
       focusNode: _textFieldControls.elementAt(controls.position).node,
       maxLength: controls.format.length,
@@ -327,14 +332,11 @@ class _FormBuilderLocalizedDatePickerState
       },
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
-        RangeLimitedInputFormatter(
-          1,
-          switch (controls.type) {
-            _DateInputSegment.day => 31,
-            _DateInputSegment.month => 12,
-            _DateInputSegment.year => 9999,
-          },
-        ),
+        RangeLimitedInputFormatter(1, switch (controls.type) {
+          _DateInputSegment.day => 31,
+          _DateInputSegment.month => 12,
+          _DateInputSegment.year => 9999,
+        }),
       ],
       onEditingComplete: () {
         if (field.value != null) {
@@ -357,11 +359,8 @@ class _FormBuilderLocalizedDatePickerState
         hintText: controls.format,
         hintStyle: const TextStyle(fontFamily: "RobotoMono"),
         border: Theme.of(context).inputDecorationTheme.border?.copyWith(
-              borderSide: const BorderSide(
-                width: 0,
-                style: BorderStyle.none,
-              ),
-            ),
+          borderSide: const BorderSide(width: 0, style: BorderStyle.none),
+        ),
       ),
     );
   }
@@ -401,10 +400,8 @@ final class _NeighbourAwareDateInputSegmentControls
 }
 
 class RangeLimitedInputFormatter extends TextInputFormatter {
-  RangeLimitedInputFormatter(
-    this.minimum,
-    this.maximum,
-  ) : assert(minimum < maximum);
+  RangeLimitedInputFormatter(this.minimum, this.maximum)
+    : assert(minimum < maximum);
 
   final int minimum;
   final int maximum;

@@ -44,10 +44,7 @@ class DocumentUploadRoute extends GoRouteData with $DocumentUploadRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return BlocProvider(
-      create: (_) => DocumentUploadCubit(
-        context.read(),
-        context.read(),
-      ),
+      create: (_) => DocumentUploadCubit(context.read(), context.read()),
       child: DocumentUploadPreparationPage(
         title: title,
         fileExtension: fileExtension,

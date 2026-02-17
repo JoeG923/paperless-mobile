@@ -44,15 +44,17 @@ class _InboxPageState extends State<InboxPage>
     super.initState();
     context.read<InboxCubit>().reloadInbox();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nestedScrollViewKey.currentState!.innerController
-          .addListener(_scrollExtentChangedListener);
+      _nestedScrollViewKey.currentState!.innerController.addListener(
+        _scrollExtentChangedListener,
+      );
     });
   }
 
   @override
   void dispose() {
-    _nestedScrollViewKey.currentState?.innerController
-        .removeListener(_scrollExtentChangedListener);
+    _nestedScrollViewKey.currentState?.innerController.removeListener(
+      _scrollExtentChangedListener,
+    );
     super.dispose();
   }
 
@@ -73,8 +75,10 @@ class _InboxPageState extends State<InboxPage>
 
   @override
   Widget build(BuildContext context) {
-    final canEditDocument =
-        context.watch<LocalUserAccount>().paperlessUser.canEditDocuments;
+    final canEditDocument = context
+        .watch<LocalUserAccount>()
+        .paperlessUser
+        .canEditDocuments;
     return Scaffold(
       drawer: const AppDrawer(),
       floatingActionButton: ConnectivityAwareActionWrapper(
@@ -113,10 +117,7 @@ class _InboxPageState extends State<InboxPage>
                     : const Icon(Icons.done_all),
               ),
               onPressed: state.hasLoaded && state.documents.isNotEmpty
-                  ? () => _onMarkAllAsSeen(
-                        state.documents,
-                        state.inboxTags,
-                      )
+                  ? () => _onMarkAllAsSeen(state.documents, state.inboxTags)
                   : null,
             );
           },
@@ -154,16 +155,16 @@ class _InboxPageState extends State<InboxPage>
                       SliverToBoxAdapter(
                         child: HintCard(
                           show: !state.isHintAcknowledged,
-                          hintText:
-                              S.of(context)!.swipeLeftToMarkADocumentAsSeen,
+                          hintText: S
+                              .of(context)!
+                              .swipeLeftToMarkADocumentAsSeen,
                           onHintAcknowledged: () =>
                               context.read<InboxCubit>().acknowledgeHint(),
                         ),
                       ),
                       // Build a list of slivers alternating between SliverToBoxAdapter
                       // (group header) and a SliverList (inbox items).
-                      ..._groupByDate(state.documents)
-                          .entries
+                      ..._groupByDate(state.documents).entries
                           .map(
                             (entry) => [
                               SliverToBoxAdapter(
@@ -173,8 +174,9 @@ class _InboxPageState extends State<InboxPage>
                                     borderRadius: BorderRadius.circular(32.0),
                                     child: Text(
                                       entry.key,
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                       textAlign: TextAlign.center,
                                     ).padded(),
                                   ),
@@ -187,9 +189,7 @@ class _InboxPageState extends State<InboxPage>
                                     if (index < entry.value.length - 1) {
                                       return Column(
                                         children: [
-                                          _buildListItem(
-                                            entry.value[index],
-                                          ),
+                                          _buildListItem(entry.value[index]),
                                           const Divider(
                                             indent: 16,
                                             endIndent: 16,
@@ -197,18 +197,14 @@ class _InboxPageState extends State<InboxPage>
                                         ],
                                       );
                                     }
-                                    return _buildListItem(
-                                      entry.value[index],
-                                    );
+                                    return _buildListItem(entry.value[index]);
                                   },
                                 ),
                               ),
                             ],
                           )
                           .flattened,
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 78),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 78)),
                     ],
                   ),
                 );
@@ -232,9 +228,7 @@ class _InboxPageState extends State<InboxPage>
           ).padded(),
           Text(
             S.of(context)!.markAsSeen,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
         ],
       ).padded(),
@@ -248,7 +242,8 @@ class _InboxPageState extends State<InboxPage>
     Iterable<DocumentModel> documents,
     Iterable<int> inboxTags,
   ) async {
-    final isActionConfirmed = await showDialog(
+    final isActionConfirmed =
+        await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: Text(S.of(context)!.markAllAsSeen),
@@ -275,16 +270,18 @@ class _InboxPageState extends State<InboxPage>
       showSnackBar(context, S.of(context)!.missingPermissions);
       return false;
     }
-    final isConnectedToInternet =
-        await context.read<ConnectivityStatusService>().isConnectedToInternet();
+    final isConnectedToInternet = await context
+        .read<ConnectivityStatusService>()
+        .isConnectedToInternet();
     if (!isConnectedToInternet) {
       if (mounted) showSnackBar(context, S.of(context)!.youAreCurrentlyOffline);
       return false;
     }
     try {
       if (mounted) {
-        final removedTags =
-            await context.read<InboxCubit>().removeFromInbox(doc);
+        final removedTags = await context.read<InboxCubit>().removeFromInbox(
+          doc,
+        );
         if (mounted) {
           showSnackBar(
             context,
@@ -303,10 +300,7 @@ class _InboxPageState extends State<InboxPage>
       if (mounted) showGenericError(context, error.message);
     } catch (error) {
       if (mounted) {
-        showErrorMessage(
-          context,
-          const PaperlessApiException.unknown(),
-        );
+        showErrorMessage(context, const PaperlessApiException.unknown());
       }
     }
     return false;
@@ -317,9 +311,10 @@ class _InboxPageState extends State<InboxPage>
     Iterable<int> removedTags,
   ) async {
     try {
-      await context
-          .read<InboxCubit>()
-          .undoRemoveFromInbox(document, removedTags);
+      await context.read<InboxCubit>().undoRemoveFromInbox(
+        document,
+        removedTags,
+      );
     } on PaperlessApiException catch (error, stackTrace) {
       if (mounted) showErrorMessage(context, error, stackTrace);
     }
@@ -328,18 +323,16 @@ class _InboxPageState extends State<InboxPage>
   Map<String, List<DocumentModel>> _groupByDate(
     Iterable<DocumentModel> documents,
   ) {
-    return groupBy<DocumentModel, String>(
-      documents,
-      (doc) {
-        if (doc.added.isToday) {
-          return S.of(context)!.today;
-        }
-        if (doc.added.isYesterday) {
-          return S.of(context)!.yesterday;
-        }
-        return DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-            .format(doc.added);
-      },
-    );
+    return groupBy<DocumentModel, String>(documents, (doc) {
+      if (doc.added.isToday) {
+        return S.of(context)!.today;
+      }
+      if (doc.added.isYesterday) {
+        return S.of(context)!.yesterday;
+      }
+      return DateFormat.yMMMMd(
+        Localizations.localeOf(context).toString(),
+      ).format(doc.added);
+    });
   }
 }

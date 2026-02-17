@@ -12,16 +12,12 @@ class SavedViewCubit extends Cubit<SavedViewState> {
   final SavedViewRepository _savedViewRepository;
 
   SavedViewCubit(this._savedViewRepository)
-      : super(const SavedViewState.initial()) {
+    : super(const SavedViewState.initial()) {
     _savedViewRepository.addListener(_onSavedViewsChanged);
   }
 
   void _onSavedViewsChanged() {
-    emit(
-      SavedViewState.loaded(
-        savedViews: _savedViewRepository.savedViews,
-      ),
-    );
+    emit(SavedViewState.loaded(savedViews: _savedViewRepository.savedViews));
   }
 
   Future<SavedView> add(SavedView view) async {
@@ -40,11 +36,7 @@ class SavedViewCubit extends Cubit<SavedViewState> {
     final views = await _savedViewRepository.findAll();
     final values = {for (var element in views) element.id!: element};
     if (!isClosed) {
-      emit(
-        SavedViewState.loaded(
-          savedViews: values,
-        ),
-      );
+      emit(SavedViewState.loaded(savedViews: values));
     }
   }
 

@@ -35,6 +35,7 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
   final _usernameFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _mfaFocusNode = FocusNode();
+  bool _useApiToken = false;
 
   @override
   Widget build(BuildContext context) {
@@ -78,46 +79,88 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
               return null;
             },
             autofillHints: const [AutofillHints.username],
-            decoration: InputDecoration(
-              label: Text(S.of(context)!.username),
-            ),
+            decoration: InputDecoration(label: Text(S.of(context)!.username)),
           ),
-          ObscuredInputTextFormField(
-            key: const ValueKey('login-password'),
-            focusNode: _passwordFocusNode,
-            label: S.of(context)!.password,
-            onChanged: (password) => field.didChange(
-              field.value?.copyWith(password: password) ??
-                  LoginFormCredentials(password: password),
-            ),
-            onFieldSubmitted: (_) {
-              _mfaFocusNode.requestFocus();
+          SwitchListTile.adaptive(
+            value: _useApiToken,
+            onChanged: (value) {
+              setState(() => _useApiToken = value);
+              field.didChange(
+                (field.value ?? LoginFormCredentials()).copyWith(
+                  password: value ? '' : field.value?.password,
+                  mfaCode: value ? '' : field.value?.mfaCode,
+                  apiToken: value ? field.value?.apiToken ?? '' : '',
+                ),
+              );
             },
-            validator: (value) {
-              if (value?.trim().isEmpty ?? true) {
-                return S.of(context)!.passwordMustNotBeEmpty;
-              }
-              return null;
-            },
+            title: Text(S.of(context)!.useApiTokenInsteadOfPassword),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           ),
-          TextFormField(
-            key: const ValueKey('login-mfa-code'),
-            focusNode: _mfaFocusNode,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.done,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            autofillHints: const [AutofillHints.oneTimeCode],
-            onChanged: (code) => field.didChange(
-              field.value?.copyWith(mfaCode: code) ??
-                  LoginFormCredentials(mfaCode: code),
+          if (_useApiToken)
+            ObscuredInputTextFormField(
+              key: const ValueKey('login-api-token'),
+              focusNode: _passwordFocusNode,
+              label: S.of(context)!.apiToken,
+              hintText: S.of(context)!.apiTokenRemoteUserHint,
+              onChanged: (token) => field.didChange(
+                (field.value ?? LoginFormCredentials()).copyWith(
+                  apiToken: token,
+                  password: '',
+                  mfaCode: '',
+                ),
+              ),
+              onFieldSubmitted: (_) {
+                widget.onFieldsSubmitted?.call();
+              },
+              validator: (value) {
+                if (value?.trim().isEmpty ?? true) {
+                  return S.of(context)!.apiTokenMustNotBeEmpty;
+                }
+                return null;
+              },
+            )
+          else ...[
+            ObscuredInputTextFormField(
+              key: const ValueKey('login-password'),
+              focusNode: _passwordFocusNode,
+              label: S.of(context)!.password,
+              onChanged: (password) => field.didChange(
+                (field.value ?? LoginFormCredentials()).copyWith(
+                  password: password,
+                  apiToken: '',
+                ),
+              ),
+              onFieldSubmitted: (_) {
+                _mfaFocusNode.requestFocus();
+              },
+              validator: (value) {
+                if (value?.trim().isEmpty ?? true) {
+                  return S.of(context)!.passwordMustNotBeEmpty;
+                }
+                return null;
+              },
             ),
-            onFieldSubmitted: (_) {
-              widget.onFieldsSubmitted?.call();
-            },
-            decoration: InputDecoration(
-              label: Text(S.of(context)!.mfaCodeOptional),
+            TextFormField(
+              key: const ValueKey('login-mfa-code'),
+              focusNode: _mfaFocusNode,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              autofillHints: const [AutofillHints.oneTimeCode],
+              onChanged: (code) => field.didChange(
+                (field.value ?? LoginFormCredentials()).copyWith(
+                  mfaCode: code,
+                  apiToken: '',
+                ),
+              ),
+              onFieldSubmitted: (_) {
+                widget.onFieldsSubmitted?.call();
+              },
+              decoration: InputDecoration(
+                label: Text(S.of(context)!.mfaCodeOptional),
+              ),
             ),
-          ),
+          ],
         ].map((child) => child.padded()).toList(),
       ),
     );

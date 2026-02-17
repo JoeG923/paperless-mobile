@@ -5,11 +5,7 @@ class TagsPlaceholder extends StatelessWidget {
   static const _lengths = <double>[90, 70, 130];
   final int count;
   final bool dense;
-  const TagsPlaceholder({
-    super.key,
-    required this.count,
-    required this.dense,
-  });
+  const TagsPlaceholder({super.key, required this.count, required this.dense});
 
   @override
   Widget build(BuildContext context) {

@@ -13,9 +13,7 @@ class TrustedCertificatesTile extends StatelessWidget {
       subtitle: Text(S.of(context)!.trustedCertificatesSubtitle),
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const TrustedCertificatesPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const TrustedCertificatesPage()),
         );
       },
     );

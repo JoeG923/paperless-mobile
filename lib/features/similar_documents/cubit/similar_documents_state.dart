@@ -11,13 +11,7 @@ class SimilarDocumentsState extends DocumentPagingState {
   });
 
   @override
-  List<Object?> get props => [
-        filter,
-        hasLoaded,
-        isLoading,
-        value,
-        error,
-      ];
+  List<Object?> get props => [filter, hasLoaded, isLoading, value, error];
 
   @override
   SimilarDocumentsState copyWithPaged({

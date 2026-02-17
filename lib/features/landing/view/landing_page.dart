@@ -64,23 +64,22 @@ class _LandingPageState extends State<LandingPage> {
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverOverlapAbsorber(
               handle: _searchBarHandle,
-              sliver: SliverSearchBar(
-                titleText: S.of(context)!.documents,
-              ),
+              sliver: SliverSearchBar(titleText: S.of(context)!.documents),
             ),
           ],
           body: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Text(
-                  S.of(context)!.welcomeUser(
+                  S
+                      .of(context)!
+                      .welcomeUser(
                         currentUser.fullName ?? currentUser.username,
                       ),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .displaySmall
-                      ?.copyWith(fontSize: 28),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.displaySmall?.copyWith(fontSize: 28),
                 ).padded(24),
               ),
               SliverToBoxAdapter(child: _buildStatisticsCard(context)),
@@ -126,7 +125,7 @@ class _LandingPageState extends State<LandingPage> {
                                   },
                                   icon: const Icon(Icons.add),
                                   label: Text(S.of(context)!.newView),
-                                )
+                                ),
                               ],
                             ).paddedOnly(left: 16),
                           );
@@ -142,9 +141,7 @@ class _LandingPageState extends State<LandingPage> {
                         );
                       },
                       orElse: () => const SliverToBoxAdapter(
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: Center(child: CircularProgressIndicator()),
                       ),
                     );
                   },

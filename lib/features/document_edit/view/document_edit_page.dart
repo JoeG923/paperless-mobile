@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/widgets/dialog_utils/pop_with_unsaved_changes.dart';
 import 'package:paperless_mobile/core/widgets/form_builder_fields/form_builder_localized_date_picker.dart';
@@ -20,6 +21,7 @@ import 'package:paperless_mobile/features/labels/view/widgets/label_form_field.d
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/routing/routes/labels_route.dart';
+import 'package:provider/provider.dart';
 
 typedef ItemBuilder<T> = Widget Function(BuildContext context, T itemData);
 
@@ -39,6 +41,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
   static const fkCreatedDate = "createdAtDate";
   static const fkStoragePath = 'storagePath';
   static const fkContent = 'content';
+  static const _fkCustomFieldPrefix = 'customField_';
 
   final _formKey = GlobalKey<FormBuilderState>();
 
@@ -54,14 +57,18 @@ class _DocumentEditPageState extends State<DocumentEditPage>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _animation =
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInCubic)
-            .drive(Tween<double>(begin: 0, end: 1));
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInCubic,
+    ).drive(Tween<double>(begin: 0, end: 1));
   }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = context.watch<LocalUserAccount>().paperlessUser;
+    final customFieldRepository = Provider.of<CustomFieldRepository?>(context);
+    final customFieldDefinitions =
+        customFieldRepository?.customFields ?? const <int, CustomFieldModel>{};
     return BlocBuilder<DocumentEditCubit, DocumentEditState>(
       builder: (context, state) {
         final filteredSuggestions = state.suggestions;
@@ -79,8 +86,12 @@ class _DocumentEditPageState extends State<DocumentEditPage>
               storagePath,
               tags,
               createdAt,
-              content
+              content,
             ) = _currentValues;
+            final customFields = _extractCustomFields(
+              state.document.customFields,
+              customFieldDefinitions,
+            );
             final isContentTouched =
                 _formKey.currentState?.fields[fkContent]?.isDirty ?? false;
             return doc.title != title ||
@@ -89,7 +100,8 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                 doc.storagePath != storagePath ||
                 !const UnorderedIterableEquality().equals(doc.tags, tags) ||
                 doc.created != createdAt ||
-                (doc.content != content && isContentTouched);
+                (doc.content != content && isContentTouched) ||
+                !_sameCustomFields(doc.customFields, customFields);
           },
           child: FormBuilder(
             key: _formKey,
@@ -124,7 +136,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                         _animationController.forward();
                       }
                     },
-                  )
+                  ),
                 ],
               ),
               body: Stack(
@@ -136,7 +148,10 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                       floatingActionButton: !_isShowingPdf
                           ? FloatingActionButton.extended(
                               heroTag: "fab_document_edit",
-                              onPressed: () => _onSubmit(state.document),
+                              onPressed: () => _onSubmit(
+                                state.document,
+                                customFieldDefinitions,
+                              ),
                               icon: const Icon(Icons.save),
                               label: Text(S.of(context)!.saveChanges),
                             )
@@ -153,6 +168,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                         state,
                         filteredSuggestions,
                         currentUser,
+                        customFieldDefinitions,
                       ),
                     ),
                   ),
@@ -187,6 +203,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
     DocumentEditState state,
     FieldSuggestions? filteredSuggestions,
     UserModel currentUser,
+    Map<int, CustomFieldModel> customFieldDefinitions,
   ) {
     final labelRepository = context.watch<LabelRepository>();
 
@@ -219,7 +236,8 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                       options: labelRepository.correspondents,
                       initialValue: state.document.correspondent != null
                           ? SetIdQueryParameter(
-                              id: state.document.correspondent!)
+                              id: state.document.correspondent!,
+                            )
                           : const UnsetIdQueryParameter(),
                       name: fkCorrespondent,
                       prefixIcon: const Icon(Icons.person_outlined),
@@ -245,7 +263,8 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                       labelText: S.of(context)!.documentType,
                       initialValue: state.document.documentType != null
                           ? SetIdQueryParameter(
-                              id: state.document.documentType!)
+                              id: state.document.documentType!,
+                            )
                           : const UnsetIdQueryParameter(),
                       options: labelRepository.documentTypes,
                       name: _DocumentEditPageState.fkDocumentType,
@@ -292,6 +311,13 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                     include: state.document.tags.toList(),
                   ),
                 ).padded(),
+              if (currentUser.canViewCustomFields &&
+                  state.document.customFields.isNotEmpty &&
+                  customFieldDefinitions.isNotEmpty)
+                _buildCustomFieldSection(
+                  state.document.customFields,
+                  customFieldDefinitions,
+                ).padded(),
 
               const SizedBox(height: 140),
             ],
@@ -304,9 +330,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
                   initialValue: state.document.content,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                  ),
+                  decoration: const InputDecoration(border: InputBorder.none),
                 ),
                 const SizedBox(height: 84),
               ],
@@ -325,15 +349,19 @@ class _DocumentEditPageState extends State<DocumentEditPage>
     List<int>? tags,
     DateTime? createdAt,
     String? content,
-  ) get _currentValues {
+  )
+  get _currentValues {
     final fkState = _formKey.currentState!;
 
-    final correspondentParam =
-        fkState.getRawValue<IdQueryParameter?>(fkCorrespondent);
-    final documentTypeParam =
-        fkState.getRawValue<IdQueryParameter?>(fkDocumentType);
-    final storagePathParam =
-        fkState.getRawValue<IdQueryParameter?>(fkStoragePath);
+    final correspondentParam = fkState.getRawValue<IdQueryParameter?>(
+      fkCorrespondent,
+    );
+    final documentTypeParam = fkState.getRawValue<IdQueryParameter?>(
+      fkDocumentType,
+    );
+    final storagePathParam = fkState.getRawValue<IdQueryParameter?>(
+      fkStoragePath,
+    );
     final tagsParam = fkState.getRawValue<TagsQuery?>(fkTags);
     final title = fkState.getRawValue<String?>(fkTitle);
     final created = fkState.getRawValue<FormDateTime?>(fkCreatedDate);
@@ -362,11 +390,14 @@ class _DocumentEditPageState extends State<DocumentEditPage>
       storagePath,
       tags,
       created?.toDateTime(),
-      content
+      content,
     );
   }
 
-  Future<void> _onSubmit(DocumentModel document) async {
+  Future<void> _onSubmit(
+    DocumentModel document,
+    Map<int, CustomFieldModel> customFieldDefinitions,
+  ) async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final (
         title,
@@ -375,8 +406,12 @@ class _DocumentEditPageState extends State<DocumentEditPage>
         storagePath,
         tags,
         createdAt,
-        content
+        content,
       ) = _currentValues;
+      final customFields = _extractCustomFields(
+        document.customFields,
+        customFieldDefinitions,
+      );
       var mergedDocument = document.copyWith(
         title: title,
         created: createdAt,
@@ -385,6 +420,7 @@ class _DocumentEditPageState extends State<DocumentEditPage>
         storagePath: () => storagePath,
         tags: tags,
         content: content,
+        customFields: customFields,
       );
 
       try {
@@ -417,7 +453,9 @@ class _DocumentEditPageState extends State<DocumentEditPage>
   }
 
   Widget _buildCreatedAtFormField(
-      DateTime? initialCreatedAtDate, FieldSuggestions? filteredSuggestions) {
+    DateTime? initialCreatedAtDate,
+    FieldSuggestions? filteredSuggestions,
+  ) {
     return Column(
       children: [
         FormBuilderLocalizedDatePicker(
@@ -434,8 +472,10 @@ class _DocumentEditPageState extends State<DocumentEditPage>
             suggestions: filteredSuggestions!.dates,
             itemBuilder: (context, itemData) => ActionChip(
               label: Text(
-                  DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-                      .format(itemData)),
+                DateFormat.yMMMMd(
+                  Localizations.localeOf(context).toString(),
+                ).format(itemData),
+              ),
               onPressed: () => _formKey.currentState?.fields[fkCreatedDate]
                   ?.didChange(FormDateTime.fromDateTime(itemData)),
             ),
@@ -472,5 +512,279 @@ class _DocumentEditPageState extends State<DocumentEditPage>
         ),
       ],
     ).padded();
+  }
+
+  Widget _buildCustomFieldSection(
+    Iterable<CustomFieldInstance> instances,
+    Map<int, CustomFieldModel> definitions,
+  ) {
+    final children = <Widget>[];
+    for (final instance in instances) {
+      final fieldId = instance.id;
+      if (fieldId == null) {
+        continue;
+      }
+      final definition = definitions[fieldId];
+      if (definition == null) {
+        continue;
+      }
+      final field = _buildCustomFieldEditor(definition, instance);
+      if (field != null) {
+        children.add(field);
+      }
+    }
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          S.of(context)!.customFields,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        ...children.map((child) => child.paddedOnly(bottom: 8)),
+      ],
+    );
+  }
+
+  Widget? _buildCustomFieldEditor(
+    CustomFieldModel definition,
+    CustomFieldInstance instance,
+  ) {
+    final fieldId = definition.id;
+    if (fieldId == null) {
+      return null;
+    }
+    final fieldName = _customFieldFormKey(fieldId);
+    final label = definition.name ?? 'Custom field $fieldId';
+    switch (definition.dataType) {
+      case CustomFieldDataType.boolean:
+        return FormBuilderSwitch(
+          name: fieldName,
+          title: Text(label),
+          initialValue: _asBool(instance.value),
+          secondary: const Icon(Icons.toggle_on_outlined),
+        );
+      case CustomFieldDataType.select:
+        final options = _selectOptions(definition.extraData);
+        if (options.isEmpty) {
+          return _buildCustomFieldTextInput(
+            name: fieldName,
+            label: label,
+            initialValue: instance.value?.toString(),
+          );
+        }
+        return FormBuilderDropdown<String>(
+          name: fieldName,
+          initialValue: instance.value?.toString(),
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          items: [
+            for (final option in options)
+              DropdownMenuItem<String>(
+                value: option.id,
+                child: Text(option.label),
+              ),
+          ],
+        );
+      case CustomFieldDataType.documentLink:
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(label),
+          subtitle: Text(instance.value?.toString() ?? '-'),
+        );
+      case CustomFieldDataType.longText:
+        return _buildCustomFieldTextInput(
+          name: fieldName,
+          label: label,
+          initialValue: instance.value?.toString(),
+          maxLines: 3,
+        );
+      case CustomFieldDataType.integer:
+        return _buildCustomFieldTextInput(
+          name: fieldName,
+          label: label,
+          initialValue: instance.value?.toString(),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            final trimmed = value?.trim();
+            if (trimmed == null || trimmed.isEmpty) {
+              return null;
+            }
+            return int.tryParse(trimmed) == null
+                ? S.of(context)!.pleaseEnterValidInteger
+                : null;
+          },
+        );
+      case CustomFieldDataType.float:
+      case CustomFieldDataType.monetary:
+        return _buildCustomFieldTextInput(
+          name: fieldName,
+          label: label,
+          initialValue: instance.value?.toString(),
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
+            signed: true,
+          ),
+          validator: (value) {
+            final trimmed = value?.trim();
+            if (trimmed == null || trimmed.isEmpty) {
+              return null;
+            }
+            return double.tryParse(trimmed) == null
+                ? S.of(context)!.pleaseEnterValidNumber
+                : null;
+          },
+        );
+      case CustomFieldDataType.string:
+      case CustomFieldDataType.url:
+      case CustomFieldDataType.date:
+        return _buildCustomFieldTextInput(
+          name: fieldName,
+          label: label,
+          initialValue: instance.value?.toString(),
+        );
+    }
+  }
+
+  Widget _buildCustomFieldTextInput({
+    required String name,
+    required String label,
+    String? initialValue,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return FormBuilderTextField(
+      name: name,
+      initialValue: initialValue,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Iterable<CustomFieldInstance> _extractCustomFields(
+    Iterable<CustomFieldInstance> source,
+    Map<int, CustomFieldModel> definitions,
+  ) {
+    return source
+        .map((instance) {
+          final fieldId = instance.id;
+          if (fieldId == null) {
+            return instance;
+          }
+          final definition = definitions[fieldId];
+          if (definition == null) {
+            return instance;
+          }
+          if (definition.dataType == CustomFieldDataType.documentLink) {
+            return instance;
+          }
+          final formValue = _formKey.currentState?.getRawValue(
+            _customFieldFormKey(fieldId),
+          );
+          return CustomFieldInstance(
+            id: fieldId,
+            value: _normalizeCustomFieldValue(definition, formValue),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  Object? _normalizeCustomFieldValue(
+    CustomFieldModel definition,
+    Object? rawValue,
+  ) {
+    switch (definition.dataType) {
+      case CustomFieldDataType.boolean:
+        return _asBool(rawValue);
+      case CustomFieldDataType.integer:
+        final text = rawValue?.toString().trim();
+        if (text == null || text.isEmpty) {
+          return null;
+        }
+        return int.tryParse(text);
+      case CustomFieldDataType.float:
+        final text = rawValue?.toString().trim();
+        if (text == null || text.isEmpty) {
+          return null;
+        }
+        return double.tryParse(text);
+      case CustomFieldDataType.monetary:
+      case CustomFieldDataType.select:
+      case CustomFieldDataType.string:
+      case CustomFieldDataType.url:
+      case CustomFieldDataType.date:
+      case CustomFieldDataType.longText:
+      case CustomFieldDataType.documentLink:
+        final text = rawValue?.toString().trim();
+        return (text == null || text.isEmpty) ? null : text;
+    }
+  }
+
+  bool _sameCustomFields(
+    Iterable<CustomFieldInstance> a,
+    Iterable<CustomFieldInstance> b,
+  ) {
+    return const DeepCollectionEquality().equals(
+      _customFieldMap(a),
+      _customFieldMap(b),
+    );
+  }
+
+  Map<int, Object?> _customFieldMap(Iterable<CustomFieldInstance> fields) {
+    return {
+      for (final field in fields)
+        if (field.id != null) field.id!: field.value,
+    };
+  }
+
+  String _customFieldFormKey(int id) => '$_fkCustomFieldPrefix$id';
+
+  bool _asBool(Object? value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      return value.toLowerCase() == 'true' || value == '1';
+    }
+    return false;
+  }
+
+  List<({String id, String label})> _selectOptions(
+    Map<String, dynamic>? extraData,
+  ) {
+    final options = extraData?['select_options'];
+    if (options is! List) {
+      return const [];
+    }
+    if (options.every((entry) => entry is String)) {
+      return options
+          .whereType<String>()
+          .map((label) => (id: label, label: label))
+          .toList(growable: false);
+    }
+    return options
+        .whereType<Map>()
+        .map((entry) => entry.cast<String, dynamic>())
+        .where((entry) => entry['id'] != null && entry['label'] != null)
+        .map(
+          (entry) =>
+              (id: entry['id'].toString(), label: entry['label'].toString()),
+        )
+        .toList(growable: false);
   }
 }

@@ -3,8 +3,10 @@ part of 'authentication_cubit.dart';
 sealed class AuthenticationState {
   const AuthenticationState();
 
-  bool get isAuthenticated =>
-      switch (this) { AuthenticatedState() => true, _ => false };
+  bool get isAuthenticated => switch (this) {
+    AuthenticatedState() => true,
+    _ => false,
+  };
 }
 
 class UnauthenticatedState extends AuthenticationState with EquatableMixin {
@@ -67,12 +69,12 @@ class AuthenticationErrorState extends AuthenticationState with EquatableMixin {
 
   @override
   List<Object?> get props => [
-        errorCode,
-        serverUrl,
-        clientCertificate,
-        username,
-        password,
-      ];
+    errorCode,
+    serverUrl,
+    clientCertificate,
+    username,
+    password,
+  ];
 }
 
 enum AuthenticatingStage {

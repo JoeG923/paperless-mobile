@@ -13,9 +13,7 @@ class UploadPresetSettingsTile extends StatelessWidget {
       subtitle: Text(S.of(context)!.uploadPresetsSubtitle),
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const UploadPresetSettingsPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const UploadPresetSettingsPage()),
         );
       },
     );

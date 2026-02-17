@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
+import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/widgets/highlighted_text.dart';
 import 'package:paperless_mobile/features/document_details/view/widgets/details_item.dart';
 import 'package:paperless_mobile/features/labels/tags/view/widgets/tags_widget.dart';
 import 'package:paperless_mobile/features/labels/view/widgets/label_text.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 
 class DocumentOverviewWidget extends StatelessWidget {
   final DocumentModel document;
@@ -26,6 +27,7 @@ class DocumentOverviewWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<LocalUserAccount>().paperlessUser;
     final labelRepository = context.watch<LabelRepository>();
+    final customFieldRepository = Provider.of<CustomFieldRepository?>(context);
     final children = <Widget>[];
 
     void addItem(Widget child) {
@@ -50,8 +52,9 @@ class DocumentOverviewWidget extends StatelessWidget {
 
     addItem(
       DetailsItem.text(
-        DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-            .format(document.created),
+        DateFormat.yMMMMd(
+          Localizations.localeOf(context).toString(),
+        ).format(document.created),
         context: context,
         label: S.of(context)!.createdAt,
       ),
@@ -103,11 +106,34 @@ class DocumentOverviewWidget extends StatelessWidget {
             label: S.of(context)!.tags,
             content: Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: TagsWidget(
-                isClickable: false,
-                tags: tags,
-              ),
+              child: TagsWidget(isClickable: false, tags: tags),
             ),
+          ),
+        );
+      }
+    }
+
+    if (document.customFields.isNotEmpty &&
+        user.canViewCustomFields &&
+        customFieldRepository != null) {
+      for (final fieldInstance in document.customFields) {
+        final fieldId = fieldInstance.id;
+        if (fieldId == null) {
+          continue;
+        }
+        final customField = customFieldRepository.customFields[fieldId];
+        if (customField == null) {
+          continue;
+        }
+        final fieldName = customField.name;
+        if (fieldName == null || fieldName.trim().isEmpty) {
+          continue;
+        }
+        addItem(
+          DetailsItem.text(
+            _formatCustomFieldValue(fieldInstance.value),
+            context: context,
+            label: fieldName,
           ),
         );
       }
@@ -117,5 +143,26 @@ class DocumentOverviewWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: children,
     );
+  }
+
+  String _formatCustomFieldValue(Object? value) {
+    if (value == null) {
+      return '-';
+    }
+    if (value is List) {
+      if (value.isEmpty) {
+        return '-';
+      }
+      return value.join(', ');
+    }
+    if (value is Map) {
+      if (value.isEmpty) {
+        return '-';
+      }
+      return value.entries
+          .map((entry) => '${entry.key}: ${entry.value}')
+          .join(', ');
+    }
+    return value.toString();
   }
 }

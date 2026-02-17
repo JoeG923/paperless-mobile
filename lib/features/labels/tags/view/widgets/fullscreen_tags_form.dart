@@ -54,9 +54,11 @@ class _FullscreenTagsFormState extends State<FullscreenTagsForm> {
     } else if (value is NotAssignedTagsQuery) {
       _notAssigned = true;
     }
-    _textEditingController.addListener(() => setState(() {
-          _showClearIcon = _textEditingController.text.isNotEmpty;
-        }));
+    _textEditingController.addListener(
+      () => setState(() {
+        _showClearIcon = _textEditingController.text.isNotEmpty;
+      }),
+    );
     if (widget.autofocus) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         //Delay keyboard popup to ensure open animation is finished before.
@@ -83,9 +85,7 @@ class _FullscreenTagsFormState extends State<FullscreenTagsForm> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface,
         toolbarHeight: 72,
-        leading: BackButton(
-          color: theme.colorScheme.onSurface,
-        ),
+        leading: BackButton(color: theme.colorScheme.onSurface),
         title: TextFormField(
           focusNode: _focusNode,
           controller: _textEditingController,
@@ -119,8 +119,9 @@ class _FullscreenTagsFormState extends State<FullscreenTagsForm> {
               if (widget.allowOnlySelection) {
                 widget.onSubmit(
                   returnValue: IdsTagsQuery(
-                    include:
-                        _include.sortedBy((id) => widget.options[id]!.name),
+                    include: _include.sortedBy(
+                      (id) => widget.options[id]!.name,
+                    ),
                   ),
                 );
                 return;
@@ -202,9 +203,10 @@ class _FullscreenTagsFormState extends State<FullscreenTagsForm> {
   }
 
   void _onAddTag() async {
-    final createdTag =
-        await CreateLabelRoute(LabelType.tag, name: _textEditingController.text)
-            .push<Tag>(context);
+    final createdTag = await CreateLabelRoute(
+      LabelType.tag,
+      name: _textEditingController.text,
+    ).push<Tag>(context);
     _textEditingController.clear();
     if (createdTag != null) {
       setState(() {
@@ -244,8 +246,9 @@ class _FullscreenTagsFormState extends State<FullscreenTagsForm> {
       yield _buildNotAssignedOption();
     }
 
-    var matches = _options
-        .where((e) => e.name.trim().toLowerCase().contains(normalizedQuery));
+    var matches = _options.where(
+      (e) => e.name.trim().toLowerCase().contains(normalizedQuery),
+    );
     if (matches.isEmpty && widget.allowCreation) {
       yield Center(
         child: Column(
@@ -328,8 +331,8 @@ class SelectableTagWidget extends StatelessWidget {
       tileColor: excluded
           ? excludeColor
           : selected
-              ? includeColor
-              : null,
+          ? includeColor
+          : null,
     );
   }
 }

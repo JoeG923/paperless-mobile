@@ -3,6 +3,36 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:paperless_api/src/models/models.dart';
 
+sealed class UploadCustomFields {
+  const UploadCustomFields();
+
+  Object toJson();
+
+  factory UploadCustomFields.ids(Iterable<int> ids) = UploadCustomFieldIds;
+  factory UploadCustomFields.values(Map<int, Object?> values) =
+      UploadCustomFieldValues;
+}
+
+class UploadCustomFieldIds extends UploadCustomFields {
+  final List<int> ids;
+
+  UploadCustomFieldIds(Iterable<int> values) : ids = List.unmodifiable(values);
+
+  @override
+  Object toJson() => List<int>.from(ids);
+}
+
+class UploadCustomFieldValues extends UploadCustomFields {
+  final Map<int, Object?> values;
+
+  UploadCustomFieldValues(Map<int, Object?> values)
+    : values = Map.unmodifiable(values);
+
+  @override
+  Object toJson() =>
+      values.map((fieldId, value) => MapEntry(fieldId.toString(), value));
+}
+
 abstract class PaperlessDocumentsApi {
   /// Uploads a document using a form data request and from server version 1.11.3
   /// returns the celery task id which can be used to track the status of the document.
@@ -15,6 +45,7 @@ abstract class PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -32,6 +63,7 @@ abstract class PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,

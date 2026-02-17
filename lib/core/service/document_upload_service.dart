@@ -6,11 +6,24 @@ import 'package:paperless_mobile/features/tasks/model/pending_tasks_notifier.dar
 
 class DocumentUploadService {
   static const Duration defaultUploadTimeout = Duration(minutes: 5);
+  static const int defaultMaxRetryAttempts = 2;
+  static const Duration defaultInitialRetryDelay = Duration(seconds: 1);
 
   final PaperlessDocumentsApi _documentApi;
   final PendingTasksNotifier _tasksNotifier;
+  final int _maxRetryAttempts;
+  final Duration _initialRetryDelay;
+  final Future<void> Function(Duration) _sleep;
 
-  DocumentUploadService(this._documentApi, this._tasksNotifier);
+  DocumentUploadService(
+    this._documentApi,
+    this._tasksNotifier, {
+    int maxRetryAttempts = defaultMaxRetryAttempts,
+    Duration initialRetryDelay = defaultInitialRetryDelay,
+    Future<void> Function(Duration)? sleep,
+  }) : _maxRetryAttempts = maxRetryAttempts,
+       _initialRetryDelay = initialRetryDelay,
+       _sleep = sleep ?? Future.delayed;
 
   Future<String?> upload(
     Uint8List bytes, {
@@ -20,6 +33,7 @@ class DocumentUploadService {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     DateTime? createdAt,
     int? asn,
     void Function(double progress)? onProgressChanged,
@@ -41,6 +55,7 @@ class DocumentUploadService {
         documentType: documentType,
         storagePath: storagePath,
         tags: tags,
+        customFields: customFields,
         createdAt: createdAt,
         asn: asn,
         onProgressChanged: onProgressChanged,
@@ -60,6 +75,7 @@ class DocumentUploadService {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     DateTime? createdAt,
     int? asn,
     void Function(double progress)? onProgressChanged,
@@ -75,6 +91,7 @@ class DocumentUploadService {
         documentType: documentType,
         storagePath: storagePath,
         tags: tags,
+        customFields: customFields,
         createdAt: createdAt,
         asn: asn,
         onProgressChanged: onProgressChanged,
@@ -94,17 +111,44 @@ class DocumentUploadService {
   }) async {
     final token = cancelToken ?? CancelToken();
     final effectiveTimeout = timeout ?? defaultUploadTimeout;
-    final uploadFuture = uploadRequest(token, effectiveTimeout);
-    final taskId = await uploadFuture.timeout(
-      effectiveTimeout,
-      onTimeout: () {
-        token.cancel('Upload timed out.');
-        throw const PaperlessApiException(ErrorCode.requestTimedOut);
-      },
-    );
-    if (taskId != null) {
-      _tasksNotifier.listenToTaskChanges(taskId);
+    for (var attempt = 0; ; attempt++) {
+      try {
+        final uploadFuture = uploadRequest(token, effectiveTimeout);
+        final taskId = await uploadFuture.timeout(
+          effectiveTimeout,
+          onTimeout: () {
+            token.cancel('Upload timed out.');
+            throw const PaperlessApiException(ErrorCode.requestTimedOut);
+          },
+        );
+        if (taskId != null) {
+          _tasksNotifier.listenToTaskChanges(taskId);
+        }
+        return taskId;
+      } on PaperlessApiException catch (error) {
+        final canRetry =
+            !token.isCancelled &&
+            attempt < _maxRetryAttempts &&
+            _isTransientUploadError(error.code);
+        if (!canRetry) {
+          rethrow;
+        }
+        await _sleep(_retryDelay(attempt));
+      }
     }
-    return taskId;
+  }
+
+  bool _isTransientUploadError(ErrorCode errorCode) {
+    return switch (errorCode) {
+      ErrorCode.requestTimedOut ||
+      ErrorCode.serverUnreachable ||
+      ErrorCode.deviceOffline => true,
+      _ => false,
+    };
+  }
+
+  Duration _retryDelay(int attempt) {
+    final multiplier = 1 << attempt;
+    return _initialRetryDelay * multiplier;
   }
 }

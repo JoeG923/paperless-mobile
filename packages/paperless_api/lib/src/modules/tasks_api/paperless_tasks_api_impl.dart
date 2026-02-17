@@ -1,14 +1,26 @@
 import 'dart:developer';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_api/src/extensions/dio_exception_extension.dart';
 
 class PaperlessTasksApiImpl implements PaperlessTasksApi {
+  static const int _maxIdsPerQuery = 100;
+
   final Dio _client;
   final int apiVersion;
+  final Duration minPollInterval;
+  final Duration maxPollInterval;
+  final Future<void> Function(Duration) _sleep;
 
-  PaperlessTasksApiImpl(this._client, {this.apiVersion = 2});
+  PaperlessTasksApiImpl(
+    this._client, {
+    this.apiVersion = 2,
+    this.minPollInterval = const Duration(seconds: 1),
+    this.maxPollInterval = const Duration(seconds: 5),
+    Future<void> Function(Duration)? sleep,
+  }) : _sleep = sleep ?? Future.delayed;
 
   String get _acknowledgeEndpoint =>
       apiVersion >= 6 ? "/api/tasks/acknowledge/" : "/api/acknowledge_tasks/";
@@ -35,7 +47,11 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
 
   /// API response returns List with single item
   Future<Task?> _findByTaskId(String taskId) async {
-    final response = await _client.get("/api/tasks/?task_id=$taskId");
+    final response = await _client.get(
+      "/api/tasks/",
+      queryParameters: {'task_id': taskId},
+      options: Options(validateStatus: (status) => status == 200),
+    );
     if (response.statusCode == 200) {
       if ((response.data as List).isNotEmpty) {
         return Task.fromJson((response.data as List).first);
@@ -47,11 +63,26 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
   @override
   Future<Iterable<Task>> findAll([Iterable<int>? ids]) async {
     try {
-      final response = await _client.get(
-        "/api/tasks/",
-        options: Options(validateStatus: (status) => status == 200),
-      );
-      return (response.data as List).map((e) => Task.fromJson(e));
+      final requestedIds = ids?.toList(growable: false);
+      if (requestedIds == null || requestedIds.isEmpty) {
+        final response = await _client.get(
+          "/api/tasks/",
+          options: Options(validateStatus: (status) => status == 200),
+        );
+        return (response.data as List).map((e) => Task.fromJson(e));
+      }
+
+      final tasks = <Task>[];
+      for (var i = 0; i < requestedIds.length; i += _maxIdsPerQuery) {
+        final chunk = requestedIds.skip(i).take(_maxIdsPerQuery).toList();
+        final response = await _client.get(
+          "/api/tasks/",
+          queryParameters: {'id__in': chunk.join(',')},
+          options: Options(validateStatus: (status) => status == 200),
+        );
+        tasks.addAll((response.data as List).map((e) => Task.fromJson(e)));
+      }
+      return tasks;
     } on DioException catch (exception) {
       throw exception.unravel(
         orElse: const PaperlessApiException(ErrorCode.loadTasksError),
@@ -61,6 +92,8 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
 
   @override
   Stream<Task> listenForTaskChanges(String taskId) async* {
+    Duration currentDelay = minPollInterval;
+    TaskStatus? previousStatus;
     bool isCompleted = false;
     while (!isCompleted) {
       final task = await find(taskId: taskId);
@@ -72,8 +105,20 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
       if (task.status == TaskStatus.success ||
           task.status == TaskStatus.failure) {
         isCompleted = true;
+        continue;
       }
-      await Future.delayed(const Duration(seconds: 1));
+
+      if (task.status == previousStatus) {
+        final nextMillis = math.min(
+          currentDelay.inMilliseconds * 2,
+          maxPollInterval.inMilliseconds,
+        );
+        currentDelay = Duration(milliseconds: nextMillis);
+      } else {
+        currentDelay = minPollInterval;
+        previousStatus = task.status;
+      }
+      await _sleep(currentDelay);
     }
   }
 
@@ -88,9 +133,7 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
     try {
       final response = await _client.post(
         _acknowledgeEndpoint,
-        data: {
-          'tasks': tasks.map((e) => e.id).toList(),
-        },
+        data: {'tasks': tasks.map((e) => e.id).toList()},
         options: Options(validateStatus: (status) => status == 200),
       );
       if (response.data['result'] != tasks.length) {

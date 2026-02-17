@@ -6,10 +6,7 @@ import 'package:paperless_mobile/routing/routes.dart';
 
 part 'logging_out_route.g.dart';
 
-@TypedGoRoute<LoggingOutRoute>(
-  path: "/logging-out",
-  name: R.loggingOut,
-)
+@TypedGoRoute<LoggingOutRoute>(path: "/logging-out", name: R.loggingOut)
 class LoggingOutRoute extends GoRouteData with $LoggingOutRoute {
   static final $parentNavigatorKey = rootNavigatorKey;
   const LoggingOutRoute();
@@ -17,11 +14,7 @@ class LoggingOutRoute extends GoRouteData with $LoggingOutRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return NoTransitionPage(
-      child: Scaffold(
-        body: Center(
-          child: Text(S.of(context)!.loggingOut),
-        ),
-      ),
+      child: Scaffold(body: Center(child: Text(S.of(context)!.loggingOut))),
     );
   }
 }

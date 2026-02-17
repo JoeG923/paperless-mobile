@@ -20,10 +20,11 @@ class BiometricAuthenticationSetting extends StatelessWidget {
           title: Text(S.of(context)!.biometricAuthentication),
           subtitle: Text(S.of(context)!.authenticateOnAppStart),
           onChanged: (val) async {
-            final String localizedReason =
-                S.of(context)!.authenticateToToggleBiometricAuthentication(
-                      val ? 'enable' : 'disable',
-                    );
+            final String localizedReason = S
+                .of(context)!
+                .authenticateToToggleBiometricAuthentication(
+                  val ? 'enable' : 'disable',
+                );
 
             final isAuthenticated = await context
                 .read<LocalAuthenticationService>()

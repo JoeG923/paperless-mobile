@@ -12,34 +12,39 @@ class ThemeModeSetting extends StatelessWidget {
       builder: (context, settings) {
         return ListTile(
           title: Text(S.of(context)!.theme),
-          subtitle: Text(_mapThemeModeToLocalizedString(
-              settings.preferredThemeMode, context)),
-          onTap: () => showDialog<ThemeMode>(
-            context: context,
-            builder: (_) => RadioSettingsDialog<ThemeMode>(
-              titleText: S.of(context)!.appearance,
-              initialValue: settings.preferredThemeMode,
-              options: [
-                RadioOption(
-                  value: ThemeMode.system,
-                  label: S.of(context)!.systemTheme,
-                ),
-                RadioOption(
-                  value: ThemeMode.light,
-                  label: S.of(context)!.lightTheme,
-                ),
-                RadioOption(
-                  value: ThemeMode.dark,
-                  label: S.of(context)!.darkTheme,
-                )
-              ],
+          subtitle: Text(
+            _mapThemeModeToLocalizedString(
+              settings.preferredThemeMode,
+              context,
             ),
-          ).then((value) async {
-            if (value != null) {
-              settings.preferredThemeMode = value;
-              await settings.save();
-            }
-          }),
+          ),
+          onTap: () =>
+              showDialog<ThemeMode>(
+                context: context,
+                builder: (_) => RadioSettingsDialog<ThemeMode>(
+                  titleText: S.of(context)!.appearance,
+                  initialValue: settings.preferredThemeMode,
+                  options: [
+                    RadioOption(
+                      value: ThemeMode.system,
+                      label: S.of(context)!.systemTheme,
+                    ),
+                    RadioOption(
+                      value: ThemeMode.light,
+                      label: S.of(context)!.lightTheme,
+                    ),
+                    RadioOption(
+                      value: ThemeMode.dark,
+                      label: S.of(context)!.darkTheme,
+                    ),
+                  ],
+                ),
+              ).then((value) async {
+                if (value != null) {
+                  settings.preferredThemeMode = value;
+                  await settings.save();
+                }
+              }),
         );
       },
     );

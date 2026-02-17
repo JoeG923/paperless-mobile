@@ -43,10 +43,7 @@ class VerifyIdentityPage extends StatelessWidget {
               S.of(context)!.useTheConfiguredBiometricFactorToAuthenticate,
               textAlign: TextAlign.center,
             ).paddedSymmetrically(horizontal: 16),
-            const Icon(
-              Icons.fingerprint,
-              size: 96,
-            ),
+            const Icon(Icons.fingerprint, size: 96),
             // Wrap(
             //   alignment: WrapAlignment.spaceBetween,
             //   runAlignment: WrapAlignment.spaceBetween,

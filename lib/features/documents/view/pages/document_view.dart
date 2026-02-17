@@ -48,9 +48,7 @@ class _DocumentViewState extends State<DocumentView> {
         _controller.pagesCount != null && _currentPage > 1;
     return Scaffold(
       appBar: widget.showAppBar
-          ? AppBar(
-              title: widget.title != null ? Text(widget.title!) : null,
-            )
+          ? AppBar(title: widget.title != null ? Text(widget.title!) : null)
           : null,
       bottomNavigationBar: widget.showControls
           ? BottomAppBar(

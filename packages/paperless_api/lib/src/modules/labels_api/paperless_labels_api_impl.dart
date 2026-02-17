@@ -108,16 +108,12 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       final response = await _client.post(
         '/api/document_types/',
         data: type.toJson(),
-        options: Options(
-          validateStatus: (status) => status == 201,
-        ),
+        options: Options(validateStatus: (status) => status == 201),
       );
       return DocumentType.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.documentTypeCreateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.documentTypeCreateFailed),
       );
     }
   }
@@ -136,9 +132,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return Tag.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.tagCreateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.tagCreateFailed),
       );
     }
   }
@@ -172,9 +166,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return documentType.id!;
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.documentTypeDeleteFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.documentTypeDeleteFailed),
       );
     }
   }
@@ -190,9 +182,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return tag.id!;
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.tagDeleteFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.tagDeleteFailed),
       );
     }
   }
@@ -228,9 +218,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return DocumentType.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.documentTypeUpdateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.documentTypeUpdateFailed),
       );
     }
   }
@@ -250,9 +238,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return Tag.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.tagUpdateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.tagUpdateFailed),
       );
     }
   }
@@ -268,9 +254,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return path.id!;
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.storagePathDeleteFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.storagePathDeleteFailed),
       );
     }
   }
@@ -310,9 +294,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return StoragePath.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.storagePathCreateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.storagePathCreateFailed),
       );
     }
   }
@@ -329,9 +311,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       return StoragePath.fromJson(response.data);
     } on DioException catch (exception) {
       throw exception.unravel(
-        orElse: const PaperlessApiException(
-          ErrorCode.storagePathUpdateFailed,
-        ),
+        orElse: const PaperlessApiException(ErrorCode.storagePathUpdateFailed),
       );
     }
   }

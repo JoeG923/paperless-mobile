@@ -57,17 +57,20 @@ class _FullscreenBulkEditLabelPageState<T extends Label>
   Iterable<int> _generateOrderedLabels() sync* {
     final availableValues = widget.options.values
         .where(
-            (e) => e.name.normalized().contains(_controller.text.normalized()))
+          (e) => e.name.normalized().contains(_controller.text.normalized()),
+        )
         .map((e) => e.id!)
         .toSet();
-    for (var label
-        in _initialValues.toSet().intersection(availableValues.toSet())) {
+    for (var label in _initialValues.toSet().intersection(
+      availableValues.toSet(),
+    )) {
       if (label != null) {
         yield label;
       }
     }
-    for (final id
-        in availableValues.whereNot((e) => _initialValues.contains(e))) {
+    for (final id in availableValues.whereNot(
+      (e) => _initialValues.contains(e),
+    )) {
       yield id;
     }
   }
@@ -75,7 +78,8 @@ class _FullscreenBulkEditLabelPageState<T extends Label>
   @override
   Widget build(BuildContext context) {
     final labels = _generateOrderedLabels();
-    final hideFab = _selection == null ||
+    final hideFab =
+        _selection == null ||
         (_initialValues.length == 1 &&
             _selection?.label == _initialValues.first);
     return FullscreenSelectionForm(
@@ -128,7 +132,8 @@ class _FullscreenBulkEditLabelPageState<T extends Label>
     } else {
       bool shouldPerformAction;
       if (_selection!.label == null) {
-        shouldPerformAction = await showDialog<bool>(
+        shouldPerformAction =
+            await showDialog<bool>(
               context: context,
               builder: (context) => ConfirmBulkModifyLabelDialog(
                 content: widget.removeMessageBuilder(widget.selection.length),
@@ -137,7 +142,8 @@ class _FullscreenBulkEditLabelPageState<T extends Label>
             false;
       } else {
         final labelName = widget.options[_selection!.label]!.name;
-        shouldPerformAction = await showDialog<bool>(
+        shouldPerformAction =
+            await showDialog<bool>(
               context: context,
               builder: (context) => ConfirmBulkModifyLabelDialog(
                 content: widget.assignMessageBuilder(

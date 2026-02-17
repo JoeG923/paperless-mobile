@@ -22,6 +22,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -42,6 +43,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
       documentType: documentType,
       storagePath: storagePath,
       tags: tags,
+      customFields: customFields,
       asn: asn,
     );
     return _sendCreateRequest(
@@ -62,6 +64,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
     void Function(double progress)? onProgressChanged,
     Duration? timeout,
@@ -82,6 +85,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
       documentType: documentType,
       storagePath: storagePath,
       tags: tags,
+      customFields: customFields,
       asn: asn,
     );
     return _sendCreateRequest(
@@ -131,6 +135,7 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     int? correspondent,
     int? storagePath,
     Iterable<int> tags = const [],
+    UploadCustomFields? customFields,
     int? asn,
   }) {
     formData.fields.add(MapEntry('title', title));
@@ -149,6 +154,11 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
     }
     if (asn != null) {
       formData.fields.add(MapEntry('archive_serial_number', jsonEncode(asn)));
+    }
+    if (customFields != null) {
+      formData.fields.add(
+        MapEntry('custom_fields', jsonEncode(customFields.toJson())),
+      );
     }
     for (final tag in tags) {
       formData.fields.add(MapEntry('tags', tag.toString()));
