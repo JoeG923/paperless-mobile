@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paperless_api/paperless_api.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/features/app_drawer/view/app_drawer.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
@@ -22,122 +23,167 @@ class ScaffoldWithNavigationBar extends StatefulWidget {
       ScaffoldWithNavigationBarState();
 }
 
+class _NavItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool enabled;
+  final Widget Function(BuildContext context, Widget child)? badgeBuilder;
+
+  const _NavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.enabled,
+    this.badgeBuilder,
+  });
+}
+
 class ScaffoldWithNavigationBarState extends State<ScaffoldWithNavigationBar> {
+  List<_NavItem> _buildItems(BuildContext context) {
+    final user = widget.authenticatedUser;
+    final l10n = S.of(context)!;
+    return [
+      _NavItem(
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+        label: l10n.home,
+        enabled: true,
+      ),
+      _NavItem(
+        icon: Icons.description_outlined,
+        selectedIcon: Icons.description_rounded,
+        label: l10n.documents,
+        enabled: user.canViewDocuments,
+      ),
+      _NavItem(
+        icon: Icons.document_scanner_outlined,
+        selectedIcon: Icons.document_scanner_rounded,
+        label: l10n.scanner,
+        enabled: user.canCreateDocuments,
+      ),
+      _NavItem(
+        icon: Icons.sell_outlined,
+        selectedIcon: Icons.sell_rounded,
+        label: l10n.labels,
+        enabled: user.canViewAnyLabel,
+      ),
+      _NavItem(
+        icon: Icons.inbox_outlined,
+        selectedIcon: Icons.inbox_rounded,
+        label: l10n.inbox,
+        enabled: user.canViewInbox,
+        badgeBuilder: (context, child) => BlocBuilder<InboxCubit, InboxState>(
+          builder: (context, state) {
+            return Badge.count(
+              isLabelVisible: state.itemsInInboxCount > 0 && user.canViewInbox,
+              count: state.itemsInInboxCount,
+              child: child,
+            );
+          },
+        ),
+      ),
+    ];
+  }
+
+  void _onSelected(int index, bool enabled) {
+    if (!enabled) return;
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final items = _buildItems(context);
+    final currentIndex = widget.navigationShell.currentIndex;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: buildOverlayStyle(theme),
-      child: Scaffold(
-        drawer: const AppDrawer(),
-        bottomNavigationBar: NavigationBar(
-          elevation: 3,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          selectedIndex: widget.navigationShell.currentIndex,
-          onDestinationSelected: (index) {
-            widget.navigationShell.goBranch(
-              index,
-              initialLocation: index == widget.navigationShell.currentIndex,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useRail = constraints.maxWidth >= PmBreakpoints.mediumWidth;
+          if (useRail) {
+            return Scaffold(
+              drawer: const AppDrawer(),
+              body: Row(
+                children: [
+                  _buildRail(context, items, currentIndex),
+                  VerticalDivider(
+                    width: 1,
+                    color: theme.colorScheme.outlineVariant,
+                  ),
+                  Expanded(child: widget.navigationShell),
+                ],
+              ),
             );
-          },
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: theme.colorScheme.primary),
-              label: S.of(context)!.home,
-            ),
-            _toggleDestination(
-              NavigationDestination(
-                icon: const Icon(Icons.description_outlined),
-                selectedIcon: Icon(
-                  Icons.description,
-                  color: theme.colorScheme.primary,
-                ),
-                label: S.of(context)!.documents,
-              ),
-              disableWhen: !widget.authenticatedUser.canViewDocuments,
-            ),
-            _toggleDestination(
-              NavigationDestination(
-                icon: const Icon(Icons.document_scanner_outlined),
-                selectedIcon: Icon(
-                  Icons.document_scanner,
-                  color: theme.colorScheme.primary,
-                ),
-                label: S.of(context)!.scanner,
-              ),
-              disableWhen: !widget.authenticatedUser.canCreateDocuments,
-            ),
-            _toggleDestination(
-              NavigationDestination(
-                icon: const Icon(Icons.sell_outlined),
-                selectedIcon: Icon(
-                  Icons.sell,
-                  color: theme.colorScheme.primary,
-                ),
-                label: S.of(context)!.labels,
-              ),
-              disableWhen: !widget.authenticatedUser.canViewAnyLabel,
-            ),
-            _toggleDestination(
-              NavigationDestination(
-                icon: Builder(
-                  builder: (context) {
-                    return BlocBuilder<InboxCubit, InboxState>(
-                      builder: (context, state) {
-                        return Badge.count(
-                          isLabelVisible: state.itemsInInboxCount > 0,
-                          count: state.itemsInInboxCount,
-                          child: const Icon(Icons.inbox_outlined),
-                        );
-                      },
-                    );
-                  },
-                ),
-                selectedIcon: BlocBuilder<InboxCubit, InboxState>(
-                  builder: (context, state) {
-                    return Badge.count(
-                      isLabelVisible:
-                          state.itemsInInboxCount > 0 &&
-                          widget.authenticatedUser.canViewInbox,
-                      count: state.itemsInInboxCount,
-                      child: Icon(
-                        Icons.inbox,
-                        color: theme.colorScheme.primary,
-                      ),
-                    );
-                  },
-                ),
-                label: S.of(context)!.inbox,
-              ),
-              disableWhen: !widget.authenticatedUser.canViewInbox,
-            ),
-          ],
-        ),
-        body: widget.navigationShell,
+          }
+          return Scaffold(
+            drawer: const AppDrawer(),
+            bottomNavigationBar: _buildBottomNav(context, items, currentIndex),
+            body: widget.navigationShell,
+          );
+        },
       ),
     );
   }
 
-  Widget _toggleDestination(Widget destination, {required bool disableWhen}) {
-    final disabledColor = Theme.of(context).disabledColor;
-
-    final disabledTheme = Theme.of(context).navigationBarTheme.copyWith(
-      labelTextStyle: WidgetStatePropertyAll(
-        Theme.of(context).textTheme.labelSmall?.copyWith(color: disabledColor),
-      ),
-      iconTheme: WidgetStatePropertyAll(
-        Theme.of(context).iconTheme.copyWith(color: disabledColor),
-      ),
+  Widget _buildBottomNav(
+    BuildContext context,
+    List<_NavItem> items,
+    int currentIndex,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: (index) {
+        _onSelected(index, items[index].enabled);
+      },
+      destinations: [
+        for (final item in items)
+          NavigationDestination(
+            icon: _wrapIcon(item, item.icon, scheme.onSurfaceVariant),
+            selectedIcon: _wrapIcon(item, item.selectedIcon, null),
+            label: item.label,
+            tooltip: item.label,
+          ),
+      ],
     );
-    if (disableWhen) {
-      return AbsorbPointer(
-        child: Theme(
-          data: Theme.of(context).copyWith(navigationBarTheme: disabledTheme),
-          child: destination,
-        ),
-      );
-    }
-    return destination;
+  }
+
+  Widget _wrapIcon(_NavItem item, IconData iconData, Color? disabledColor) {
+    final icon = Icon(iconData, color: item.enabled ? null : disabledColor);
+    final wrapped = item.badgeBuilder?.call(context, icon) ?? icon;
+    return Opacity(opacity: item.enabled ? 1.0 : 0.45, child: wrapped);
+  }
+
+  Widget _buildRail(
+    BuildContext context,
+    List<_NavItem> items,
+    int currentIndex,
+  ) {
+    final extended =
+        MediaQuery.sizeOf(context).width >= PmBreakpoints.largeWidth;
+    return NavigationRail(
+      extended: extended,
+      selectedIndex: currentIndex,
+      onDestinationSelected: (index) {
+        _onSelected(index, items[index].enabled);
+      },
+      destinations: [
+        for (final item in items)
+          NavigationRailDestination(
+            icon: _wrapIcon(
+              item,
+              item.icon,
+              Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            selectedIcon: _wrapIcon(item, item.selectedIcon, null),
+            label: Text(item.label),
+          ),
+      ],
+    );
   }
 }

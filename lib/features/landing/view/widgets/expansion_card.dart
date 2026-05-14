@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 
 class ExpansionCard extends StatelessWidget {
   final Widget title;
@@ -17,30 +18,33 @@ class ExpansionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
-      margin: const EdgeInsets.all(16),
+      color: colorScheme.surfaceContainer,
+      margin: const EdgeInsets.symmetric(
+        horizontal: PmSpacing.lg,
+        vertical: PmSpacing.sm,
+      ),
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent,
           expansionTileTheme: ExpansionTileThemeData(
-            shape: Theme.of(context).cardTheme.shape,
-            collapsedShape: Theme.of(context).cardTheme.shape,
+            shape: RoundedRectangleBorder(borderRadius: PmRadii.rmd),
+            collapsedShape: RoundedRectangleBorder(borderRadius: PmRadii.rmd),
+            backgroundColor: Colors.transparent,
+            collapsedBackgroundColor: Colors.transparent,
+            tilePadding: const EdgeInsets.symmetric(horizontal: PmSpacing.lg),
+            childrenPadding: const EdgeInsets.fromLTRB(
+              PmSpacing.lg,
+              0,
+              PmSpacing.lg,
+              PmSpacing.lg,
+            ),
           ),
           listTileTheme: ListTileThemeData(
-            shape: Theme.of(context).cardTheme.shape,
+            shape: RoundedRectangleBorder(borderRadius: PmRadii.rmd),
           ),
         ),
         child: ExpansionTile(
-          backgroundColor: ElevationOverlay.applySurfaceTint(
-            colorScheme.surface,
-            colorScheme.surfaceTint,
-            4,
-          ),
           initiallyExpanded: initiallyExpanded,
-          collapsedBackgroundColor: ElevationOverlay.applySurfaceTint(
-            colorScheme.surface,
-            colorScheme.surfaceTint,
-            4,
-          ),
           title: title,
           children: [content],
         ),
