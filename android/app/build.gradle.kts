@@ -8,6 +8,11 @@ plugins {
 import java.util.Properties
 import java.io.FileInputStream
 
+val debugApplicationIdSuffixOverride =
+    providers.gradleProperty("debugApplicationIdSuffixOverride").getOrElse(".debug")
+val debugAppLabelOverride =
+    providers.gradleProperty("debugAppLabelOverride").getOrElse("Paperless Mobile API10")
+
 val keystorePropsFile = rootProject.file("key.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropsFile.exists()) {
@@ -67,8 +72,8 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         getByName("debug") {
-            applicationIdSuffix = ".debug"
-            manifestPlaceholders["appLabel"] = "Paperless Mobile API10"
+            applicationIdSuffix = debugApplicationIdSuffixOverride
+            manifestPlaceholders["appLabel"] = debugAppLabelOverride
         }
     }
 
