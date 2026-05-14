@@ -39,6 +39,7 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "paperless_mobile"
 
         // Required for flutter_local_notifications
         multiDexEnabled = true
@@ -67,6 +68,7 @@ android {
         }
         getByName("debug") {
             applicationIdSuffix = ".debug"
+            manifestPlaceholders["appLabel"] = "Paperless Mobile API10"
         }
     }
 
