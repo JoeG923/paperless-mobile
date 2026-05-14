@@ -153,7 +153,7 @@ class ScannerPage extends StatefulWidget {
   static Future<DocumentScanner> _defaultDocumentScannerFactory() async {
     return DocumentScanner(
       options: DocumentScannerOptions(
-        documentFormat: DocumentFormat.jpeg,
+        documentFormats: const {DocumentFormat.jpeg},
         mode: ScannerMode.full,
         pageLimit: 30,
         isGalleryImport: true,
@@ -480,7 +480,7 @@ class _ScannerPageState extends State<ScannerPage>
     try {
       final result = await ScannerPage.documentScannerScanProvider(scanner);
       final images = result.images;
-      if (images.isEmpty) {
+      if (images == null || images.isEmpty) {
         if (kDebugMode) {
           dev.log('[ScannerPage] Scan canceled or returned no images.');
         }
