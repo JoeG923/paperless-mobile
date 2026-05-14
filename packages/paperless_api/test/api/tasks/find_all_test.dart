@@ -89,6 +89,50 @@ void main() {
     expect(result.first.id, 1);
     expect(result.last.id, 205);
   });
+
+  test('findAll reads paginated API 10 task responses', () async {
+    final dio = Dio();
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          handler.resolve(
+            Response(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'count': 1,
+                'next': null,
+                'previous': null,
+                'results': [
+                  {
+                    'id': 10,
+                    'task_id': 'api-10-task',
+                    'task_type': 'consume_file',
+                    'input_data': {'filename': 'api10.pdf'},
+                    'date_created': '2026-02-16T00:00:00Z',
+                    'status': 'pending',
+                    'acknowledged': false,
+                    'related_document_ids': [44],
+                  },
+                ],
+              },
+            ),
+          );
+        },
+      ),
+    );
+
+    final api = PaperlessTasksApiImpl(dio, apiVersion: 10);
+    final result = await api.findAll();
+    final task = result.single;
+
+    expect(task.id, 10);
+    expect(task.type, 'consume_file');
+    expect(task.taskFileName, 'api10.pdf');
+    expect(task.status, TaskStatus.pending);
+    expect(task.relatedDocument, 44);
+  });
 }
 
 Map<String, dynamic> _taskJson(int id, String taskId, String status) {

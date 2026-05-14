@@ -39,8 +39,8 @@ class _EdgeDetectionAppState extends State<EdgeDetectionApp> {
     final int uvRowStride = image.planes[1].bytesPerRow;
     final int uvPixelStride = image.planes[1].bytesPerPixel!;
 
-    print("uvRowStride: $uvRowStride");
-    print("uvPixelStride: $uvPixelStride");
+    debugPrint("uvRowStride: $uvRowStride");
+    debugPrint("uvPixelStride: $uvPixelStride");
 
     // imgLib -> Image package from https://pub.dartlang.org/packages/image
     var img = imglib.Image(

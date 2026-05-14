@@ -145,7 +145,6 @@ class AuthenticatedRoute extends ShellRouteData {
           final apiFactory = context.read<PaperlessApiFactory>();
           return HomeShellWidget(
             localUserId: authenticatedUser.id,
-            paperlessApiVersion: authenticatedUser.apiVersion,
             paperlessProviderFactory: apiFactory,
             child: ChangeNotifierProvider(
               create: (context) =>

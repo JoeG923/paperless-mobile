@@ -90,7 +90,7 @@ class DocumentFilter extends Equatable {
         modified is RelativeDateRangeQuery;
   }
 
-  Map<String, dynamic> toQueryParameters() {
+  Map<String, dynamic> toQueryParameters({int apiVersion = 9}) {
     List<MapEntry<String, dynamic>> params = [
       MapEntry('page', '$page'),
       MapEntry('page_size', '$pageSize'),
@@ -102,7 +102,7 @@ class DocumentFilter extends Equatable {
       ...added.toQueryParameter(DateRangeQueryField.added).entries,
       ...created.toQueryParameter(DateRangeQueryField.created).entries,
       ...modified.toQueryParameter(DateRangeQueryField.modified).entries,
-      ...query.toQueryParameter().entries,
+      ...query.toQueryParameter(apiVersion: apiVersion).entries,
       if (customFieldQuery?.isNotEmpty ?? false)
         MapEntry('custom_field_query', customFieldQuery!),
     ];

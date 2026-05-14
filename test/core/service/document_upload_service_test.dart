@@ -242,8 +242,6 @@ class _CapturingDocumentsApi extends _SequencedDocumentsApi {
 }
 
 class _CancelingUploadApi extends _SequencedDocumentsApi {
-  int createCallCount = 0;
-
   _CancelingUploadApi() : super(const []);
 
   @override

@@ -28,10 +28,12 @@ class TextQuery {
     );
   }
 
-  Map<String, String> toQueryParameter() {
+  Map<String, String> toQueryParameter({int apiVersion = 9}) {
     final params = <String, String>{};
     if (queryText != null && queryText!.isNotEmpty) {
-      params.addAll({queryType.queryParam: queryText!});
+      params.addAll({
+        queryType.queryParamForApiVersion(apiVersion): queryText!,
+      });
     }
     return params;
   }

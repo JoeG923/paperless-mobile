@@ -9,8 +9,11 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
   PaperlessApiFactoryImpl(this.sessionManager);
 
   @override
-  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion}) {
-    return PaperlessDocumentsApiImpl(dio);
+  PaperlessDocumentsApi createDocumentsApi(
+    Dio dio, {
+    required int serverApiVersion,
+  }) {
+    return PaperlessDocumentsApiImpl(dio, apiVersion: serverApiVersion);
   }
 
   @override

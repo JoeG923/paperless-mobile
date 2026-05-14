@@ -28,9 +28,6 @@ class HomeShellWidget extends StatelessWidget {
   /// The id of the currently authenticated user (e.g. demo@paperless.example.com)
   final String localUserId;
 
-  /// The Paperless API version of the currently connected instance
-  final int paperlessApiVersion;
-
   // A factory providing the API implementations given an API version
   final PaperlessApiFactory paperlessProviderFactory;
 
@@ -38,7 +35,6 @@ class HomeShellWidget extends StatelessWidget {
 
   const HomeShellWidget({
     super.key,
-    required this.paperlessApiVersion,
     required this.paperlessProviderFactory,
     required this.localUserId,
     required this.child,
@@ -49,7 +45,6 @@ class HomeShellWidget extends StatelessWidget {
     return GlobalSettingsBuilder(
       builder: (context, settings) {
         final currentUserId = settings.loggedInUserId;
-        final apiVersion = ApiVersion(paperlessApiVersion);
         return ValueListenableBuilder(
           valueListenable: Hive.localUserAccountBox.listenable(
             keys: [currentUserId],
@@ -61,8 +56,12 @@ class HomeShellWidget extends StatelessWidget {
               return const SizedBox.shrink();
             }
             final currentLocalUser = box.get(currentUserId)!;
+            final paperlessApiVersion = currentLocalUser.apiVersion;
+            final apiVersion = ApiVersion(paperlessApiVersion);
             return MultiProvider(
-              key: ValueKey(currentUserId),
+              key: ValueKey(
+                '$currentUserId-${currentLocalUser.apiVersion}-${currentLocalUser.serverApiVersion}',
+              ),
               providers: [
                 Provider.value(value: currentLocalUser),
                 Provider.value(value: apiVersion),
@@ -81,7 +80,7 @@ class HomeShellWidget extends StatelessWidget {
                   create: (context) =>
                       paperlessProviderFactory.createDocumentsApi(
                         context.read<SessionManager>().client,
-                        apiVersion: paperlessApiVersion,
+                        serverApiVersion: currentLocalUser.serverApiVersion,
                       ),
                 ),
                 Provider(

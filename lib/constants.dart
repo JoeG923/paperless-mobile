@@ -6,4 +6,12 @@ late final PackageInfo packageInfo;
 late final AndroidDeviceInfo? androidInfo;
 late final IosDeviceInfo? iosInfo;
 
-const latestSupportedApiVersion = 9;
+const defaultRequestApiVersion = 9;
+const latestSupportedApiVersion = 10;
+
+int defaultRequestApiVersionFor(int serverApiVersion) {
+  if (serverApiVersion < defaultRequestApiVersion) {
+    return serverApiVersion;
+  }
+  return defaultRequestApiVersion;
+}

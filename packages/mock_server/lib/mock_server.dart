@@ -281,15 +281,9 @@ class LocalMockApiServer {
 }
 
 extension on Request {
-  Future<String?> bodyJsonValue(String param) async {
-    return jsonDecode(await readAsString())?[param];
-  }
-
   Future<Map?> bodyJsonMap() async {
     return jsonDecode(await readAsString());
   }
-
-  String? get accessToken => headers['Authorization']?.split('Bearer ').last;
 }
 
 extension JsonMockResponse on Response {

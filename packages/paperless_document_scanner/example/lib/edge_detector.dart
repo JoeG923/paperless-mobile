@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -76,7 +77,7 @@ class EdgeDetector {
     var completer = Completer<T>();
 
     sub = port.listen((result) async {
-      print(result);
+      log(result.toString());
       await sub.cancel();
       completer.complete(await result);
     });

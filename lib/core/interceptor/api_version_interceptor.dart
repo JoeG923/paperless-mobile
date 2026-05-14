@@ -12,7 +12,7 @@ class ApiVersionInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final headers = options.headers;
     if (!headers.containsKey(Headers.acceptHeader)) {
-      final apiVersion = _resolveApiVersion();
+      final apiVersion = _resolveApiVersion(options.extra);
       if (apiVersion != null) {
         headers[Headers.acceptHeader] = 'application/json; version=$apiVersion';
       }
@@ -32,7 +32,7 @@ class ApiVersionInterceptor extends Interceptor {
     handler.next(response);
   }
 
-  int? _resolveApiVersion() {
+  int? _resolveApiVersion(Map<String, dynamic> optionsExtra) {
     final settings = Hive.globalSettingsBox.getValue();
     final userId = settings?.loggedInUserId;
     if (userId == null) {
@@ -42,7 +42,12 @@ class ApiVersionInterceptor extends Interceptor {
     if (account == null) {
       return null;
     }
-    return apiVersionClamp(account.apiVersion);
+    final requestedApiVersion =
+        _requestedApiVersionFromExtra(optionsExtra) ?? account.apiVersion;
+    return apiVersionClamp(
+      requestedApiVersion,
+      serverApiVersion: account.serverApiVersion,
+    );
   }
 
   void _updateApiVersion(int apiVersion) {
@@ -55,18 +60,33 @@ class ApiVersionInterceptor extends Interceptor {
     if (account == null) {
       return;
     }
-    final normalized = apiVersionClamp(apiVersion);
-    if (account.apiVersion == normalized) {
+    final normalized = defaultRequestApiVersionFor(
+      apiVersionClamp(apiVersion, serverApiVersion: apiVersion),
+    );
+    if (account.apiVersion == normalized &&
+        account.serverApiVersion == apiVersion) {
       return;
     }
+    account.serverApiVersion = apiVersion;
     account.apiVersion = normalized;
     unawaited(account.save());
   }
 }
 
-int apiVersionClamp(int apiVersion) {
-  if (apiVersion > latestSupportedApiVersion) {
-    return latestSupportedApiVersion;
+int apiVersionClamp(int apiVersion, {required int serverApiVersion}) {
+  final maxSupportedApiVersion = serverApiVersion < latestSupportedApiVersion
+      ? serverApiVersion
+      : latestSupportedApiVersion;
+  if (apiVersion > maxSupportedApiVersion) {
+    return maxSupportedApiVersion;
   }
   return apiVersion;
+}
+
+int? _requestedApiVersionFromExtra(Map<String, dynamic> optionsExtra) {
+  final apiVersion = optionsExtra[paperlessApiVersionOverrideExtraKey];
+  if (apiVersion is int) {
+    return apiVersion;
+  }
+  return null;
 }

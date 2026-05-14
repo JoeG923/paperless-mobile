@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:paperless_api/paperless_api.dart';
 
 abstract class PaperlessApiFactory {
-  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion});
+  PaperlessDocumentsApi createDocumentsApi(
+    Dio dio, {
+    required int serverApiVersion,
+  });
   PaperlessSavedViewsApi createSavedViewsApi(
     Dio dio, {
     required int apiVersion,

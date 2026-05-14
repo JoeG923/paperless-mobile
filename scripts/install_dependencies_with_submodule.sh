@@ -16,8 +16,15 @@ pushd packages/mock_server
 $FLUTTER_ROOT/flutter packages pub get
 popd
 
+pushd packages/paperless_document_scanner
+$FLUTTER_ROOT/flutter packages pub get
+popd
+
+pushd packages/paperless_document_scanner/example
+$FLUTTER_ROOT/flutter packages pub get
+popd
+
 $FLUTTER_ROOT/flutter packages pub get
 $FLUTTER_ROOT/dart run build_runner build --delete-conflicting-outputs
 $FLUTTER_ROOT/flutter gen-l10n
 popd
-

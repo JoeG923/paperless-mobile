@@ -50,3 +50,15 @@ jobs:
       - name: Test paperless_api package
         working-directory: packages/paperless_api
         run: $FLUTTER_ROOT/flutter test
+
+      - name: Analyze mock_server package
+        working-directory: packages/mock_server
+        run: $FLUTTER_ROOT/dart analyze
+
+      - name: Analyze paperless_document_scanner package
+        working-directory: packages/paperless_document_scanner
+        run: $FLUTTER_ROOT/flutter analyze
+
+      - name: Analyze paperless_document_scanner example
+        working-directory: packages/paperless_document_scanner/example
+        run: $FLUTTER_ROOT/flutter analyze

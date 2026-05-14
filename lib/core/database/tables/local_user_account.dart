@@ -22,13 +22,17 @@ class LocalUserAccount extends HiveObject {
   @HiveField(8, defaultValue: 2)
   int apiVersion;
 
+  @HiveField(9)
+  int serverApiVersion;
+
   LocalUserAccount({
     required this.id,
     required this.serverUrl,
     required this.settings,
     required this.paperlessUser,
     required this.apiVersion,
-  });
+    int? serverApiVersion,
+  }) : serverApiVersion = serverApiVersion ?? apiVersion;
 
   bool get hasMultiUserSupport => apiVersion >= 3;
 }

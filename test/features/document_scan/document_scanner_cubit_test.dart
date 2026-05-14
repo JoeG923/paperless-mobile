@@ -10,7 +10,7 @@ void main() {
   late File secondScan;
   late DocumentScannerCubit cubit;
 
-  Future<File> _createScanFile(String name) async {
+  Future<File> createScanFile(String name) async {
     final file = File('${tempDir.path}/$name.jpg');
     await file.writeAsBytes(List<int>.generate(8, (i) => i), flush: true);
     return file;
@@ -18,8 +18,8 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('scanner_cubit_test_');
-    firstScan = await _createScanFile('first');
-    secondScan = await _createScanFile('second');
+    firstScan = await createScanFile('first');
+    secondScan = await createScanFile('second');
     cubit = DocumentScannerCubit(LocalNotificationService());
   });
 

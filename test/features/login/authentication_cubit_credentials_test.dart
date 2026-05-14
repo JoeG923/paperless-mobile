@@ -44,7 +44,10 @@ class _FakeApiFactory implements PaperlessApiFactory {
   }
 
   @override
-  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion}) {
+  PaperlessDocumentsApi createDocumentsApi(
+    Dio dio, {
+    required int serverApiVersion,
+  }) {
     throw UnimplementedError();
   }
 

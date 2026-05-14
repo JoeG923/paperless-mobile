@@ -22,6 +22,7 @@ import 'package:paperless_mobile/features/login/view/widgets/form_fields/user_cr
 import 'package:paperless_mobile/generated/assets.gen.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
+import 'package:paperless_mobile/keys.dart';
 import 'package:paperless_mobile/routing/routes/app_logs_route.dart';
 
 class AddAccountPage extends StatefulWidget {
@@ -130,6 +131,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                               // ),
                               SizedBox(width: 8),
                               FilledButton.icon(
+                                key: TestKeys.login.continueButton,
                                 onPressed: () async {
                                   final status = await _updateReachability();
                                   if (!mounted) return;
@@ -209,6 +211,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
                                 label: Text(S.of(context)!.edit),
                               ),
                               FilledButton(
+                                key: TestKeys.login.loginButton,
                                 onPressed: () {
                                   _onSubmit();
                                 },

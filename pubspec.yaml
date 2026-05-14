@@ -46,7 +46,7 @@ dependencies:
   cached_network_image: ^3.2.1
   shimmer: ^3.0.0
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.5
+  equatable: ^2.0.8
   flutter_form_builder: ^10.2.0
   package_info_plus: ^9.0.0
   local_auth: ^3.0.0
@@ -62,13 +62,13 @@ dependencies:
   fluttertoast: ^9.0.0
   paperless_api:
     path: packages/paperless_api
-  hive_ce: ^2.13.2
+  hive_ce: ^2.19.3
   rxdart: ^0.28.0
   flutter_colorpicker: ^1.0.3
   provider: ^6.0.5
-  dio: ^5.0.0
+  dio: ^5.9.2
   hydrated_bloc: ^10.1.1
-  json_annotation: ^4.9.0
+  json_annotation: ^4.11.0
   pretty_dio_logger: ^1.4.0
   collection: ^1.17.0
   device_info_plus: ^12.1.0
@@ -79,7 +79,7 @@ dependencies:
   flutter_html: ^3.0.0-alpha.6
   freezed_annotation: ^3.1.0
   animations: ^2.0.7
-  hive_ce_flutter: ^2.3.2
+  hive_ce_flutter: ^2.3.4
   flutter_secure_storage: ^10.0.0
   sliver_tools: ^0.2.10
   printing: ^5.11.1
@@ -115,17 +115,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   patrol: ^4.0.1
-  build_runner: ^2.10.4
-  dependency_validator: ^5.0.2
+  build_runner: ^2.15.0
+  dependency_validator: ^5.0.5
   flutter_lints: ^6.0.0
-  json_serializable: ^6.11.1
-  freezed: ^3.2.3
-  hive_ce_generator: ^1.9.3
+  json_serializable: ^6.13.2
+  freezed: ^3.2.5
+  hive_ce_generator: ^1.11.1
   mock_server:
     path: packages/mock_server
   go_router_builder: ^4.1.3
   flutter_gen_runner: ^5.3.2
-  mockito: ^5.5.0
+  mockito: ^5.6.4
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 # The following section is specific to Flutter.

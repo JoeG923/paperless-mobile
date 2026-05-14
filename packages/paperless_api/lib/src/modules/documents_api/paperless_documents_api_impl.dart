@@ -8,8 +8,9 @@ import 'package:paperless_api/src/extensions/dio_exception_extension.dart';
 
 class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
   final Dio client;
+  final int apiVersion;
 
-  PaperlessDocumentsApiImpl(this.client);
+  PaperlessDocumentsApiImpl(this.client, {this.apiVersion = 9});
 
   @override
   Future<String?> create(
@@ -185,13 +186,17 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
   Future<PagedSearchResult<DocumentModel>> findAll(
     DocumentFilter filter,
   ) async {
-    final filterParams = filter.toQueryParameters()
+    final searchApiVersion = apiVersion >= 10 ? 10 : 9;
+    final filterParams = filter.toQueryParameters(apiVersion: searchApiVersion)
       ..addAll({'truncate_content': "true"});
     try {
       final response = await client.get(
         "/api/documents/",
         queryParameters: filterParams,
-        options: Options(validateStatus: (status) => status == 200),
+        options: Options(
+          validateStatus: (status) => status == 200,
+          extra: searchApiVersion >= 10 ? paperlessApiVersionExtra(10) : null,
+        ),
       );
       return compute(
         PagedSearchResult.fromJsonSingleParam,

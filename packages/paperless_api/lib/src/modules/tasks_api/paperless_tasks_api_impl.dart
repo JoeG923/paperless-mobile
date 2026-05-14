@@ -53,8 +53,9 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
       options: Options(validateStatus: (status) => status == 200),
     );
     if (response.statusCode == 200) {
-      if ((response.data as List).isNotEmpty) {
-        return Task.fromJson((response.data as List).first);
+      final tasks = _tasksFromResponse(response.data);
+      if (tasks.isNotEmpty) {
+        return tasks.first;
       }
     }
     return null;
@@ -69,7 +70,7 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
           "/api/tasks/",
           options: Options(validateStatus: (status) => status == 200),
         );
-        return (response.data as List).map((e) => Task.fromJson(e));
+        return _tasksFromResponse(response.data);
       }
 
       final tasks = <Task>[];
@@ -80,7 +81,7 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
           queryParameters: {'id__in': chunk.join(',')},
           options: Options(validateStatus: (status) => status == 200),
         );
-        tasks.addAll((response.data as List).map((e) => Task.fromJson(e)));
+        tasks.addAll(_tasksFromResponse(response.data));
       }
       return tasks;
     } on DioException catch (exception) {
@@ -145,5 +146,16 @@ class PaperlessTasksApiImpl implements PaperlessTasksApi {
         orElse: const PaperlessApiException(ErrorCode.acknowledgeTasksError),
       );
     }
+  }
+
+  List<Task> _tasksFromResponse(dynamic data) {
+    final dynamic taskItems = switch (data) {
+      {'results': final results} => results,
+      _ => data,
+    };
+    return (taskItems as List)
+        .cast<Map<String, dynamic>>()
+        .map(Task.fromJson)
+        .toList(growable: false);
   }
 }

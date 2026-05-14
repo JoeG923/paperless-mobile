@@ -594,7 +594,8 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         settings: LocalUserSettings(),
         serverUrl: serverUrl,
         paperlessUser: serverUser,
-        apiVersion: apiVersion,
+        apiVersion: defaultRequestApiVersionFor(apiVersion),
+        serverApiVersion: apiVersion,
       ),
     );
     logger.fd(
@@ -670,7 +671,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
   Future<int> _getApiVersion(
     Dio dio, {
     Duration? timeout,
-    int defaultValue = 2,
+    int defaultValue = defaultRequestApiVersion,
   }) async {
     logger.fd(
       "Trying to fetch API version...",
@@ -679,12 +680,26 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     );
     try {
       final response = await dio.get(
-        "/api/",
-        options: Options(sendTimeout: timeout),
+        "/api/profile/",
+        options: Options(
+          followRedirects: false,
+          sendTimeout: timeout,
+          receiveTimeout: timeout,
+          validateStatus: (status) => status != null && status < 500,
+        ),
       );
-      int apiVersion = int.parse(
-        response.headers.value('x-api-version') ?? "3",
+      final apiVersionHeader = response.headers.value(
+        PaperlessServerInformationModel.apiVersionHeader,
       );
+      int? apiVersion = int.tryParse(apiVersionHeader ?? '');
+      if (apiVersion == null) {
+        logger.fw(
+          "Could not retrieve API version, using default ($defaultValue).",
+          className: runtimeType.toString(),
+          methodName: '_getApiVersion',
+        );
+        return defaultValue;
+      }
       if (apiVersion > latestSupportedApiVersion) {
         logger.fw(
           "The server is running a newer API version ($apiVersion) than the app supports (v$latestSupportedApiVersion), falling back to latest supported version (v$latestSupportedApiVersion). "
@@ -727,6 +742,8 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         .findCurrentUser();
 
     localUserAccount.paperlessUser = updatedPaperlessUser;
+    localUserAccount.serverApiVersion = apiVersion;
+    localUserAccount.apiVersion = defaultRequestApiVersionFor(apiVersion);
     await localUserAccount.save();
     logger.fd(
       "Successfully updated remote user object.",

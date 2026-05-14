@@ -16,4 +16,16 @@ enum QueryType {
 
   final String queryParam;
   const QueryType(this.queryParam);
+
+  String queryParamForApiVersion(int apiVersion) {
+    if (apiVersion >= 10) {
+      return switch (this) {
+        QueryType.title => 'title_search',
+        QueryType.titleAndContent => 'text',
+        QueryType.extended => 'query',
+        QueryType.asn => 'asn',
+      };
+    }
+    return queryParam;
+  }
 }

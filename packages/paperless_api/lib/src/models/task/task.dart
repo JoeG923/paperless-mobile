@@ -36,7 +36,9 @@ class Task extends Equatable {
     this.result,
   });
 
-  factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return _$TaskFromJson(_normalizeTaskJson(json));
+  }
 
   Map<String, dynamic> toJson() => _$TaskToJson(this);
 
@@ -79,4 +81,50 @@ class Task extends Equatable {
       type: type ?? this.type,
     );
   }
+}
+
+Map<String, dynamic> _normalizeTaskJson(Map<String, dynamic> json) {
+  final normalized = Map<String, dynamic>.from(json);
+
+  normalized['status'] = _normalizeTaskStatus(normalized['status']);
+  normalized['type'] ??= normalized['task_type'];
+  normalized['task_file_name'] ??= _inputFilename(normalized['input_data']);
+  normalized['related_document'] ??= _relatedDocumentId(normalized);
+
+  return normalized;
+}
+
+String? _normalizeTaskStatus(dynamic value) {
+  if (value is String) {
+    return value.toUpperCase();
+  }
+  return null;
+}
+
+String? _inputFilename(dynamic inputData) {
+  if (inputData is Map) {
+    final filename = inputData['filename'];
+    if (filename is String) {
+      return filename;
+    }
+  }
+  return null;
+}
+
+String? _relatedDocumentId(Map<String, dynamic> json) {
+  final resultData = json['result_data'];
+  if (resultData is Map) {
+    final documentId = resultData['document_id'];
+    if (documentId != null) {
+      return documentId.toString();
+    }
+  }
+
+  final relatedDocumentIds = json['related_document_ids'];
+  if (relatedDocumentIds is List && relatedDocumentIds.isNotEmpty) {
+    return relatedDocumentIds.first.toString();
+  }
+
+  final relatedDocument = json['related_document'];
+  return relatedDocument?.toString();
 }

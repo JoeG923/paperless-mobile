@@ -1,3 +1,5 @@
+// ignore_for_file: camel_case_types
+
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';

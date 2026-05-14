@@ -39,7 +39,6 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       Tag.fromJson,
       ErrorCode.tagLoadFailed,
       client: _client,
-      minRequiredApiVersion: 2,
     );
     return results
         .where((element) => ids?.contains(element.id) ?? true)
@@ -124,10 +123,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
       final response = await _client.post(
         '/api/tags/',
         data: tag.toJson(),
-        options: Options(
-          headers: {"Accept": "application/json; version=2"},
-          validateStatus: (status) => status == 201,
-        ),
+        options: Options(validateStatus: (status) => status == 201),
       );
       return Tag.fromJson(response.data);
     } on DioException catch (exception) {
@@ -229,10 +225,7 @@ class PaperlessLabelApiImpl implements PaperlessLabelsApi {
     try {
       final response = await _client.put(
         '/api/tags/${tag.id}/',
-        options: Options(
-          headers: {"Accept": "application/json; version=2"},
-          validateStatus: (status) => status == 200,
-        ),
+        options: Options(validateStatus: (status) => status == 200),
         data: tag.toJson(),
       );
       return Tag.fromJson(response.data);
