@@ -1560,7 +1560,7 @@ void main() {
         scanAssembler: _assembleTestScans,
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
       await tester.pump();
 
       expect(
@@ -1610,7 +1610,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
       await tester.pump();
 
       expect(scannerFactoryCalled, isFalse);
@@ -1655,7 +1655,7 @@ void main() {
         documentScannerFactory: () async => fakeScanner,
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -1703,7 +1703,7 @@ void main() {
         documentScannerFactory: () async => fakeScanner,
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -1771,7 +1771,7 @@ void main() {
           },
         );
 
-        await tester.tap(find.byType(FloatingActionButton));
+        await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
         await tester.pump();
         for (var i = 0; i < 20 && copiedDestinationPath == null; i++) {
           await tester.pump(const Duration(milliseconds: 100));
@@ -1842,7 +1842,7 @@ void main() {
           },
         );
 
-        await tester.tap(find.byType(FloatingActionButton));
+        await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
         await tester.pump();
         for (var i = 0; i < 20 && copiedDestinationPath == null; i++) {
           await tester.pump(const Duration(milliseconds: 100));
@@ -1902,7 +1902,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
@@ -1967,7 +1967,7 @@ void main() {
           },
         );
 
-        await tester.tap(find.byType(FloatingActionButton));
+        await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
         await tester.pump();
         for (
           var i = 0;
