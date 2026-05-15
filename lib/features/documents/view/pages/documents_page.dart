@@ -439,33 +439,47 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Widget _buildViewActions() {
     return BlocBuilder<DocumentsCubit, DocumentsState>(
       builder: (context, state) {
+        final theme = Theme.of(context);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Filter chips row
             const DocumentFilterChipsRow(),
-            // Toolbar row: count, sort, view type
+            // Count row (own line so it isn't squeezed between controls)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(
+                PmSpacing.md,
+                PmSpacing.sm,
+                PmSpacing.md,
+                0,
+              ),
+              color: theme.colorScheme.surface,
+              child: Text(
+                _buildCountText(context, state),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Controls row: sort + view type segmented control
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: PmSpacing.md,
                 vertical: PmSpacing.xs,
               ),
-              color: Theme.of(context).colorScheme.surface,
+              color: theme.colorScheme.surface,
               child: Row(
                 children: [
-                  // Document count
                   Expanded(
-                    child: Text(
-                      _buildCountText(context, state),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: SortDocumentsButton(
+                        enabled: state.selection.isEmpty,
                       ),
                     ),
                   ),
-                  // Sort button
-                  SortDocumentsButton(enabled: state.selection.isEmpty),
-                  const SizedBox(width: PmSpacing.sm),
-                  // View type segment
                   ViewTypeSelectionWidget(
                     viewType: state.viewType,
                     onChanged: context.read<DocumentsCubit>().setViewType,

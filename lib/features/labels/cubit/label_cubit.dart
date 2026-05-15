@@ -9,7 +9,15 @@ part 'label_state.dart';
 class LabelCubit extends Cubit<LabelState> {
   final LabelRepository labelRepository;
 
-  LabelCubit(this.labelRepository) : super(const LabelState()) {
+  LabelCubit(this.labelRepository)
+    : super(
+        LabelState(
+          correspondents: labelRepository.correspondents,
+          documentTypes: labelRepository.documentTypes,
+          storagePaths: labelRepository.storagePaths,
+          tags: labelRepository.tags,
+        ),
+      ) {
     labelRepository.addListener(_updateStateListener);
   }
 

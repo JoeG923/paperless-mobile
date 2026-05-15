@@ -50,6 +50,20 @@ class _LabelsPageState extends State<LabelsPage>
       length: _calculateTabCount(user),
       vsync: this,
     )..addListener(() => setState(() => _currentIndex = _tabController.index));
+
+    // Defensive reload on first visit — labels are often stale or empty
+    // because LabelRepository is only populated lazily by other screens.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final connected = context.read<ConnectivityCubit>().state.isConnected;
+      if (!connected) return;
+      context.read<LabelCubit>().reload(
+        loadCorrespondents: user.canViewCorrespondents,
+        loadDocumentTypes: user.canViewDocumentTypes,
+        loadStoragePaths: user.canViewStoragePaths,
+        loadTags: user.canViewTags,
+      );
+    });
   }
 
   @override

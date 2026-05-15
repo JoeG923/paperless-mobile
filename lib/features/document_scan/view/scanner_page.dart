@@ -594,7 +594,17 @@ class _ScannerPageState extends State<ScannerPage>
 
                       const Spacer(),
 
-                      // More menu
+                      // Export to PDF — visible IconButton for discoverability
+                      // (was previously buried in the overflow menu).
+                      IconButton(
+                        key: const Key('scanner_export_button'),
+                        tooltip: S.of(context)!.export,
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        onPressed: scans.isNotEmpty ? _onSaveToFile : null,
+                      ),
+
+                      // More menu (clear-all only — destructive action behind
+                      // a confirmation dialog).
                       Builder(
                         builder: (menuAnchorCtx) {
                           final pageContext = context;
@@ -604,21 +614,6 @@ class _ScannerPageState extends State<ScannerPage>
                             onSelected: (value) =>
                                 _handleMenuAction(pageContext, state, value),
                             itemBuilder: (menuCtx) => [
-                              // Export to PDF
-                              PopupMenuItem<String>(
-                                key: const Key('scanner_export_button'),
-                                value: 'export',
-                                enabled: scans.isNotEmpty,
-                                onTap: scans.isNotEmpty ? _onSaveToFile : null,
-                                child: ListTile(
-                                  leading: const Icon(
-                                    Icons.picture_as_pdf_outlined,
-                                  ),
-                                  title: Text(S.of(menuCtx)!.export),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-
                               // Clear all
                               PopupMenuItem<String>(
                                 value: 'clear',

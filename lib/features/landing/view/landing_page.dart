@@ -236,7 +236,9 @@ class _GreetingAppBar extends StatelessWidget {
         ? Uri.parse(account.serverUrl).host
         : account.serverUrl;
 
-    return SliverAppBar.large(
+    return SliverAppBar(
+      pinned: true,
+      floating: true,
       leading: Builder(
         builder: (ctx) => IconButton(
           icon: const Icon(Icons.menu_rounded),
@@ -244,30 +246,37 @@ class _GreetingAppBar extends StatelessWidget {
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      title: Text(S.of(context)!.welcomeUser(displayName)),
+      titleSpacing: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            S.of(context)!.welcomeUser(displayName),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            host,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: PmSpacing.md),
           child: UserAvatar(account: account),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(24),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 72, bottom: PmSpacing.sm),
-            child: Text(
-              host,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
