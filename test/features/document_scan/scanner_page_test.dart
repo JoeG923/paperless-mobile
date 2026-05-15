@@ -338,7 +338,7 @@ Future<bool> _pressQuickUpload(WidgetTester tester) async {
     onPressed();
     await Future<void>.delayed(const Duration(milliseconds: 300));
   });
-  await tester.pumpAndSettle();
+  await tester.pump();
   return true;
 }
 
@@ -361,7 +361,7 @@ Future<bool> _pressPreview(WidgetTester tester) async {
 Future<bool> _pressPrepareUpload(WidgetTester tester) async {
   final uploadButton = find.byKey(const Key('scanner_upload_button'));
   expect(uploadButton, findsOneWidget);
-  final widget = tester.widget<TextButton>(uploadButton);
+  final widget = tester.widget<FilledButton>(uploadButton);
   final onPressed = widget.onPressed;
   if (onPressed == null) {
     return false;
@@ -379,7 +379,7 @@ Future<bool> _pressFilesystemUpload(WidgetTester tester) async {
     const Key('scanner_filesystem_upload_button'),
   );
   expect(uploadFromFilesystemButton, findsOneWidget);
-  final widget = tester.widget<TextButton>(uploadFromFilesystemButton);
+  final widget = tester.widget<OutlinedButton>(uploadFromFilesystemButton);
   final onPressed = widget.onPressed;
   if (onPressed == null) {
     return false;
@@ -2451,11 +2451,13 @@ void main() {
         scanAssembler: _assembleTestScans,
         exportFilenameProvider: (_) async => 'scan_export',
       );
-      final exportButton = tester.widget<TextButton>(
+      await tester.tap(find.byKey(const Key('scanner_more_menu')));
+      await tester.pumpAndSettle();
+      final exportButton = tester.widget<PopupMenuItem<String>>(
         find.byKey(const Key('scanner_export_button')),
       );
-      expect(exportButton.onPressed, isNotNull);
-      exportButton.onPressed!();
+      expect(exportButton.onTap, isNotNull);
+      exportButton.onTap!();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pump();
@@ -2509,11 +2511,13 @@ void main() {
         exportFilenameProvider: (_) async => 'export_error',
       );
 
-      final exportButton = tester.widget<TextButton>(
+      await tester.tap(find.byKey(const Key('scanner_more_menu')));
+      await tester.pumpAndSettle();
+      final exportButton = tester.widget<PopupMenuItem<String>>(
         find.byKey(const Key('scanner_export_button')),
       );
-      expect(exportButton.onPressed, isNotNull);
-      exportButton.onPressed!();
+      expect(exportButton.onTap, isNotNull);
+      exportButton.onTap!();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
@@ -2563,11 +2567,13 @@ void main() {
           exportFilenameProvider: (_) async => null,
         );
 
-        final exportButton = tester.widget<TextButton>(
+        await tester.tap(find.byKey(const Key('scanner_more_menu')));
+        await tester.pumpAndSettle();
+        final exportButton = tester.widget<PopupMenuItem<String>>(
           find.byKey(const Key('scanner_export_button')),
         );
-        expect(exportButton.onPressed, isNotNull);
-        exportButton.onPressed!();
+        expect(exportButton.onTap, isNotNull);
+        exportButton.onTap!();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 20));
 

@@ -3,16 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
-import 'package:paperless_mobile/features/documents/view/widgets/date_and_document_type_widget.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/document_preview.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/items/document_item.dart';
-import 'package:paperless_mobile/features/labels/correspondent/view/widgets/correspondent_widget.dart';
 import 'package:paperless_mobile/features/labels/tags/view/widgets/tags_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -57,11 +57,14 @@ class DocumentDetailedItem extends DocumentItem {
         ? min(600.0, availableHeight)
         : min(500.0, availableHeight);
     final labelRepository = context.watch<LabelRepository>();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Card(
-      color: isSelected ? Theme.of(context).colorScheme.inversePrimary : null,
+      color: isSelected ? scheme.primaryContainer : null,
       child: InkWell(
         enableFeedback: true,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: PmRadii.rmd,
         onTap: () {
           if (isSelectionActive) {
             onSelected?.call(document);
@@ -75,6 +78,7 @@ class DocumentDetailedItem extends DocumentItem {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Thumbnail
             ConstrainedBox(
               constraints: BoxConstraints.tightFor(
                 width: double.infinity,
@@ -83,72 +87,150 @@ class DocumentDetailedItem extends DocumentItem {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  DocumentPreview(
-                    documentId: document.id,
-                    title: document.title,
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(PmRadii.md),
+                    ),
+                    child: DocumentPreview(
+                      documentId: document.id,
+                      title: document.title,
+                      borderRadius: 0,
+                    ),
                   ),
-                  if (paperlessUser.canViewTags)
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: TagsWidget(
-                        tags: document.tags
-                            .map((e) => labelRepository.tags[e])
-                            .whereType<Tag>()
-                            .toList(),
-                        onTagSelected: onTagSelected,
-                      ).padded(),
+                  // Selection indicator
+                  if (isSelectionActive)
+                    Positioned(
+                      top: PmSpacing.sm,
+                      right: PmSpacing.sm,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: scheme.surface.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          color: isSelected ? scheme.primary : scheme.outline,
+                          size: 24,
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
-            if (paperlessUser.canViewCorrespondents)
-              CorrespondentWidget(
-                onSelected: onCorrespondentSelected,
-                textStyle: Theme.of(context).textTheme.titleSmall?.apply(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                correspondent:
-                    labelRepository.correspondents[document.correspondent],
-              ).paddedLTRB(8, 8, 8, 0),
-            Text(
-              document.title.isEmpty ? '(-)' : document.title,
-              style: Theme.of(context).textTheme.titleMedium,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ).paddedLTRB(8, 8, 8, 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: DateAndDocumentTypeLabelWidget(
-                    document: document,
-                    onDocumentTypeSelected: onDocumentTypeSelected,
-                  ),
-                ),
-                if (document.archiveSerialNumber != null)
-                  Text(
-                    '#${document.archiveSerialNumber}',
-                    style: Theme.of(context).textTheme.bodySmall?.apply(
-                      color: Theme.of(context).hintColor,
+            // Metadata content
+            Padding(
+              padding: const EdgeInsets.all(PmSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Correspondent
+                  if (paperlessUser.canViewCorrespondents &&
+                      document.correspondent != null) ...[
+                    Text(
+                      labelRepository
+                              .correspondents[document.correspondent]
+                              ?.name ??
+                          '',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
+                    const SizedBox(height: 4),
+                  ],
+                  // Title
+                  Text(
+                    document.title.isEmpty ? '(-)' : document.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
-            ).paddedLTRB(8, 4, 8, 8),
-            if (highlights != null)
-              Html(
-                data: '<p>${highlights!}</p>',
-                style: {
-                  "span": Style(
-                    backgroundColor: Colors.yellow,
-                    color: Colors.black,
+                  const SizedBox(height: 8),
+                  // Metadata row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _buildMetadataText(context, labelRepository),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (document.archiveSerialNumber != null)
+                        Text(
+                          '#${document.archiveSerialNumber}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
-                  "p": Style(maxLines: 3, textOverflow: TextOverflow.ellipsis),
-                },
-              ).padded(),
+                  // Tags
+                  if (paperlessUser.canViewTags &&
+                      document.tags.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    TagsWidget(
+                      tags: document.tags
+                          .map((e) => labelRepository.tags[e])
+                          .whereType<Tag>()
+                          .toList(),
+                      onTagSelected: onTagSelected,
+                      isClickable: isLabelClickable,
+                    ),
+                  ],
+                  // Highlights
+                  if (highlights != null) ...[
+                    const SizedBox(height: 8),
+                    Html(
+                      data: '<p>$highlights</p>',
+                      style: {
+                        "span": Style(
+                          backgroundColor: Colors.yellow,
+                          color: Colors.black,
+                        ),
+                        "p": Style(
+                          maxLines: 3,
+                          textOverflow: TextOverflow.ellipsis,
+                        ),
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
     ).padded();
+  }
+
+  String _buildMetadataText(
+    BuildContext context,
+    LabelRepository labelRepository,
+  ) {
+    final parts = <String>[];
+
+    // Created date
+    parts.add(
+      DateFormat.yMMMMd(
+        Localizations.localeOf(context).toString(),
+      ).format(document.created),
+    );
+
+    // Document type
+    final docType = labelRepository.documentTypes[document.documentType];
+    if (docType != null) {
+      parts.add(docType.name);
+    }
+
+    return parts.join(' · ');
   }
 }

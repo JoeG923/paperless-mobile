@@ -75,12 +75,10 @@ class _DocumentPermissionsWidgetState extends State<DocumentPermissionsWidget> {
             : _resolveUserLabel(widget.document.owner!, userState.users);
 
         if (permissions == null) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Text(
-                S.of(context)!.permissionsUnavailable,
-                textAlign: TextAlign.center,
-              ),
+          return Center(
+            child: Text(
+              S.of(context)!.permissionsUnavailable,
+              textAlign: TextAlign.center,
             ),
           );
         }
@@ -106,7 +104,8 @@ class _DocumentPermissionsWidgetState extends State<DocumentPermissionsWidget> {
             (widget.document.userCanChange ?? false) &&
             widget.onUpdatePermissions != null;
 
-        return SliverList.list(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DetailsItem.text(
               owner,

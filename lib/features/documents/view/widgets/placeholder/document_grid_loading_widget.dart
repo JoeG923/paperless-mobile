@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/core/widgets/shimmer_placeholder.dart';
-import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
-import 'package:paperless_mobile/features/documents/view/widgets/placeholder/tags_placeholder.dart';
-import 'package:paperless_mobile/features/documents/view/widgets/placeholder/text_placeholder.dart';
 
 class DocumentGridLoadingWidget extends StatelessWidget {
   final bool _isSliver;
@@ -17,67 +15,80 @@ class DocumentGridLoadingWidget extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 4,
       crossAxisSpacing: 4,
-      childAspectRatio: 1 / 2,
+      mainAxisExtent: 324,
     );
     if (_isSliver) {
       return SliverGrid.builder(
         gridDelegate: delegate,
+        itemCount: 6,
         itemBuilder: (context, index) => _buildPlaceholderGridItem(context),
       );
     }
     return GridView.builder(
       gridDelegate: delegate,
+      itemCount: 6,
       itemBuilder: (context, index) => _buildPlaceholderGridItem(context),
     );
   }
 
   Widget _buildPlaceholderGridItem(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Card(
-        elevation: 1.0,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShimmerPlaceholder(
-              child: AspectRatio(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ShimmerPlaceholder(
+        child: Card.filled(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thumbnail placeholder
+              AspectRatio(
                 aspectRatio: 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(color: Colors.white),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ShimmerPlaceholder(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const TextPlaceholder(length: 70, fontSize: 16).padded(1),
-                      const TextPlaceholder(length: 50, fontSize: 16).padded(1),
-                      TextPlaceholder(
-                        length: 200,
-                        fontSize:
-                            Theme.of(context).textTheme.titleMedium?.fontSize ??
-                            10,
-                      ).padded(1),
-                      const Spacer(),
-                      const TagsPlaceholder(count: 2, dense: true),
-                      const Spacer(),
-                      TextPlaceholder(
-                        length: 100,
-                        fontSize: Theme.of(
-                          context,
-                        ).textTheme.bodySmall!.fontSize!,
-                      ),
-                    ],
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(PmRadii.lg),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+              // Content placeholder
+              Padding(
+                padding: const EdgeInsets.all(PmSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 14,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        borderRadius: PmRadii.rsm,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 14,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        borderRadius: PmRadii.rsm,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 10,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        borderRadius: PmRadii.rsm,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

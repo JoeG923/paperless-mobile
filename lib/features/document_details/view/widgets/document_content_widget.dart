@@ -13,18 +13,11 @@ class DocumentContentWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HighlightedText(
-            text: document.content ?? '',
-            highlights: queryString != null ? queryString!.split(" ") : [],
-            style: Theme.of(context).textTheme.bodyMedium,
-            caseSensitive: false,
-          ),
-        ],
-      ),
+    return HighlightedText(
+      text: document.content ?? '',
+      highlights: queryString != null ? queryString!.split(" ") : [],
+      style: Theme.of(context).textTheme.bodyMedium,
+      caseSensitive: false,
     );
   }
 }

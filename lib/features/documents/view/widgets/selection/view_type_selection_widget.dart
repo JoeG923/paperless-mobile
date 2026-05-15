@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:paperless_mobile/features/settings/model/view_type.dart';
-import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 
 /// Meant to be used with blocbuilder.
 class ViewTypeSelectionWidget extends StatelessWidget {
@@ -15,71 +14,24 @@ class ViewTypeSelectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    late final IconData icon;
-    switch (viewType) {
-      case ViewType.grid:
-        icon = Icons.grid_view_rounded;
-        break;
-      case ViewType.list:
-        icon = Icons.list;
-        break;
-      case ViewType.detailed:
-        icon = Icons.article_outlined;
-        break;
-    }
-
-    return PopupMenuButton<ViewType>(
-      constraints: const BoxConstraints(
-        minWidth: 4 * 56.0,
-        maxWidth: 5 * 56.0,
-      ), // Ensures text is not split into two lines
-      position: PopupMenuPosition.under,
-      initialValue: viewType,
-      icon: Icon(icon, color: Theme.of(context).colorScheme.primary),
-      itemBuilder: (context) => [
-        _buildViewTypeOption(
-          context,
-          type: ViewType.list,
-          label: S.of(context)!.list,
-          icon: Icons.list,
+    return SegmentedButton<ViewType>(
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment(
+          value: ViewType.list,
+          icon: Icon(Icons.view_list, size: 20),
         ),
-        _buildViewTypeOption(
-          context,
-          type: ViewType.grid,
-          label: S.of(context)!.grid,
-          icon: Icons.grid_view_rounded,
+        ButtonSegment(
+          value: ViewType.grid,
+          icon: Icon(Icons.grid_view_rounded, size: 20),
         ),
-        _buildViewTypeOption(
-          context,
-          type: ViewType.detailed,
-          label: S.of(context)!.detailed,
-          icon: Icons.article_outlined,
+        ButtonSegment(
+          value: ViewType.detailed,
+          icon: Icon(Icons.view_agenda_outlined, size: 20),
         ),
       ],
-      onSelected: (next) {
-        onChanged(next);
-      },
-    );
-  }
-
-  PopupMenuItem<ViewType> _buildViewTypeOption(
-    BuildContext context, {
-    required ViewType type,
-    required String label,
-    required IconData icon,
-  }) {
-    final selected = type == viewType;
-    return PopupMenuItem(
-      value: type,
-      child: ListTile(
-        selected: selected,
-        trailing: selected ? const Icon(Icons.done) : null,
-        title: Text(label, maxLines: 1),
-        iconColor: Theme.of(context).colorScheme.onSurface,
-        textColor: Theme.of(context).colorScheme.onSurface,
-        leading: Icon(icon),
-        contentPadding: EdgeInsets.zero,
-      ),
+      selected: {viewType},
+      onSelectionChanged: (selection) => onChanged(selection.first),
     );
   }
 }

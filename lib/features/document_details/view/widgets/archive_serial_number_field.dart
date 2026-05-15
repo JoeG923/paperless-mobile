@@ -86,14 +86,16 @@ class _ArchiveSerialNumberFieldState extends State<ArchiveSerialNumberField> {
                           ? _asnEditingController.clear
                           : null,
                     ),
-                  IconButton(
-                    icon: const Icon(Icons.plus_one_rounded),
-                    color: Theme.of(context).colorScheme.primary,
-                    onPressed:
-                        context.watchInternetConnection && !_showClearButton
-                        ? _onAutoAssign
-                        : null,
-                  ).paddedOnly(right: 8),
+                  Tooltip(
+                    message: 'Auto-assign next ASN', // TODO(l10n)
+                    child: IconButton.filledTonal(
+                      icon: const Icon(Icons.plus_one_rounded, size: 20),
+                      onPressed:
+                          context.watchInternetConnection && !_showClearButton
+                          ? _onAutoAssign
+                          : null,
+                    ).paddedOnly(right: 8),
+                  ),
                 ],
               ),
               errorText: _errors['archive_serial_number'],
