@@ -8,13 +8,11 @@ class ShimmerPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Shimmer.fromColors(
-      baseColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey[300]!
-          : Colors.grey[900]!,
-      highlightColor: Theme.of(context).brightness == Brightness.light
-          ? Colors.grey[100]!
-          : Colors.grey[600]!,
+      baseColor: scheme.surfaceContainerHighest,
+      highlightColor: scheme.surfaceContainer,
+      period: const Duration(milliseconds: 1400),
       child: child,
     );
   }
