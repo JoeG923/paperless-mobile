@@ -102,10 +102,9 @@ class _MimeTypesPieChartState extends State<MimeTypesPieChart> {
                       height: 20,
                     ),
                     Text(
-                      _mimeTypeNames[widget
-                          .statistics
-                          .fileTypeCounts[i]
-                          .mimeType]!,
+                      _displayNameFor(
+                        widget.statistics.fileTypeCounts[i].mimeType,
+                      ),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ],
@@ -136,6 +135,10 @@ class _MimeTypesPieChartState extends State<MimeTypesPieChart> {
         ),
       );
     }
+  }
+
+  String _displayNameFor(String mimeType) {
+    return _mimeTypeNames[mimeType] ?? mimeType;
   }
 }
 

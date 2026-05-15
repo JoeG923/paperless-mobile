@@ -219,7 +219,7 @@ class _InboxItemState extends State<InboxItem> {
     );
   }
 
-  Widget _buildActionRow(BuildContext context, dynamic currentUser) {
+  Widget _buildActionRow(BuildContext context, UserModel currentUser) {
     final chipShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(32),
     );
