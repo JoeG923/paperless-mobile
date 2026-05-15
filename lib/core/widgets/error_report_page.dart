@@ -113,9 +113,7 @@ class _ErrorReportPageState extends State<ErrorReportPage> {
               context: context,
               builder: (context) => AlertDialog(
                 title: Text(S.of(context)!.continueWithoutStackTrace),
-                content: Text(
-                  S.of(context)!.continueWithoutStackTraceMessage,
-                ),
+                content: Text(S.of(context)!.continueWithoutStackTraceMessage),
                 actionsAlignment: MainAxisAlignment.end,
                 actions: [
                   TextButton(

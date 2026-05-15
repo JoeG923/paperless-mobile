@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paperless_mobile/accessibility/accessibility_utils.dart';
 import 'package:paperless_mobile/core/extensions/document_extensions.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
+import 'package:paperless_mobile/core/widgets/state/pm_empty_state.dart';
 import 'package:paperless_mobile/features/document_search/cubit/document_search_cubit.dart';
 import 'package:paperless_mobile/features/document_search/view/remove_history_entry_dialog.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/adaptive_documents_view.dart';
@@ -27,24 +28,23 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
 
   Timer? _debounceTimer;
 
-  String get query => _queryController.text;
+  String get query => _queryController.text.trim();
 
   @override
   Widget build(BuildContext context) {
     const double progressIndicatorHeight = 4;
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+        backgroundColor: scheme.surface,
+        elevation: 0,
         toolbarHeight: 72 - progressIndicatorHeight,
-        leading: BackButton(color: theme.colorScheme.onSurfaceVariant),
+        leading: BackButton(color: scheme.onSurfaceVariant),
         title: Hero(
           tag: "search_hero_tag",
           child: TextField(
             autofocus: true,
-            // style: theme.textTheme.bodyLarge?.apply(
-            //   color: theme.colorScheme.onSurface,
-            // ),
             focusNode: _queryFocusNode,
             decoration: InputDecoration(
               contentPadding: EdgeInsets.zero,
@@ -53,6 +53,7 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
             ),
             controller: _queryController,
             onChanged: (query) {
+              setState(() {});
               _debounceTimer?.cancel();
               _debounceTimer = Timer(const Duration(milliseconds: 500), () {
                 context.read<DocumentSearchCubit>().suggest(query);
@@ -60,21 +61,27 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
             },
             textInputAction: TextInputAction.search,
             onSubmitted: (query) {
-              FocusScope.of(context).unfocus();
-              _debounceTimer?.cancel();
-              context.read<DocumentSearchCubit>().search(query);
+              if (query.trim().isNotEmpty) {
+                FocusScope.of(context).unfocus();
+                _debounceTimer?.cancel();
+                context.read<DocumentSearchCubit>().search(query);
+              }
             },
           ),
         ).accessible(),
         actions: [
-          IconButton(
-            color: theme.colorScheme.onSurfaceVariant,
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              context.read<DocumentSearchCubit>().reset();
-              _queryController.clear();
-            },
-          ).padded(),
+          if (_queryController.text.isNotEmpty)
+            IconButton(
+              color: scheme.onSurfaceVariant,
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                setState(() {
+                  _queryController.clear();
+                });
+                context.read<DocumentSearchCubit>().reset();
+                _queryFocusNode.requestFocus();
+              },
+            ).padded(),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(progressIndicatorHeight),
@@ -83,26 +90,20 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
               if (state.isLoading) {
                 return const LinearProgressIndicator();
               }
-              return ColoredBox(color: Theme.of(context).colorScheme.surface);
+              return const Divider(height: 1, thickness: 1);
             },
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: BlocBuilder<DocumentSearchCubit, DocumentSearchState>(
-              builder: (context, state) {
-                switch (state.view) {
-                  case SearchView.suggestions:
-                    return _buildSuggestionsView(state);
-                  case SearchView.results:
-                    return _buildResultsView(state);
-                }
-              },
-            ),
-          ),
-        ],
+      body: BlocBuilder<DocumentSearchCubit, DocumentSearchState>(
+        builder: (context, state) {
+          switch (state.view) {
+            case SearchView.suggestions:
+              return _buildSuggestionsView(state);
+            case SearchView.results:
+              return _buildResultsView(state);
+          }
+        },
       ),
     );
   }
@@ -111,39 +112,109 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
     final suggestions = state.suggestions
         .whereNot((element) => state.searchHistory.contains(element))
         .toList();
-    final historyMatches = state.searchHistory
-        .where((element) => element.startsWith(query))
-        .toList();
+    final historyMatches = query.isEmpty
+        ? <String>[]
+        : state.searchHistory
+              .where(
+                (element) =>
+                    element.toLowerCase().contains(query.toLowerCase()),
+              )
+              .toList();
+
+    final showRecentSearches = query.isEmpty && state.searchHistory.isNotEmpty;
+
+    if (!showRecentSearches &&
+        historyMatches.isEmpty &&
+        suggestions.isEmpty &&
+        state.hasLoaded) {
+      return PmEmptyState(
+        icon: Icons.search_off_outlined,
+        title: S.of(context)!.noMatchesFound,
+      );
+    }
+
     return CustomScrollView(
       slivers: [
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => ListTile(
-              title: Text(historyMatches[index]),
-              leading: const Icon(Icons.history),
-              onLongPress: () => _onDeleteHistoryEntry(historyMatches[index]),
-              onTap: () => _selectSuggestion(historyMatches[index]),
-              trailing: _buildInsertSuggestionButton(historyMatches[index]),
+        if (showRecentSearches) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                PmSpacing.lg,
+                PmSpacing.md,
+                PmSpacing.sm,
+                PmSpacing.sm,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent searches', // TODO(l10n)
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () => _onClearAllHistory(),
+                  ),
+                ],
+              ),
             ),
-            childCount: historyMatches.length,
           ),
-        ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => ListTile(
-              title: Text(suggestions[index]),
-              leading: const Icon(Icons.search),
-              onTap: () => _selectSuggestion(suggestions[index]),
-              trailing: _buildInsertSuggestionButton(suggestions[index]),
-            ),
-            childCount: suggestions.length,
-          ),
-        ),
-        if (suggestions.isEmpty && historyMatches.isEmpty && state.hasLoaded)
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: PmSpacing.md,
+              vertical: PmSpacing.xs,
+            ),
             sliver: SliverToBoxAdapter(
-              child: Center(child: Text(S.of(context)!.noMatchesFound)),
+              child: Wrap(
+                spacing: PmSpacing.sm,
+                runSpacing: PmSpacing.sm,
+                children: state.searchHistory.take(10).map((entry) {
+                  return InputChip(
+                    avatar: const Icon(Icons.history, size: 18),
+                    label: Text(entry),
+                    onDeleted: () => _onDeleteHistoryEntry(entry),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onPressed: () => _selectSuggestion(entry),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: PmSpacing.md)),
+        ],
+        if (historyMatches.isNotEmpty && query.isNotEmpty) ...[
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => ListTile(
+                dense: true,
+                title: Text(historyMatches[index]),
+                leading: const Icon(Icons.history),
+                onTap: () => _selectSuggestion(historyMatches[index]),
+                trailing: IconButton(
+                  icon: const Icon(Icons.north_west),
+                  onPressed: () => _insertSuggestion(historyMatches[index]),
+                ),
+              ),
+              childCount: historyMatches.length,
+            ),
+          ),
+        ],
+        if (suggestions.isNotEmpty)
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => ListTile(
+                dense: true,
+                title: Text(suggestions[index]),
+                leading: const Icon(Icons.search),
+                onTap: () => _selectSuggestion(suggestions[index]),
+                trailing: IconButton(
+                  icon: const Icon(Icons.north_west),
+                  onPressed: () => _insertSuggestion(suggestions[index]),
+                ),
+              ),
+              childCount: suggestions.length,
             ),
           ),
       ],
@@ -162,50 +233,88 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
     }
   }
 
-  Widget _buildInsertSuggestionButton(String suggestion) {
-    return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.rotationY(math.pi),
-      child: IconButton(
-        icon: const Icon(Icons.arrow_outward),
-        onPressed: () {
-          _queryController.text = '$suggestion ';
-          _queryController.selection = TextSelection.fromPosition(
-            TextPosition(offset: _queryController.text.length),
-          );
-          _queryFocusNode.requestFocus();
-        },
-      ),
-    );
+  void _onClearAllHistory() async {
+    final shouldClear =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog.adaptive(
+            title: const Text('Clear all search history'), // TODO(l10n)
+            content: const Text(
+              'This will remove all recent searches.',
+            ), // TODO(l10n)
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(S.of(context)!.cancel),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Clear'), // TODO(l10n)
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldClear && mounted) {
+      final cubit = context.read<DocumentSearchCubit>();
+      for (final entry in cubit.state.searchHistory.toList()) {
+        cubit.removeHistoryEntry(entry);
+      }
+    }
+  }
+
+  void _insertSuggestion(String suggestion) {
+    setState(() {
+      _queryController.text = '$suggestion ';
+      _queryController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _queryController.text.length),
+      );
+    });
+    _queryFocusNode.requestFocus();
   }
 
   Widget _buildResultsView(DocumentSearchState state) {
-    final header = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          S.of(context)!.results,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
-        BlocBuilder<DocumentSearchCubit, DocumentSearchState>(
-          builder: (context, state) {
-            return ViewTypeSelectionWidget(
-              viewType: state.viewType,
-              onChanged: (type) =>
-                  context.read<DocumentSearchCubit>().updateViewType(type),
-            );
-          },
-        ),
-      ],
-    ).paddedLTRB(16, 8, 8, 8);
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(
+        PmSpacing.lg,
+        PmSpacing.md,
+        PmSpacing.sm,
+        PmSpacing.sm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              'Results for "$query"', // TODO(l10n)
+              style: Theme.of(context).textTheme.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          ViewTypeSelectionWidget(
+            viewType: state.viewType,
+            onChanged: (type) =>
+                context.read<DocumentSearchCubit>().updateViewType(type),
+          ),
+        ],
+      ),
+    );
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: header),
         if (state.hasLoaded && !state.isLoading && state.documents.isEmpty)
-          SliverToBoxAdapter(
-            child: Center(
-              child: Text(S.of(context)!.noDocumentsFound),
-            ).paddedOnly(top: 8),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: PmEmptyState(
+              icon: Icons.find_in_page_outlined,
+              title: S.of(context)!.noDocumentsFound,
+            ),
           )
         else
           SliverAdaptiveDocumentsView(
@@ -230,8 +339,18 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
   }
 
   void _selectSuggestion(String suggestion) {
-    _queryController.text = suggestion;
+    setState(() {
+      _queryController.text = suggestion;
+    });
     context.read<DocumentSearchCubit>().search(suggestion);
     FocusScope.of(context).unfocus();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    _queryFocusNode.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 }

@@ -5,7 +5,6 @@ import 'package:hive_ce/hive.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
-import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/features/document_details/cubit/document_details_cubit.dart';
 import 'package:paperless_mobile/features/document_details/view/dialogs/select_file_type_dialog.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
@@ -40,15 +39,15 @@ class _DocumentDownloadButtonState extends State<DocumentDownloadButton> {
       tooltip: S.of(context)!.downloadDocumentTooltip,
       icon: _isDownloadPending
           ? const SizedBox(
-              height: 16,
-              width: 16,
-              child: CircularProgressIndicator(),
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Icon(Icons.download),
+          : const Icon(Icons.download_outlined),
       onPressed: widget.document != null && widget.enabled
           ? () => _onDownload(widget.document!)
           : null,
-    ).paddedOnly(right: 4);
+    );
   }
 
   Future<void> _onDownload(DocumentModel document) async {

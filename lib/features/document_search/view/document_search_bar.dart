@@ -4,6 +4,7 @@ import 'package:hive_ce_flutter/adapters.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_app_state.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/features/document_search/cubit/document_search_cubit.dart';
 import 'package:paperless_mobile/features/document_search/view/document_search_page.dart';
 import 'package:paperless_mobile/features/settings/view/manage_accounts_page.dart';
@@ -22,86 +23,88 @@ class DocumentSearchBar extends StatefulWidget {
 class _DocumentSearchBarState extends State<DocumentSearchBar> {
   @override
   Widget build(BuildContext context) {
-    return OpenContainer(
-      transitionDuration: const Duration(milliseconds: 200),
-      transitionType: ContainerTransitionType.fadeThrough,
-      closedElevation: 1,
-      middleColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      openColor: Theme.of(context).colorScheme.surface,
-      closedColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      closedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(56),
-      ),
-      closedBuilder: (_, action) {
-        return InkWell(
-          onTap: action,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 720,
-              minWidth: 360,
-              maxHeight: 48,
-              minHeight: 48,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: PmSpacing.md),
+      child: OpenContainer(
+        transitionDuration: const Duration(milliseconds: 200),
+        transitionType: ContainerTransitionType.fadeThrough,
+        closedElevation: 0,
+        middleColor: scheme.surfaceContainerHighest,
+        openColor: scheme.surface,
+        closedColor: scheme.surfaceContainerHigh,
+        closedShape: const StadiumBorder(),
+        openBuilder: (_, action) {
+          return Provider(
+            create: (_) => DocumentSearchCubit(
+              context.read(),
+              context.read(),
+              Hive.box<LocalUserAppState>(
+                HiveBoxes.localUserAppState,
+              ).get(context.read<LocalUserAccount>().id)!,
+              context.read(),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: ListenableBuilder(
-                            listenable: context
-                                .read<ConsumptionChangeNotifier>(),
-                            builder: (context, child) {
-                              return Badge(
-                                isLabelVisible: context
-                                    .read<ConsumptionChangeNotifier>()
-                                    .pendingFiles
-                                    .isNotEmpty,
-                                backgroundColor: Colors.red,
-                                smallSize: 8,
-                                child: const Icon(Icons.menu),
-                              );
-                            },
+            child: const DocumentSearchPage(),
+          );
+        },
+        closedBuilder: (_, action) {
+          return InkWell(
+            onTap: action,
+            customBorder: const StadiumBorder(),
+            child: Container(
+              height: 56,
+              constraints: const BoxConstraints(maxWidth: 720, minWidth: 360),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: ListenableBuilder(
+                              listenable: context
+                                  .read<ConsumptionChangeNotifier>(),
+                              builder: (context, child) {
+                                return Badge(
+                                  isLabelVisible: context
+                                      .read<ConsumptionChangeNotifier>()
+                                      .pendingFiles
+                                      .isNotEmpty,
+                                  backgroundColor: Colors.red,
+                                  smallSize: 8,
+                                  child: const Icon(Icons.menu),
+                                );
+                              },
+                            ),
+                            onPressed: Scaffold.of(context).openDrawer,
                           ),
-                          onPressed: Scaffold.of(context).openDrawer,
-                        ),
-                        Flexible(
-                          child: Text(
-                            S.of(context)!.searchDocuments,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).hintColor,
-                                ),
+                          Flexible(
+                            child: Text(
+                              S.of(context)!.searchDocuments,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                _buildUserAvatar(context),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: _buildUserAvatar(context),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-      openBuilder: (_, action) {
-        return Provider(
-          create: (_) => DocumentSearchCubit(
-            context.read(),
-            context.read(),
-            Hive.box<LocalUserAppState>(
-              HiveBoxes.localUserAppState,
-            ).get(context.read<LocalUserAccount>().id)!,
-            context.read(),
-          ),
-          child: const DocumentSearchPage(),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

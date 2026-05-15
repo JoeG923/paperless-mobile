@@ -6,7 +6,6 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/constants.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
-import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/features/document_details/cubit/document_details_cubit.dart';
 import 'package:paperless_mobile/features/document_details/view/dialogs/select_file_type_dialog.dart';
 import 'package:paperless_mobile/features/settings/model/file_download_type.dart';
@@ -37,20 +36,20 @@ class _DocumentShareButtonState extends State<DocumentShareButton> {
   Widget build(BuildContext context) {
     return ConnectivityAwareActionWrapper(
       offlineBuilder: (context, child) =>
-          const IconButton(icon: Icon(Icons.share), onPressed: null),
+          const IconButton(icon: Icon(Icons.share_outlined), onPressed: null),
       child: IconButton(
         tooltip: S.of(context)!.shareTooltip,
         icon: _isDownloadPending
             ? const SizedBox(
-                height: 16,
-                width: 16,
-                child: CircularProgressIndicator(),
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Icon(Icons.share),
+            : const Icon(Icons.share_outlined),
         onPressed: widget.document != null && widget.enabled
             ? () => _onShare(widget.document!)
             : null,
-      ).paddedOnly(right: 4),
+      ),
     );
   }
 

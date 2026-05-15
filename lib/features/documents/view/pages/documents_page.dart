@@ -8,11 +8,13 @@ import 'package:paperless_mobile/core/bloc/connectivity_cubit.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/extensions/document_extensions.dart';
 import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/features/app_drawer/view/app_drawer.dart';
 import 'package:paperless_mobile/features/document_search/view/sliver_search_bar.dart';
 import 'package:paperless_mobile/features/documents/cubit/documents_cubit.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/adaptive_documents_view.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/documents_empty_state.dart';
+import 'package:paperless_mobile/features/documents/view/widgets/filter_chips_row.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/saved_views/saved_view_changed_dialog.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/saved_views/saved_views_widget.dart';
 import 'package:paperless_mobile/features/documents/view/widgets/search/document_filter_panel.dart';
@@ -437,22 +439,52 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Widget _buildViewActions() {
     return BlocBuilder<DocumentsCubit, DocumentsState>(
       builder: (context, state) {
-        return Container(
-          padding: const EdgeInsets.all(4),
-          color: Theme.of(context).colorScheme.surface,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SortDocumentsButton(enabled: state.selection.isEmpty),
-              ViewTypeSelectionWidget(
-                viewType: state.viewType,
-                onChanged: context.read<DocumentsCubit>().setViewType,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Filter chips row
+            const DocumentFilterChipsRow(),
+            // Toolbar row: count, sort, view type
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: PmSpacing.md,
+                vertical: PmSpacing.xs,
               ),
-            ],
-          ),
+              color: Theme.of(context).colorScheme.surface,
+              child: Row(
+                children: [
+                  // Document count
+                  Expanded(
+                    child: Text(
+                      _buildCountText(context, state),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  // Sort button
+                  SortDocumentsButton(enabled: state.selection.isEmpty),
+                  const SizedBox(width: PmSpacing.sm),
+                  // View type segment
+                  ViewTypeSelectionWidget(
+                    viewType: state.viewType,
+                    onChanged: context.read<DocumentsCubit>().setViewType,
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  String _buildCountText(BuildContext context, DocumentsState state) {
+    final count = state.value.isNotEmpty ? state.value.first.count : 0;
+    if (count == 1) {
+      return '1 document'; // TODO(l10n)
+    }
+    return '$count documents'; // TODO(l10n)
   }
 
   void _openDocumentFilter() async {

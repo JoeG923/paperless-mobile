@@ -73,16 +73,19 @@ void main() {
     expect(assembled.bytes, equals(original));
   });
 
-  test('assembleScannedFiles preserves extension for single file without pdf', () async {
-    final file = await _writeTemporaryImage(tempDir, 'scan');
-    createdFiles.add(file);
-    final assembled = await assembleScannedFiles([file], forcePdf: false);
+  test(
+    'assembleScannedFiles preserves extension for single file without pdf',
+    () async {
+      final file = await _writeTemporaryImage(tempDir, 'scan');
+      createdFiles.add(file);
+      final assembled = await assembleScannedFiles([file], forcePdf: false);
 
-    final original = await file.readAsBytes();
+      final original = await file.readAsBytes();
 
-    expect(assembled.extension, isEmpty);
-    expect(assembled.bytes, equals(original));
-  });
+      expect(assembled.extension, isEmpty);
+      expect(assembled.bytes, equals(original));
+    },
+  );
 
   test(
     'assembleScannedFiles forces pdf output for one file when requested',
@@ -117,37 +120,41 @@ void main() {
     expect(() => assembleScannedFiles([]), throwsA(isA<ArgumentError>()));
   });
 
-  test('assembleScannedFiles forces pdf when enabled even for mixed extensions',
-      () async {
-    final first = await _writeTemporaryImage(tempDir, 'first.png');
-    final second = await _writeTemporaryImage(tempDir, 'second.jpeg');
-    createdFiles.addAll([first, second]);
+  test(
+    'assembleScannedFiles forces pdf when enabled even for mixed extensions',
+    () async {
+      final first = await _writeTemporaryImage(tempDir, 'first.png');
+      final second = await _writeTemporaryImage(tempDir, 'second.jpeg');
+      createdFiles.addAll([first, second]);
 
-    final assembled = await assembleScannedFiles(
-      [
+      final assembled = await assembleScannedFiles([
         first,
         second,
-      ],
-      forcePdf: true,
-    );
+      ], forcePdf: true);
 
-    final header = String.fromCharCodes(assembled.bytes.take(4));
-    expect(assembled.extension, '.pdf');
-    expect(header, '%PDF');
-  });
+      final header = String.fromCharCodes(assembled.bytes.take(4));
+      expect(assembled.extension, '.pdf');
+      expect(header, '%PDF');
+    },
+  );
 
-  test('assembleScannedFiles throws when forcing pdf from corrupt image bytes',
-      () async {
-    final invalidFile = await _writeTemporaryRawFile(
-      tempDir,
-      'invalid.jpg',
-      [1, 2, 3, 4, 5, 6],
-    );
-    createdFiles.add(invalidFile);
+  test(
+    'assembleScannedFiles throws when forcing pdf from corrupt image bytes',
+    () async {
+      final invalidFile = await _writeTemporaryRawFile(tempDir, 'invalid.jpg', [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+      ]);
+      createdFiles.add(invalidFile);
 
-    await expectLater(
-      () => assembleScannedFiles([invalidFile], forcePdf: true),
-      throwsA(isA<Exception>()),
-    );
-  });
+      await expectLater(
+        () => assembleScannedFiles([invalidFile], forcePdf: true),
+        throwsA(isA<Exception>()),
+      );
+    },
+  );
 }

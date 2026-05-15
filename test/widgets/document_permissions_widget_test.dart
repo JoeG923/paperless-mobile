@@ -116,8 +116,8 @@ void main() {
             ],
             supportedLocales: S.supportedLocales,
             home: Scaffold(
-              body: CustomScrollView(
-                slivers: [DocumentPermissionsWidget(document: document)],
+              body: SingleChildScrollView(
+                child: DocumentPermissionsWidget(document: document),
               ),
             ),
           ),
@@ -197,13 +197,11 @@ void main() {
             ],
             supportedLocales: S.supportedLocales,
             home: Scaffold(
-              body: CustomScrollView(
-                slivers: [
-                  DocumentPermissionsWidget(
-                    document: document,
-                    onUpdatePermissions: (update) async {},
-                  ),
-                ],
+              body: SingleChildScrollView(
+                child: DocumentPermissionsWidget(
+                  document: document,
+                  onUpdatePermissions: (update) async {},
+                ),
               ),
             ),
           ),

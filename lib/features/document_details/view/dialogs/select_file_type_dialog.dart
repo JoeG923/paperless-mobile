@@ -16,7 +16,7 @@ class _SelectFileTypeDialogState extends State<SelectFileTypeDialog> {
   FileDownloadType _downloadType = FileDownloadType.original;
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return AlertDialog.adaptive(
       title: Text(S.of(context)!.chooseFiletype),
       content: RadioGroup<FileDownloadType>(
         groupValue: _downloadType,
@@ -28,16 +28,18 @@ class _SelectFileTypeDialogState extends State<SelectFileTypeDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            RadioListTile(
+            RadioListTile.adaptive(
               value: FileDownloadType.original,
               title: Text(S.of(context)!.original),
+              contentPadding: EdgeInsets.zero,
             ),
-            RadioListTile(
+            RadioListTile.adaptive(
               value: FileDownloadType.archived,
               title: Text(S.of(context)!.archivedPdf),
+              contentPadding: EdgeInsets.zero,
             ),
             const Divider(),
-            CheckboxListTile(
+            CheckboxListTile.adaptive(
               controlAffinity: ListTileControlAffinity.leading,
               value: _rememberSelection,
               onChanged: (value) =>
@@ -46,13 +48,14 @@ class _SelectFileTypeDialogState extends State<SelectFileTypeDialog> {
                 S.of(context)!.rememberDecision,
                 style: Theme.of(context).textTheme.labelMedium,
               ),
+              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),
       ),
       actions: [
         const DialogCancelButton(),
-        ElevatedButton(
+        FilledButton(
           child: Text(S.of(context)!.select),
           onPressed: () {
             if (_rememberSelection) {

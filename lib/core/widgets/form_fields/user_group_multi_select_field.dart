@@ -19,10 +19,11 @@ class UserMultiSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unselected = availableUsers.entries
-        .where((e) => !selectedIds.contains(e.key))
-        .toList()
-      ..sort((a, b) => a.value.username.compareTo(b.value.username));
+    final unselected =
+        availableUsers.entries
+            .where((e) => !selectedIds.contains(e.key))
+            .toList()
+          ..sort((a, b) => a.value.username.compareTo(b.value.username));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,8 +31,8 @@ class UserMultiSelectField extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 4),
         Wrap(
@@ -99,10 +100,11 @@ class GroupMultiSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unselected = availableGroups.entries
-        .where((e) => !selectedIds.contains(e.key))
-        .toList()
-      ..sort((a, b) => a.value.name.compareTo(b.value.name));
+    final unselected =
+        availableGroups.entries
+            .where((e) => !selectedIds.contains(e.key))
+            .toList()
+          ..sort((a, b) => a.value.name.compareTo(b.value.name));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,8 +112,8 @@ class GroupMultiSelectField extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 4),
         Wrap(
@@ -232,8 +234,10 @@ class _SelectionDialogState extends State<_SelectionDialog> {
     final filtered = _filter.isEmpty
         ? widget.items
         : widget.items
-            .where((i) => i.label.toLowerCase().contains(_filter.toLowerCase()))
-            .toList();
+              .where(
+                (i) => i.label.toLowerCase().contains(_filter.toLowerCase()),
+              )
+              .toList();
 
     return AlertDialog(
       contentPadding: const EdgeInsets.only(top: 16),
