@@ -269,6 +269,9 @@ class _ScannerPageState extends State<ScannerPage>
         return Scaffold(
           drawer: const AppDrawer(),
           body: _buildBody(context, state),
+          // FAB is only shown when scans exist: it adds another page.
+          // The empty state provides its own "Scan a Document" CTA button,
+          // so we do not duplicate it with a second FAB there.
           floatingActionButton: hasScans && !_isSelectionMode
               ? FloatingActionButton.extended(
                   heroTag: "fab_add_page",
@@ -276,16 +279,8 @@ class _ScannerPageState extends State<ScannerPage>
                   icon: const Icon(Icons.add_a_photo_outlined),
                   label: const Text('Add page'), // TODO(l10n)
                 )
-              : (hasScans
-                    ? null
-                    : FloatingActionButton(
-                        heroTag: "fab_document_scan",
-                        onPressed: () => _openDocumentScanner(context),
-                        child: const Icon(Icons.add_a_photo_outlined),
-                      )),
-          floatingActionButtonLocation: hasScans
-              ? FloatingActionButtonLocation.endFloat
-              : FloatingActionButtonLocation.centerFloat,
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           bottomNavigationBar: _buildBottomBar(context, state),
         );
       },
@@ -333,6 +328,7 @@ class _ScannerPageState extends State<ScannerPage>
 
             // Primary CTA: Scan
             FilledButton.icon(
+              key: const Key('scanner_empty_scan_button'),
               onPressed: () => _openDocumentScanner(context),
               icon: const Icon(Icons.document_scanner_outlined),
               label: Text(S.of(context)!.scanADocument),
@@ -518,22 +514,25 @@ class _ScannerPageState extends State<ScannerPage>
                   final scans = state.scans;
                   final canQuickUpload =
                       scans.isNotEmpty && !_isQuickUploading && !_isOffline;
+                  // Left group: secondary actions (Preview, Quick Upload).
+                  // Right group: Export PDF icon + primary Upload button.
+                  // No Spacer/Expanded on Upload — it takes its natural size
+                  // so the label never wraps.
                   return Row(
                     children: [
                       // Preview
-                      TextButton(
+                      TextButton.icon(
                         key: const Key('scanner_preview_button'),
                         onPressed: scans.isNotEmpty
                             ? () => _onPreviewScans(context, scans)
                             : null,
-                        child: Text(S.of(context)!.previewScan),
+                        icon: const Icon(Icons.preview_outlined, size: 18),
+                        label: Text(S.of(context)!.previewScan),
                       ),
 
-                      // Quick upload (when preset enabled) — kept as a visible
-                      // button so it can be reached without opening the
-                      // overflow menu (and so widget tests can tap it).
+                      // Quick upload (when preset enabled).
                       if (settings.uploadPresetEnabled) ...[
-                        const SizedBox(width: PmSpacing.sm),
+                        const SizedBox(width: PmSpacing.xs),
                         ConnectivityAwareActionWrapper(
                           disabled: scans.isEmpty || _isQuickUploading,
                           child: TextButton.icon(
@@ -567,35 +566,8 @@ class _ScannerPageState extends State<ScannerPage>
 
                       const Spacer(),
 
-                      // Upload (primary action)
-                      Expanded(
-                        flex: 2,
-                        child: ConnectivityAwareActionWrapper(
-                          disabled: scans.isEmpty || _isUploading,
-                          child: FilledButton.icon(
-                            key: const Key('scanner_upload_button'),
-                            onPressed: scans.isEmpty || _isUploading
-                                ? null
-                                : () =>
-                                      _onPrepareDocumentUpload(context, scans),
-                            icon: _isUploading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.cloud_upload_outlined),
-                            label: Text(S.of(context)!.upload),
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Export to PDF — visible IconButton for discoverability
-                      // (was previously buried in the overflow menu).
+                      // Export to PDF — icon-only, same visual weight as
+                      // the more-menu icon next to it.
                       IconButton(
                         key: const Key('scanner_export_button'),
                         tooltip: S.of(context)!.export,
@@ -603,8 +575,31 @@ class _ScannerPageState extends State<ScannerPage>
                         onPressed: scans.isNotEmpty ? _onSaveToFile : null,
                       ),
 
-                      // More menu (clear-all only — destructive action behind
-                      // a confirmation dialog).
+                      const SizedBox(width: PmSpacing.sm),
+
+                      // Upload — primary action. Natural (not Expanded) width
+                      // so the label always fits on one line.
+                      ConnectivityAwareActionWrapper(
+                        disabled: scans.isEmpty || _isUploading,
+                        child: FilledButton.icon(
+                          key: const Key('scanner_upload_button'),
+                          onPressed: scans.isEmpty || _isUploading
+                              ? null
+                              : () => _onPrepareDocumentUpload(context, scans),
+                          icon: _isUploading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.cloud_upload_outlined),
+                          label: Text(S.of(context)!.upload),
+                        ),
+                      ),
+
+                      // More menu (clear-all only — destructive, behind dialog).
                       Builder(
                         builder: (menuAnchorCtx) {
                           final pageContext = context;
@@ -614,7 +609,6 @@ class _ScannerPageState extends State<ScannerPage>
                             onSelected: (value) =>
                                 _handleMenuAction(pageContext, state, value),
                             itemBuilder: (menuCtx) => [
-                              // Clear all
                               PopupMenuItem<String>(
                                 value: 'clear',
                                 enabled: scans.isNotEmpty,
