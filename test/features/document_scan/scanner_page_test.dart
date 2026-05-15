@@ -2451,13 +2451,12 @@ void main() {
         scanAssembler: _assembleTestScans,
         exportFilenameProvider: (_) async => 'scan_export',
       );
-      await tester.tap(find.byKey(const Key('scanner_more_menu')));
       await tester.pumpAndSettle();
-      final exportButton = tester.widget<PopupMenuItem<String>>(
+      final exportButton = tester.widget<IconButton>(
         find.byKey(const Key('scanner_export_button')),
       );
-      expect(exportButton.onTap, isNotNull);
-      exportButton.onTap!();
+      expect(exportButton.onPressed, isNotNull);
+      exportButton.onPressed!();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pump();
@@ -2511,13 +2510,12 @@ void main() {
         exportFilenameProvider: (_) async => 'export_error',
       );
 
-      await tester.tap(find.byKey(const Key('scanner_more_menu')));
       await tester.pumpAndSettle();
-      final exportButton = tester.widget<PopupMenuItem<String>>(
+      final exportButton = tester.widget<IconButton>(
         find.byKey(const Key('scanner_export_button')),
       );
-      expect(exportButton.onTap, isNotNull);
-      exportButton.onTap!();
+      expect(exportButton.onPressed, isNotNull);
+      exportButton.onPressed!();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
@@ -2567,13 +2565,12 @@ void main() {
           exportFilenameProvider: (_) async => null,
         );
 
-        await tester.tap(find.byKey(const Key('scanner_more_menu')));
         await tester.pumpAndSettle();
-        final exportButton = tester.widget<PopupMenuItem<String>>(
+        final exportButton = tester.widget<IconButton>(
           find.byKey(const Key('scanner_export_button')),
         );
-        expect(exportButton.onTap, isNotNull);
-        exportButton.onTap!();
+        expect(exportButton.onPressed, isNotNull);
+        exportButton.onPressed!();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 20));
 

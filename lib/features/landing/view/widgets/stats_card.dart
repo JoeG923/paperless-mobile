@@ -108,10 +108,7 @@ class _StatsContent extends StatelessWidget {
         ),
         if (stats.fileTypeCounts.isNotEmpty) ...[
           const SizedBox(height: PmSpacing.lg),
-          AspectRatio(
-            aspectRatio: 1.4,
-            child: MimeTypesPieChart(statistics: stats),
-          ),
+          MimeTypesPieChart(statistics: stats),
         ],
       ],
     );
