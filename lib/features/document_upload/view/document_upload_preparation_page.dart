@@ -10,9 +10,10 @@ import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/global_settings.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
-import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
 import 'package:paperless_mobile/core/repository/custom_field_repository.dart';
 import 'package:paperless_mobile/core/repository/label_repository.dart';
+import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/core/widgets/form_builder_fields/form_builder_localized_date_picker.dart';
 import 'package:paperless_mobile/core/widgets/future_or_builder.dart';
 import 'package:paperless_mobile/features/document_upload/cubit/document_upload_cubit.dart';
@@ -21,6 +22,7 @@ import 'package:paperless_mobile/features/labels/view/widgets/label_form_field.d
 import 'package:paperless_mobile/features/logging/data/logger.dart';
 import 'package:paperless_mobile/features/sharing/view/widgets/file_thumbnail.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
+import 'package:paperless_mobile/helpers/connectivity_aware_action_wrapper.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/helpers/upload_preset_helper.dart';
 import 'package:paperless_mobile/routing/routes/labels_route.dart';
@@ -97,89 +99,62 @@ class _DocumentUploadPreparationPageState
         : null;
     return BlocBuilder<DocumentUploadCubit, DocumentUploadState>(
       builder: (context, state) {
+        final isUploading = state.uploadProgress != null;
+        final colorScheme = Theme.of(context).colorScheme;
         return Scaffold(
-          extendBodyBehindAppBar: false,
           resizeToAvoidBottomInset: true,
-          floatingActionButton: Visibility(
-            visible: MediaQuery.of(context).viewInsets.bottom == 0,
-            child: FloatingActionButton.extended(
-              heroTag: "fab_document_upload",
-              onPressed: state.uploadProgress == null ? _onSubmit : null,
-              label: state.uploadProgress == null
-                  ? Text(S.of(context)!.upload)
-                  : Text(S.of(context)!.uploading),
-              icon: state.uploadProgress == null
-                  ? const Icon(Icons.upload)
-                  : SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        value: state.uploadProgress,
-                      ),
-                    ).padded(4),
-            ),
-          ),
-          body: FormBuilder(
-            key: _formKey,
-            child: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverOverlapAbsorber(
-                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
-                    context,
-                  ),
-                  sliver: SliverAppBar(
-                    leading: const BackButton(),
-                    pinned: true,
-                    expandedHeight: 150,
-                    actions: [
-                      if (state.uploadProgress != null)
-                        TextButton(
-                          onPressed: () => context
-                              .read<DocumentUploadCubit>()
-                              .cancelUpload(),
-                          child: Text(S.of(context)!.cancel),
-                        ),
-                    ],
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: FutureOrBuilder<Uint8List>(
-                        future: widget.fileBytes,
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SizedBox.shrink();
-                          }
-                          return FileThumbnail(
-                            bytes: snapshot.data!,
-                            fit: BoxFit.fitWidth,
-                            width: MediaQuery.sizeOf(context).width,
-                          );
-                        },
-                      ),
+          bottomNavigationBar: _buildBottomBar(context, state),
+          body: AbsorbPointer(
+            absorbing: isUploading,
+            child: AnimatedOpacity(
+              opacity: isUploading ? 0.6 : 1.0,
+              duration: PmDurations.short,
+              child: FormBuilder(
+                key: _formKey,
+                child: CustomScrollView(
+                  slivers: [
+                    SliverAppBar.large(
+                      leading: const BackButton(),
                       title: Text(S.of(context)!.prepareDocument),
-                      collapseMode: CollapseMode.pin,
-                    ),
-                  ),
-                ),
-              ],
-              body: Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: Builder(
-                  builder: (context) {
-                    final bottomPadding =
-                        MediaQuery.of(context).padding.bottom + 96;
-                    return CustomScrollView(
-                      slivers: [
-                        SliverOverlapInjector(
-                          handle:
-                              NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                context,
-                              ),
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: FutureOrBuilder<Uint8List>(
+                          future: widget.fileBytes,
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return ColoredBox(
+                                color: colorScheme.surfaceContainerHighest,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.insert_drive_file_outlined,
+                                    size: 48,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              );
+                            }
+                            return FileThumbnail(
+                              bytes: snapshot.data!,
+                              fit: BoxFit.fitWidth,
+                              width: MediaQuery.sizeOf(context).width,
+                            );
+                          },
                         ),
-                        SliverPadding(
-                          padding: EdgeInsets.only(bottom: bottomPadding),
-                          sliver: SliverList.list(
+                        collapseMode: CollapseMode.pin,
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        PmSpacing.lg,
+                        PmSpacing.md,
+                        PmSpacing.lg,
+                        PmSpacing.xxl,
+                      ),
+                      sliver: SliverList.list(
+                        children: [
+                          // ── Title & filename section ─────────────────────
+                          _SectionCard(
+                            label: S.of(context)!.title,
                             children: [
-                              // Title
                               FormBuilderTextField(
                                 autovalidateMode: AutovalidateMode.always,
                                 key: const ValueKey<String>(
@@ -195,6 +170,7 @@ class _DocumentUploadPreparationPageState
                                 },
                                 decoration: InputDecoration(
                                   labelText: S.of(context)!.title,
+                                  border: const OutlineInputBorder(),
                                   suffixIcon: IconButton(
                                     icon: const Icon(Icons.close),
                                     onPressed: () {
@@ -221,7 +197,7 @@ class _DocumentUploadPreparationPageState
                                   }
                                 },
                               ),
-                              // Filename
+                              const SizedBox(height: PmSpacing.md),
                               FormBuilderTextField(
                                 autovalidateMode: AutovalidateMode.always,
                                 readOnly: _syncTitleAndFilename,
@@ -230,6 +206,7 @@ class _DocumentUploadPreparationPageState
                                 key: const ValueKey<String>(fkFileName),
                                 decoration: InputDecoration(
                                   labelText: S.of(context)!.fileName,
+                                  border: const OutlineInputBorder(),
                                   suffixText: widget.fileExtension,
                                   suffixIcon: IconButton(
                                     icon: const Icon(Icons.clear),
@@ -242,9 +219,9 @@ class _DocumentUploadPreparationPageState
                                 initialValue:
                                     widget.filename ?? defaultFileName,
                               ),
-                              // Synchronize title and filename
                               SwitchListTile(
                                 value: _syncTitleAndFilename,
+                                contentPadding: EdgeInsets.zero,
                                 onChanged: (value) {
                                   setState(() => _syncTitleAndFilename = value);
                                   if (_syncTitleAndFilename) {
@@ -256,27 +233,21 @@ class _DocumentUploadPreparationPageState
                                               ?.value
                                           as String,
                                     );
-                                    if (_syncTitleAndFilename) {
-                                      _formKey.currentState?.fields[fkFileName]
-                                          ?.didChange(transformedValue);
-                                    }
+                                    _formKey.currentState?.fields[fkFileName]
+                                        ?.didChange(transformedValue);
                                   }
                                 },
                                 title: Text(
                                   S.of(context)!.synchronizeTitleAndFilename,
                                 ),
                               ),
-                              // Created at
-                              FormBuilderLocalizedDatePicker(
-                                name: DocumentModel.createdKey,
-                                firstDate: DateTime(1970, 1, 1),
-                                lastDate: DateTime(2100, 1, 1),
-                                locale: Localizations.localeOf(context),
-                                labelText: "${S.of(context)!.createdAt} *",
-                                allowUnset: true,
-                                initialValue: initialCreatedDate,
-                              ),
-                              // Correspondent
+                            ],
+                          ),
+                          const SizedBox(height: PmSpacing.md),
+                          // ── Metadata section ─────────────────────────────
+                          _SectionCard(
+                            label: 'Metadata', // TODO(l10n)
+                            children: [
                               if (user.canViewCorrespondents)
                                 LabelFormField<Correspondent>(
                                   showAnyAssignedOption: false,
@@ -296,7 +267,9 @@ class _DocumentUploadPreparationPageState
                                       user.canCreateCorrespondents,
                                   initialValue: initialCorrespondent,
                                 ),
-                              // Document type
+                              if (user.canViewCorrespondents &&
+                                  user.canViewDocumentTypes)
+                                const SizedBox(height: PmSpacing.md),
                               if (user.canViewDocumentTypes)
                                 LabelFormField<DocumentType>(
                                   showAnyAssignedOption: false,
@@ -317,6 +290,9 @@ class _DocumentUploadPreparationPageState
                                       user.canCreateDocumentTypes,
                                   initialValue: initialDocumentType,
                                 ),
+                              if (user.canViewDocumentTypes &&
+                                  user.canViewStoragePaths)
+                                const SizedBox(height: PmSpacing.md),
                               if (user.canViewStoragePaths)
                                 LabelFormField<StoragePath>(
                                   showAnyAssignedOption: false,
@@ -334,7 +310,14 @@ class _DocumentUploadPreparationPageState
                                   canCreateNewLabel: user.canCreateStoragePaths,
                                   initialValue: initialStoragePath,
                                 ),
-                              if (user.canViewTags)
+                            ],
+                          ),
+                          const SizedBox(height: PmSpacing.md),
+                          // ── Tags section ──────────────────────────────────
+                          if (user.canViewTags) ...[
+                            _SectionCard(
+                              label: S.of(context)!.tags,
+                              children: [
                                 TagsFormField(
                                   name: DocumentModel.tagsKey,
                                   allowCreation: true,
@@ -343,29 +326,117 @@ class _DocumentUploadPreparationPageState
                                   options: labelRepository.tags,
                                   initialValue: initialTags,
                                 ),
-                              if (user.canViewCustomFields &&
-                                  customFieldDefinitions.isNotEmpty)
-                                ..._buildCustomFieldInputs(
-                                  context,
-                                  customFieldDefinitions,
-                                ),
-                              Text(
-                                "* ${S.of(context)!.uploadInferValuesHint}",
-                                style: Theme.of(context).textTheme.bodySmall,
-                                textAlign: TextAlign.justify,
-                              ).padded(),
-                            ].padded(),
+                              ],
+                            ),
+                            const SizedBox(height: PmSpacing.md),
+                          ],
+                          // ── Date section ──────────────────────────────────
+                          _SectionCard(
+                            label: 'Date', // TODO(l10n)
+                            children: [
+                              FormBuilderLocalizedDatePicker(
+                                name: DocumentModel.createdKey,
+                                firstDate: DateTime(1970, 1, 1),
+                                lastDate: DateTime(2100, 1, 1),
+                                locale: Localizations.localeOf(context),
+                                labelText: "${S.of(context)!.createdAt} *",
+                                allowUnset: true,
+                                initialValue: initialCreatedDate,
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    );
-                  },
+                          // ── Custom fields section ─────────────────────────
+                          if (user.canViewCustomFields &&
+                              customFieldDefinitions.isNotEmpty) ...[
+                            const SizedBox(height: PmSpacing.md),
+                            _SectionCard(
+                              label: S.of(context)!.customFields,
+                              children: _buildCustomFieldInputsFlat(
+                                context,
+                                customFieldDefinitions,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: PmSpacing.md),
+                          // ── Hint ──────────────────────────────────────────
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: PmSpacing.xs,
+                            ),
+                            child: Text(
+                              "* ${S.of(context)!.uploadInferValuesHint}",
+                              style: Theme.of(context).textTheme.bodySmall,
+                              textAlign: TextAlign.justify,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context, DocumentUploadState state) {
+    final isUploading = state.uploadProgress != null;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final uploadButton = FilledButton.icon(
+      onPressed: isUploading ? null : _onSubmit,
+      icon: isUploading
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                value: state.uploadProgress,
+                color: colorScheme.onPrimary,
+              ),
+            )
+          : const Icon(Icons.cloud_upload_outlined),
+      label: Text(
+        isUploading ? S.of(context)!.uploading : S.of(context)!.upload,
+      ),
+    );
+
+    // Only use ConnectivityAwareActionWrapper when the service is in the tree.
+    ConnectivityStatusService? connectivityService;
+    try {
+      connectivityService = context.read<ConnectivityStatusService>();
+    } catch (_) {}
+    final wrappedButton = connectivityService != null && !isUploading
+        ? ConnectivityAwareActionWrapper(child: uploadButton)
+        : uploadButton;
+
+    return Material(
+      elevation: PmElevations.level2,
+      color: colorScheme.surface,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PmSpacing.lg,
+            vertical: PmSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              if (isUploading) ...[
+                TextButton(
+                  onPressed: () =>
+                      context.read<DocumentUploadCubit>().cancelUpload(),
+                  child: Text(S.of(context)!.cancel),
+                ),
+                const SizedBox(width: PmSpacing.sm),
+              ],
+              Expanded(child: wrappedButton),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -491,7 +562,9 @@ class _DocumentUploadPreparationPageState
     return id != null ? SetIdQueryParameter(id: id) : null;
   }
 
-  List<Widget> _buildCustomFieldInputs(
+  /// Returns a flat list of custom field widgets (no header), suitable for
+  /// embedding inside a [_SectionCard].
+  List<Widget> _buildCustomFieldInputsFlat(
     BuildContext context,
     Map<int, CustomFieldModel> customFieldDefinitions,
   ) {
@@ -501,21 +574,14 @@ class _DocumentUploadPreparationPageState
           (b.name ?? '').toLowerCase(),
         ),
       );
-    final children = <Widget>[
-      const SizedBox(height: 8),
-      Text(
-        S.of(context)!.customFields,
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-      const SizedBox(height: 8),
-    ];
+    final children = <Widget>[];
     for (final definition in fields) {
       final input = _buildCustomFieldInput(context, definition);
-      if (input == null) {
-        continue;
+      if (input == null) continue;
+      if (children.isNotEmpty) {
+        children.add(const SizedBox(height: PmSpacing.md));
       }
       children.add(input);
-      children.add(const SizedBox(height: 8));
     }
     return children;
   }
@@ -790,4 +856,37 @@ class _DocumentUploadPreparationPageState
   //     1,
   //   );
   // }
+}
+
+/// A titled card section used in the upload preparation form.
+class _SectionCard extends StatelessWidget {
+  final String label;
+  final List<Widget> children;
+
+  const _SectionCard({required this.label, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      shape: PmRadii.cardShape,
+      child: Padding(
+        padding: PmSpacing.cardPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: PmSpacing.md),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
 }

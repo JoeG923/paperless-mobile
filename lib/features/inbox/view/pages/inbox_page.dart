@@ -5,16 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/exception/server_message_exception.dart';
+import 'package:paperless_mobile/core/extensions/dart_extensions.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
+import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/core/widgets/dialog_utils/dialog_cancel_button.dart';
 import 'package:paperless_mobile/core/widgets/dialog_utils/dialog_confirm_button.dart';
-import 'package:paperless_mobile/core/widgets/hint_card.dart';
-import 'package:paperless_mobile/core/extensions/dart_extensions.dart';
-import 'package:paperless_mobile/core/extensions/flutter_extensions.dart';
+import 'package:paperless_mobile/core/widgets/state/pm_empty_state.dart';
+import 'package:paperless_mobile/core/widgets/state/pm_loading_state.dart';
 import 'package:paperless_mobile/features/app_drawer/view/app_drawer.dart';
-import 'package:paperless_mobile/features/document_search/view/sliver_search_bar.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
-import 'package:paperless_mobile/features/inbox/view/widgets/inbox_empty_widget.dart';
 import 'package:paperless_mobile/features/inbox/view/widgets/inbox_item.dart';
 import 'package:paperless_mobile/features/paged_document_view/view/document_paging_view_mixin.dart';
 import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
@@ -30,47 +29,13 @@ class InboxPage extends StatefulWidget {
 
 class _InboxPageState extends State<InboxPage>
     with DocumentPagingViewMixin<InboxPage, InboxCubit> {
-  final SliverOverlapAbsorberHandle searchBarHandle =
-      SliverOverlapAbsorberHandle();
-
   @override
   final pagingScrollController = ScrollController();
-  final _nestedScrollViewKey = GlobalKey<NestedScrollViewState>();
-  final _emptyStateRefreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
-  final _scrollController = ScrollController();
-  bool _showExtendedFab = true;
+
   @override
   void initState() {
     super.initState();
     context.read<InboxCubit>().reloadInbox();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _nestedScrollViewKey.currentState!.innerController.addListener(
-        _scrollExtentChangedListener,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _nestedScrollViewKey.currentState?.innerController.removeListener(
-      _scrollExtentChangedListener,
-    );
-    super.dispose();
-  }
-
-  void _scrollExtentChangedListener() {
-    const threshold = 400;
-    final offset =
-        _nestedScrollViewKey.currentState!.innerController.position.pixels;
-    if (offset < threshold && _showExtendedFab == false) {
-      setState(() {
-        _showExtendedFab = true;
-      });
-    } else if (offset >= threshold && _showExtendedFab == true) {
-      setState(() {
-        _showExtendedFab = false;
-      });
-    }
   }
 
   @override
@@ -81,160 +46,171 @@ class _InboxPageState extends State<InboxPage>
         .canEditDocuments;
     return Scaffold(
       drawer: const AppDrawer(),
-      floatingActionButton: ConnectivityAwareActionWrapper(
-        offlineBuilder: (context, child) => const SizedBox.shrink(),
-        child: BlocBuilder<InboxCubit, InboxState>(
-          builder: (context, state) {
-            if (!state.hasLoaded ||
-                state.documents.isEmpty ||
-                !canEditDocument) {
-              return const SizedBox.shrink();
-            }
-            return FloatingActionButton.extended(
-              extendedPadding: _showExtendedFab
-                  ? null
-                  : const EdgeInsets.symmetric(horizontal: 16),
-              heroTag: "inbox_page_fab",
-              label: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SizeTransition(
-                      sizeFactor: animation,
-                      axis: Axis.horizontal,
-                      child: child,
-                    ),
-                  );
-                },
-                child: _showExtendedFab
-                    ? Row(
-                        children: [
-                          const Icon(Icons.done_all),
-                          Text(S.of(context)!.allSeen),
-                        ],
-                      )
-                    : const Icon(Icons.done_all),
-              ),
-              onPressed: state.hasLoaded && state.documents.isNotEmpty
-                  ? () => _onMarkAllAsSeen(state.documents, state.inboxTags)
-                  : null,
-            );
-          },
+      floatingActionButton: _buildFab(context, canEditDocument),
+      body: BlocBuilder<InboxCubit, InboxState>(
+        builder: (context, state) {
+          return RefreshIndicator(
+            onRefresh: () => context.read<InboxCubit>().reload(),
+            child: CustomScrollView(
+              controller: pagingScrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                _buildSliverAppBar(context, state),
+                ..._buildSliverContent(context, state),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar(BuildContext context, InboxState state) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final count = state.itemsInInboxCount;
+    return SliverAppBar.large(
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
         ),
       ),
-      body: SafeArea(
-        top: true,
-        child: NestedScrollView(
-          key: _nestedScrollViewKey,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverSearchBar(titleText: S.of(context)!.inbox),
+      pinned: true,
+      stretch: true,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(
+          left: PmSpacing.lg,
+          bottom: PmSpacing.lg,
+          right: 80,
+        ),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(S.of(context)!.inbox, style: theme.textTheme.titleLarge),
+            if (state.hasLoaded && count > 0)
+              Text(
+                '$count ${count == 1 ? "document" : "documents"}', // TODO(l10n)
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
           ],
-          body: BlocBuilder<InboxCubit, InboxState>(
-            builder: (_, state) {
-              if (state.documents.isEmpty && state.hasLoaded) {
-                return Center(
-                  child: InboxEmptyWidget(
-                    emptyStateRefreshIndicatorKey:
-                        _emptyStateRefreshIndicatorKey,
-                  ),
-                );
-              } else if (state.isLoading) {
-                return ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, left: 16),
-                  controller: _scrollController,
-                  itemBuilder: (context, index) {
-                    return const InboxItemPlaceholder();
-                  },
-                );
-              } else {
-                return RefreshIndicator(
-                  onRefresh: context.read<InboxCubit>().reload,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: HintCard(
-                          show: !state.isHintAcknowledged,
-                          hintText: S
-                              .of(context)!
-                              .swipeLeftToMarkADocumentAsSeen,
-                          onHintAcknowledged: () =>
-                              context.read<InboxCubit>().acknowledgeHint(),
-                        ),
-                      ),
-                      // Build a list of slivers alternating between SliverToBoxAdapter
-                      // (group header) and a SliverList (inbox items).
-                      ..._groupByDate(state.documents).entries
-                          .map(
-                            (entry) => [
-                              SliverToBoxAdapter(
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(32.0),
-                                    child: Text(
-                                      entry.key,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                      textAlign: TextAlign.center,
-                                    ).padded(),
-                                  ),
-                                ).paddedOnly(top: 8.0),
-                              ),
-                              SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  childCount: entry.value.length,
-                                  (context, index) {
-                                    if (index < entry.value.length - 1) {
-                                      return Column(
-                                        children: [
-                                          _buildListItem(entry.value[index]),
-                                          const Divider(
-                                            indent: 16,
-                                            endIndent: 16,
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                    return _buildListItem(entry.value[index]);
-                                  },
-                                ),
-                              ),
-                            ],
-                          )
-                          .flattened,
-                      const SliverToBoxAdapter(child: SizedBox(height: 78)),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildListItem(DocumentModel doc) {
-    return Dismissible(
-      direction: DismissDirection.endToStart,
-      background: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Icon(
-            Icons.done_all,
-            color: Theme.of(context).colorScheme.primary,
-          ).padded(),
-          Text(
-            S.of(context)!.markAsSeen,
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
+  List<Widget> _buildSliverContent(BuildContext context, InboxState state) {
+    // Initial loading — no cached data yet
+    if (!state.hasLoaded && state.documents.isEmpty) {
+      return [
+        SliverList.builder(
+          itemCount: 5,
+          itemBuilder: (_, _) => const PmShimmerListItem(height: 88),
+        ),
+      ];
+    }
+
+    // Loaded, empty inbox
+    if (state.hasLoaded && state.documents.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: PmEmptyState(
+            icon: Icons.mark_email_read_outlined,
+            title: S.of(context)!.youDoNotHaveUnseenDocuments,
+            message: 'Inbox zero! All caught up.', // TODO(l10n)
+            actionLabel: S.of(context)!.refresh,
+            onAction: () => context.read<InboxCubit>().loadInbox(),
+          ),
+        ),
+      ];
+    }
+
+    // Loaded with documents — date-grouped list
+    final groups = _groupByDate(state.documents);
+    return [
+      ...groups.entries.expand(
+        (entry) => [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: PmSpacing.lg,
+                right: PmSpacing.lg,
+                top: PmSpacing.md,
+                bottom: PmSpacing.xs,
+              ),
+              child: Text(
+                entry.key,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          SliverList.builder(
+            itemCount: entry.value.length,
+            itemBuilder: (context, index) =>
+                _buildDismissibleTile(entry.value[index]),
           ),
         ],
-      ).padded(),
-      confirmDismiss: (_) => _onItemDismissed(doc),
+      ),
+      // Bottom padding to clear the FAB
+      const SliverToBoxAdapter(child: SizedBox(height: 88)),
+    ];
+  }
+
+  Widget _buildDismissibleTile(DocumentModel doc) {
+    final scheme = Theme.of(context).colorScheme;
+    return Dismissible(
       key: ValueKey(doc.id),
+      direction: DismissDirection.startToEnd,
+      background: ColoredBox(
+        color: scheme.primary,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: PmSpacing.xl),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.done_all, color: scheme.onPrimary),
+                const SizedBox(width: PmSpacing.sm),
+                Text(
+                  S.of(context)!.markAsSeen,
+                  style: TextStyle(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      confirmDismiss: (_) => _onItemDismissed(doc),
       child: InboxItem(document: doc),
+    );
+  }
+
+  Widget _buildFab(BuildContext context, bool canEditDocument) {
+    return ConnectivityAwareActionWrapper(
+      offlineBuilder: (context, child) => const SizedBox.shrink(),
+      child: BlocBuilder<InboxCubit, InboxState>(
+        builder: (context, state) {
+          if (!state.hasLoaded || state.documents.isEmpty || !canEditDocument) {
+            return const SizedBox.shrink();
+          }
+          return FloatingActionButton.extended(
+            heroTag: 'inbox_page_fab',
+            icon: const Icon(Icons.done_all),
+            label: Text(S.of(context)!.allSeen),
+            onPressed: () => _onMarkAllAsSeen(state.documents, state.inboxTags),
+          );
+        },
+      ),
     );
   }
 
@@ -243,7 +219,7 @@ class _InboxPageState extends State<InboxPage>
     Iterable<int> inboxTags,
   ) async {
     final isActionConfirmed =
-        await showDialog(
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: Text(S.of(context)!.markAllAsSeen),
@@ -324,12 +300,8 @@ class _InboxPageState extends State<InboxPage>
     Iterable<DocumentModel> documents,
   ) {
     return groupBy<DocumentModel, String>(documents, (doc) {
-      if (doc.added.isToday) {
-        return S.of(context)!.today;
-      }
-      if (doc.added.isYesterday) {
-        return S.of(context)!.yesterday;
-      }
+      if (doc.added.isToday) return S.of(context)!.today;
+      if (doc.added.isYesterday) return S.of(context)!.yesterday;
       return DateFormat.yMMMMd(
         Localizations.localeOf(context).toString(),
       ).format(doc.added);
