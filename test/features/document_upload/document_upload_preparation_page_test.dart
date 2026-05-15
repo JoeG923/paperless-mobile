@@ -923,72 +923,72 @@ void main() {
 
   testWidgets(
     'does not duplicate file extension when filename already has extension',
-    (WidgetTester tester,
-  ) async {
-    final labels = LabelRepository(FakeLabelsApi());
-    final api = RecordingSuccessNoTaskDocumentsApi();
-    final user = UserModelV3(
-      id: 1,
-      username: 'tester',
-      email: 'tester@example.com',
-      firstName: 'Test',
-      lastName: 'User',
-      dateJoined: DateTime(2024, 1, 1),
-      isStaff: false,
-      isActive: true,
-      isSuperuser: false,
-      groups: const [],
-      userPermissions: const [
-        'view_tag',
-        'view_document_type',
-        'view_correspondent',
-        'view_storage_path',
-      ],
-      inheritedPermissions: const [],
-    );
-    final account = LocalUserAccount(
-      id: '1',
-      serverUrl: 'https://example.com',
-      settings: LocalUserSettings(),
-      paperlessUser: user,
-      apiVersion: 3,
-    );
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          Provider<LocalUserAccount>.value(value: account),
-          ChangeNotifierProvider<LabelRepository>.value(value: labels),
+    (WidgetTester tester) async {
+      final labels = LabelRepository(FakeLabelsApi());
+      final api = RecordingSuccessNoTaskDocumentsApi();
+      final user = UserModelV3(
+        id: 1,
+        username: 'tester',
+        email: 'tester@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        dateJoined: DateTime(2024, 1, 1),
+        isStaff: false,
+        isActive: true,
+        isSuperuser: false,
+        groups: const [],
+        userPermissions: const [
+          'view_tag',
+          'view_document_type',
+          'view_correspondent',
+          'view_storage_path',
         ],
-        child: MaterialApp(
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+        inheritedPermissions: const [],
+      );
+      final account = LocalUserAccount(
+        id: '1',
+        serverUrl: 'https://example.com',
+        settings: LocalUserSettings(),
+        paperlessUser: user,
+        apiVersion: 3,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            Provider<LocalUserAccount>.value(value: account),
+            ChangeNotifierProvider<LabelRepository>.value(value: labels),
           ],
-          supportedLocales: S.supportedLocales,
-          home: BlocProvider(
-            create: (_) => _buildFastRetryCubit(api),
-            child: DocumentUploadPreparationPage(
-              fileBytes: Uint8List(4),
-              filename: 'existing.pdf',
-              fileExtension: '.pdf',
+          child: MaterialApp(
+            localizationsDelegates: const [
+              S.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: S.supportedLocales,
+            home: BlocProvider(
+              create: (_) => _buildFastRetryCubit(api),
+              child: DocumentUploadPreparationPage(
+                fileBytes: Uint8List(4),
+                filename: 'existing.pdf',
+                fileExtension: '.pdf',
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.enterText(
-      find.byKey(const ValueKey<String>('filename')),
-      'existing.pdf',
-    );
-    await tester.tap(find.text('Upload'));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('filename')),
+        'existing.pdf',
+      );
+      await tester.tap(find.text('Upload'));
+      await tester.pumpAndSettle();
 
-    expect(api.lastFilename, 'existing.pdf');
-  });
+      expect(api.lastFilename, 'existing.pdf');
+    },
+  );
 
   testWidgets('synchronizes title and filename and pads file extension', (
     WidgetTester tester,

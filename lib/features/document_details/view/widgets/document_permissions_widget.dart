@@ -290,10 +290,7 @@ Future<DocumentPermissionsUpdate?> _showSetPermissionsDialog(
                   Navigator.of(context).pop(
                     DocumentPermissionsUpdate(
                       permissions: {
-                        'view': {
-                          'users': viewUsers,
-                          'groups': viewGroups,
-                        },
+                        'view': {'users': viewUsers, 'groups': viewGroups},
                         'change': {
                           'users': changeUsers,
                           'groups': changeGroups,

@@ -1020,10 +1020,7 @@ Future<_SetPermissionsDialogResult?> _showSetPermissionsDialog(
                   Navigator.of(context).pop(
                     _SetPermissionsDialogResult(
                       permissions: {
-                        'view': {
-                          'users': viewUsers,
-                          'groups': viewGroups,
-                        },
+                        'view': {'users': viewUsers, 'groups': viewGroups},
                         'change': {
                           'users': changeUsers,
                           'groups': changeGroups,
@@ -1042,4 +1039,3 @@ Future<_SetPermissionsDialogResult?> _showSetPermissionsDialog(
     },
   );
 }
-
