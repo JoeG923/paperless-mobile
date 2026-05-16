@@ -9,9 +9,16 @@ late final IosDeviceInfo? iosInfo;
 const defaultRequestApiVersion = 9;
 const latestSupportedApiVersion = 10;
 
-int defaultRequestApiVersionFor(int serverApiVersion) {
-  if (serverApiVersion < defaultRequestApiVersion) {
+/// Selects the request API version for the server version advertised by
+/// paperless-ngx. v2 servers currently advertise API 9; v3 servers advertise
+/// API 10. Future server versions are capped at the latest client-supported
+/// version until the client implements newer behavior explicitly.
+int selectedApiVersionForServer(int serverApiVersion) {
+  if (serverApiVersion <= defaultRequestApiVersion) {
     return serverApiVersion;
   }
-  return defaultRequestApiVersion;
+  if (serverApiVersion > latestSupportedApiVersion) {
+    return latestSupportedApiVersion;
+  }
+  return serverApiVersion;
 }

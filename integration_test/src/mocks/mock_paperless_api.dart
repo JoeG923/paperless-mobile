@@ -34,10 +34,7 @@ class MockPaperlessApiFactory implements PaperlessApiFactory {
   }
 
   @override
-  PaperlessDocumentsApi createDocumentsApi(
-    Dio dio, {
-    required int serverApiVersion,
-  }) {
+  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion}) {
     return documentApi;
   }
 

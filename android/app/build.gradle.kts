@@ -11,7 +11,7 @@ import java.io.FileInputStream
 val debugApplicationIdSuffixOverride =
     providers.gradleProperty("debugApplicationIdSuffixOverride").getOrElse(".debug")
 val debugAppLabelOverride =
-    providers.gradleProperty("debugAppLabelOverride").getOrElse("Paperless Mobile API10")
+    providers.gradleProperty("debugAppLabelOverride").getOrElse("Paperless Mobile Debug")
 
 val keystorePropsFile = rootProject.file("key.properties")
 val keystoreProperties = Properties().apply {
@@ -44,7 +44,7 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["appLabel"] = "paperless_mobile"
+        manifestPlaceholders["appLabel"] = "Paperless Mobile"
 
         // Required for flutter_local_notifications
         multiDexEnabled = true

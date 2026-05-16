@@ -410,7 +410,6 @@ class _DocumentsPageState extends State<DocumentsPage> {
                   onSelected: context
                       .read<DocumentsCubit>()
                       .toggleDocumentSelection,
-                  hasInternetConnection: connectivityState.isConnected,
                   onTagSelected: allowToggleFilter ? _addTagToFilter : null,
                   onCorrespondentSelected: allowToggleFilter
                       ? _addCorrespondentToFilter

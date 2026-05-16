@@ -116,8 +116,7 @@ class _TasksPageState extends State<TasksPage> {
                     return ListTile(
                       leading: Icon(_statusIcon(status)),
                       title: Text(
-                        task.taskFileName ??
-                            S.of(context)!.taskFallbackTitle(task.id),
+                        _taskTitle(context, task),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -151,6 +150,12 @@ class _TasksPageState extends State<TasksPage> {
         },
       ),
     );
+  }
+
+  String _taskTitle(BuildContext context, Task task) {
+    if (task.taskFileName != null) return task.taskFileName!;
+    if (task.type == 'llm_index') return 'LLM Index';
+    return S.of(context)!.taskFallbackTitle(task.id);
   }
 
   String _statusLabel(TaskStatus? status) {

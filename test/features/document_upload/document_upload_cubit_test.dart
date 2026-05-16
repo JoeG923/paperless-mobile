@@ -25,6 +25,9 @@ class FakeTasksApi implements PaperlessTasksApi {
 
 class FailingDocumentsApi implements PaperlessDocumentsApi {
   @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
   Future<String?> create(
     Uint8List documentBytes, {
     required String filename,
@@ -152,6 +155,9 @@ class SlowDocumentsApi implements PaperlessDocumentsApi {
   SlowDocumentsApi(this.delay);
 
   @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
   Future<String?> create(
     Uint8List documentBytes, {
     required String filename,
@@ -276,6 +282,9 @@ class SlowDocumentsApi implements PaperlessDocumentsApi {
 }
 
 class CancellableDocumentsApi implements PaperlessDocumentsApi {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
   @override
   Future<String?> create(
     Uint8List documentBytes, {

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:logger/logger.dart';
 import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/factory/paperless_api_factory.dart';
 import 'package:paperless_mobile/core/security/auth_header_configuration.dart';
@@ -11,6 +12,8 @@ import 'package:paperless_mobile/features/login/cubit/authentication_cubit.dart'
 import 'package:paperless_mobile/features/login/model/client_certificate.dart';
 import 'package:paperless_mobile/features/login/model/login_form_credentials.dart';
 import 'package:paperless_mobile/features/login/services/authentication_service.dart';
+import 'package:paperless_mobile/features/logging/data/logger.dart'
+    as app_logger;
 import 'package:paperless_mobile/features/notifications/services/local_notification_service.dart';
 
 class _FakeSessionManager extends ChangeNotifier implements SessionManager {
@@ -30,11 +33,17 @@ class _FakeSessionManager extends ChangeNotifier implements SessionManager {
 }
 
 class _FakeApiFactory implements PaperlessApiFactory {
+  final PaperlessAuthenticationApi? authenticationApi;
   int createAuthenticationApiCalls = 0;
+
+  _FakeApiFactory({this.authenticationApi});
 
   @override
   PaperlessAuthenticationApi createAuthenticationApi(Dio dio) {
     createAuthenticationApiCalls++;
+    if (authenticationApi != null) {
+      return authenticationApi!;
+    }
     throw UnimplementedError();
   }
 
@@ -44,10 +53,7 @@ class _FakeApiFactory implements PaperlessApiFactory {
   }
 
   @override
-  PaperlessDocumentsApi createDocumentsApi(
-    Dio dio, {
-    required int serverApiVersion,
-  }) {
+  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion}) {
     throw UnimplementedError();
   }
 
@@ -88,6 +94,23 @@ class _FakeApiFactory implements PaperlessApiFactory {
   }
 }
 
+class _ThrowingAuthenticationApi implements PaperlessAuthenticationApi {
+  final Object error;
+  String? observedCode;
+
+  _ThrowingAuthenticationApi(this.error);
+
+  @override
+  Future<String> login({
+    required String username,
+    required String password,
+    String? code,
+  }) async {
+    observedCode = code;
+    throw error;
+  }
+}
+
 AuthenticationCubit _buildCubit(PaperlessApiFactory apiFactory) {
   return AuthenticationCubit(
     LocalAuthenticationService(LocalAuthentication()),
@@ -99,6 +122,10 @@ AuthenticationCubit _buildCubit(PaperlessApiFactory apiFactory) {
 }
 
 void main() {
+  setUpAll(() {
+    app_logger.logger = Logger(level: Level.off);
+  });
+
   test(
     'login throws ArgumentError when password and token are both missing',
     () async {
@@ -178,4 +205,30 @@ void main() {
       expect(apiFactory.createAuthenticationApiCalls, 0);
     },
   );
+
+  test('login emits error state when MFA validation fails', () async {
+    final authenticationApi = _ThrowingAuthenticationApi(
+      PaperlessFormValidationException({
+        'non_field_errors': 'Invalid MFA code',
+      }),
+    );
+    final cubit = _buildCubit(
+      _FakeApiFactory(authenticationApi: authenticationApi),
+    );
+
+    await expectLater(
+      () => cubit.login(
+        credentials: LoginFormCredentials(
+          username: 'alice',
+          password: 'password',
+          mfaCode: '000000',
+        ),
+        serverUrl: 'https://paperless.example.com',
+      ),
+      throwsA(isA<PaperlessFormValidationException>()),
+    );
+
+    expect(authenticationApi.observedCode, '000000');
+    expect(cubit.state, isA<AuthenticationErrorState>());
+  });
 }

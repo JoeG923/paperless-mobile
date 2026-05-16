@@ -94,4 +94,49 @@ void main() {
     expect(credentials!.apiToken, 'token-123');
     expect(credentials.hasApiToken, isTrue);
   });
+
+  testWidgets('MFA input is written to form credentials value', (tester) async {
+    final formKey = GlobalKey<FormBuilderState>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: S.localizationsDelegates,
+        supportedLocales: S.supportedLocales,
+        home: Scaffold(
+          body: FormBuilder(
+            key: formKey,
+            child: UserCredentialsFormField(formKey: formKey),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('login-username')),
+      'alice',
+    );
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const ValueKey('login-password')),
+        matching: find.byType(EditableText),
+      ),
+      'password',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('login-mfa-code')),
+      '123456',
+    );
+    await tester.pump();
+
+    final credentials =
+        formKey
+                .currentState!
+                .fields[UserCredentialsFormField.fkCredentials]!
+                .value
+            as LoginFormCredentials?;
+    expect(credentials, isNotNull);
+    expect(credentials!.username, 'alice');
+    expect(credentials.password, 'password');
+    expect(credentials.mfaCode, '123456');
+  });
 }

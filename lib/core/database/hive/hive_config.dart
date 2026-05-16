@@ -57,19 +57,33 @@ class HiveTypeIds {
 }
 
 void registerHiveAdapters() {
-  registerPaperlessApiHiveTypeAdapters();
-  Hive.registerAdapter(ColorSchemeOptionAdapter());
-  Hive.registerAdapter(ThemeModeAdapter());
-  Hive.registerAdapter(GlobalSettingsAdapter());
-  Hive.registerAdapter(AuthenticationInformationAdapter());
-  Hive.registerAdapter(ClientCertificateAdapter());
-  Hive.registerAdapter(LocalUserSettingsAdapter());
-  Hive.registerAdapter(UserCredentialsAdapter());
-  Hive.registerAdapter(LocalUserAccountAdapter());
-  Hive.registerAdapter(LocalUserAppStateAdapter());
-  Hive.registerAdapter(ViewTypeAdapter());
-  Hive.registerAdapter(FileDownloadTypeAdapter());
-  Hive.registerAdapter(TrustedCertificatePinAdapter());
+  if (!Hive.isAdapterRegistered(PaperlessApiHiveTypeIds.documentFilter)) {
+    registerPaperlessApiHiveTypeAdapters();
+  }
+  _registerAdapter(ColorSchemeOptionAdapter(), HiveTypeIds.colorSchemeOption);
+  _registerAdapter(ThemeModeAdapter(), HiveTypeIds.themeMode);
+  _registerAdapter(GlobalSettingsAdapter(), HiveTypeIds.globalSettings);
+  _registerAdapter(
+    AuthenticationInformationAdapter(),
+    HiveTypeIds.authentication,
+  );
+  _registerAdapter(ClientCertificateAdapter(), HiveTypeIds.clientCertificate);
+  _registerAdapter(LocalUserSettingsAdapter(), HiveTypeIds.localUserSettings);
+  _registerAdapter(UserCredentialsAdapter(), HiveTypeIds.localUserCredentials);
+  _registerAdapter(LocalUserAccountAdapter(), HiveTypeIds.localUserAccount);
+  _registerAdapter(LocalUserAppStateAdapter(), HiveTypeIds.localUserAppState);
+  _registerAdapter(ViewTypeAdapter(), HiveTypeIds.viewType);
+  _registerAdapter(FileDownloadTypeAdapter(), HiveTypeIds.fileDownloadType);
+  _registerAdapter(
+    TrustedCertificatePinAdapter(),
+    HiveTypeIds.trustedCertificatePin,
+  );
+}
+
+void _registerAdapter<T>(TypeAdapter<T> adapter, int typeId) {
+  if (!Hive.isAdapterRegistered(typeId)) {
+    Hive.registerAdapter(adapter);
+  }
 }
 
 extension HiveSingleValueBox<T> on Box<T> {

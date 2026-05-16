@@ -245,7 +245,7 @@ class DocumentDetailsCubit extends Cubit<DocumentDetailsState> {
       locale: locale,
       userId: userId,
     );
-    logger.fi("Document '${state.document!.title}' saved to $targetPath.");
+    logger.fi("Document ${state.document!.id} saved.");
   }
 
   Future<void> shareDocument({bool shareOriginal = false}) async {

@@ -14,6 +14,9 @@ class _SequencedDocumentsApi implements PaperlessDocumentsApi {
   _SequencedDocumentsApi(this.createOutcomes);
 
   @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
   Future<String?> create(
     Uint8List documentBytes, {
     required String filename,

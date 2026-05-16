@@ -1,5 +1,5 @@
 name: paperless_document_scanner
-description: A new Flutter plugin project.
+description: Internal document scanner plugin for Paperless Mobile.
 version: 0.0.1
 
 environment:

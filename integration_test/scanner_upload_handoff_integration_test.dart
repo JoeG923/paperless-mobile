@@ -241,7 +241,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byKey(const Key('scanner_empty_scan_button')));
     for (var i = 0; i < 20 && scannerCubit.state.scans.isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }

@@ -1,10 +1,13 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:paperless_api/paperless_api.dart';
 import 'package:paperless_mobile/core/database/hive/hive_config.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_account.dart';
 import 'package:paperless_mobile/core/database/tables/local_user_app_state.dart';
 import 'package:paperless_mobile/core/theme/design_tokens.dart';
+import 'package:paperless_mobile/features/ai/model/ai_feature_status.dart';
+import 'package:paperless_mobile/features/ai_chat/view/ai_chat_page.dart';
 import 'package:paperless_mobile/features/document_search/cubit/document_search_cubit.dart';
 import 'package:paperless_mobile/features/document_search/view/document_search_page.dart';
 import 'package:paperless_mobile/features/settings/view/manage_accounts_page.dart';
@@ -25,6 +28,7 @@ class _DocumentSearchBarState extends State<DocumentSearchBar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final aiStatus = context.watchAiFeatureStatusOrDisabled();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: PmSpacing.md),
@@ -97,7 +101,31 @@ class _DocumentSearchBarState extends State<DocumentSearchBar> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 4),
-                    child: _buildUserAvatar(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (aiStatus.enabled)
+                          IconButton(
+                            tooltip: 'Ask documents',
+                            icon: const Icon(Icons.auto_awesome_outlined),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => Provider.value(
+                                  value: context.read<PaperlessDocumentsApi>(),
+                                  child: Provider.value(
+                                    value: aiStatus,
+                                    child: const AiChatPage(
+                                      title: 'Ask documents',
+                                      scopeLabel: 'All visible documents',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        _buildUserAvatar(context),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -12,6 +12,7 @@ class FieldSuggestions with EquatableMixin {
   final Iterable<int> correspondents;
   final Iterable<int> tags;
   final Iterable<int> documentTypes;
+  final Iterable<int> storagePaths;
   final Iterable<DateTime> dates;
 
   const FieldSuggestions({
@@ -19,24 +20,28 @@ class FieldSuggestions with EquatableMixin {
     this.correspondents = const [],
     this.tags = const [],
     this.documentTypes = const [],
+    this.storagePaths = const [],
     this.dates = const [],
   });
 
   bool get hasSuggestedCorrespondents => correspondents.isNotEmpty;
   bool get hasSuggestedTags => tags.isNotEmpty;
   bool get hasSuggestedDocumentTypes => documentTypes.isNotEmpty;
+  bool get hasSuggestedStoragePaths => storagePaths.isNotEmpty;
   bool get hasSuggestedDates => dates.isNotEmpty;
 
   bool get hasSuggestions =>
       hasSuggestedCorrespondents ||
       hasSuggestedDates ||
       hasSuggestedTags ||
-      hasSuggestedDocumentTypes;
+      hasSuggestedDocumentTypes ||
+      hasSuggestedStoragePaths;
 
   int get suggestionsCount =>
       (correspondents.isNotEmpty ? 1 : 0) +
       (tags.isNotEmpty ? 1 : 0) +
       (documentTypes.isNotEmpty ? 1 : 0) +
+      (storagePaths.isNotEmpty ? 1 : 0) +
       (dates.isNotEmpty ? 1 : 0);
 
   FieldSuggestions forDocumentId(int id) => FieldSuggestions(
@@ -44,6 +49,7 @@ class FieldSuggestions with EquatableMixin {
     correspondents: correspondents,
     dates: dates,
     documentTypes: documentTypes,
+    storagePaths: storagePaths,
     tags: tags,
   );
 
@@ -54,6 +60,7 @@ class FieldSuggestions with EquatableMixin {
     Iterable<int> tags = const {},
     Iterable<int> correspondents = const {},
     Iterable<int> documentTypes = const {},
+    Iterable<int> storagePaths = const {},
     Iterable<DateTime> dates = const {},
   }) {
     return copyWith(
@@ -64,6 +71,7 @@ class FieldSuggestions with EquatableMixin {
       documentTypes: this.documentTypes.toSet().difference(
         documentTypes.toSet(),
       ),
+      storagePaths: this.storagePaths.toSet().difference(storagePaths.toSet()),
       dates: this.dates.toSet().difference(dates.toSet()),
     );
   }
@@ -77,6 +85,9 @@ class FieldSuggestions with EquatableMixin {
       documentTypes: [
         document.documentType,
       ].where((e) => e != null).map((e) => e!),
+      storagePaths: [
+        document.storagePath,
+      ].where((e) => e != null).map((e) => e!),
       dates: [document.created],
     );
   }
@@ -85,6 +96,7 @@ class FieldSuggestions with EquatableMixin {
     Iterable<int>? tags,
     Iterable<int>? correspondents,
     Iterable<int>? documentTypes,
+    Iterable<int>? storagePaths,
     Iterable<DateTime>? dates,
     int? documentId,
   }) {
@@ -92,6 +104,8 @@ class FieldSuggestions with EquatableMixin {
       tags: tags ?? this.tags,
       correspondents: correspondents ?? this.correspondents,
       dates: dates ?? this.dates,
+      documentTypes: documentTypes ?? this.documentTypes,
+      storagePaths: storagePaths ?? this.storagePaths,
       documentId: documentId ?? this.documentId,
     );
   }
@@ -107,6 +121,7 @@ class FieldSuggestions with EquatableMixin {
     correspondents,
     tags,
     documentTypes,
+    storagePaths,
     dates,
   ];
 }

@@ -149,7 +149,9 @@ void main() {
     final account = Hive.localUserAccountBox.get('$_username@$_baseUrl');
     expect(account, isNotNull);
     if (_expectedApiVersion.isNotEmpty) {
-      expect(account!.serverApiVersion, int.parse(_expectedApiVersion));
+      final expectedApiVersion = int.parse(_expectedApiVersion);
+      expect(account!.serverApiVersion, expectedApiVersion);
+      expect(account.apiVersion, expectedApiVersion);
     }
   });
 }

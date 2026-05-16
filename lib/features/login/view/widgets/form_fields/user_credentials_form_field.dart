@@ -17,11 +17,13 @@ class UserCredentialsFormField extends StatefulWidget {
   final String? initialUsername;
   final String? initialPassword;
   final GlobalKey<FormBuilderState> formKey;
+  final UserCredentialsFormFieldController? controller;
   const UserCredentialsFormField({
     super.key,
     this.onFieldsSubmitted,
     this.initialUsername,
     this.initialPassword,
+    this.controller,
     required this.formKey,
   });
 
@@ -30,12 +32,45 @@ class UserCredentialsFormField extends StatefulWidget {
       _UserCredentialsFormFieldState();
 }
 
+class UserCredentialsFormFieldController {
+  VoidCallback? _clearMfaCode;
+
+  void clearMfaCode() => _clearMfaCode?.call();
+}
+
 class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
     with AutomaticKeepAliveClientMixin {
   final _usernameFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _mfaFocusNode = FocusNode();
+  final _mfaTextController = TextEditingController();
+  FormFieldState<LoginFormCredentials?>? _field;
   bool _useApiToken = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?._clearMfaCode = _clearMfaCode;
+  }
+
+  @override
+  void didUpdateWidget(covariant UserCredentialsFormField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?._clearMfaCode = null;
+      widget.controller?._clearMfaCode = _clearMfaCode;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller?._clearMfaCode = null;
+    _mfaTextController.dispose();
+    _usernameFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _mfaFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,123 +81,137 @@ class _UserCredentialsFormFieldState extends State<UserCredentialsFormField>
         username: widget.initialUsername,
       ),
       name: UserCredentialsFormField.fkCredentials,
-      builder: (field) => Column(
-        children: [
-          TextFormField(
-            key: const ValueKey('login-username'),
-            focusNode: _usernameFocusNode,
-            textCapitalization: TextCapitalization.none,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (value) {
-              _passwordFocusNode.requestFocus();
-            },
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            autocorrect: false,
-            onChanged: (username) => field.didChange(
-              field.value?.copyWith(username: username) ??
-                  LoginFormCredentials(username: username),
-            ),
-            validator: (value) {
-              if (value?.trim().isEmpty ?? true) {
-                return S.of(context)!.usernameMustNotBeEmpty;
-              }
-              final serverAddress = widget.formKey.currentState!
-                  .getRawValue<String>(ServerAddressFormField.fkServerAddress);
-              if (serverAddress != null) {
-                final userExists = Hive.localUserAccountBox.values
-                    .map((e) => e.id)
-                    .contains('$value@$serverAddress');
-                if (userExists) {
-                  return S.of(context)!.userAlreadyExists;
-                }
-              }
-              return null;
-            },
-            autofillHints: const [AutofillHints.username],
-            decoration: InputDecoration(label: Text(S.of(context)!.username)),
-          ),
-          SwitchListTile.adaptive(
-            value: _useApiToken,
-            onChanged: (value) {
-              setState(() => _useApiToken = value);
-              field.didChange(
-                (field.value ?? LoginFormCredentials()).copyWith(
-                  password: value ? '' : field.value?.password,
-                  mfaCode: value ? '' : field.value?.mfaCode,
-                  apiToken: value ? field.value?.apiToken ?? '' : '',
-                ),
-              );
-            },
-            title: Text(S.of(context)!.useApiTokenInsteadOfPassword),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-          ),
-          if (_useApiToken)
-            ObscuredInputTextFormField(
-              key: const ValueKey('login-api-token'),
-              focusNode: _passwordFocusNode,
-              label: S.of(context)!.apiToken,
-              hintText: S.of(context)!.apiTokenRemoteUserHint,
-              onChanged: (token) => field.didChange(
-                (field.value ?? LoginFormCredentials()).copyWith(
-                  apiToken: token,
-                  password: '',
-                  mfaCode: '',
-                ),
-              ),
-              onFieldSubmitted: (_) {
-                widget.onFieldsSubmitted?.call();
-              },
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return S.of(context)!.apiTokenMustNotBeEmpty;
-                }
-                return null;
-              },
-            )
-          else ...[
-            ObscuredInputTextFormField(
-              key: const ValueKey('login-password'),
-              focusNode: _passwordFocusNode,
-              label: S.of(context)!.password,
-              onChanged: (password) => field.didChange(
-                (field.value ?? LoginFormCredentials()).copyWith(
-                  password: password,
-                  apiToken: '',
-                ),
-              ),
-              onFieldSubmitted: (_) {
-                _mfaFocusNode.requestFocus();
-              },
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return S.of(context)!.passwordMustNotBeEmpty;
-                }
-                return null;
-              },
-            ),
+      builder: (field) {
+        _field = field;
+        return Column(
+          children: [
             TextFormField(
-              key: const ValueKey('login-mfa-code'),
-              focusNode: _mfaFocusNode,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              autofillHints: const [AutofillHints.oneTimeCode],
-              onChanged: (code) => field.didChange(
-                (field.value ?? LoginFormCredentials()).copyWith(
-                  mfaCode: code,
-                  apiToken: '',
+              key: const ValueKey('login-username'),
+              focusNode: _usernameFocusNode,
+              textCapitalization: TextCapitalization.none,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (value) {
+                _passwordFocusNode.requestFocus();
+              },
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              autocorrect: false,
+              onChanged: (username) => field.didChange(
+                field.value?.copyWith(username: username) ??
+                    LoginFormCredentials(username: username),
+              ),
+              validator: (value) {
+                if (value?.trim().isEmpty ?? true) {
+                  return S.of(context)!.usernameMustNotBeEmpty;
+                }
+                final serverAddress = widget.formKey.currentState!
+                    .getRawValue<String>(
+                      ServerAddressFormField.fkServerAddress,
+                    );
+                if (serverAddress != null) {
+                  final userExists = Hive.localUserAccountBox.values
+                      .map((e) => e.id)
+                      .contains('$value@$serverAddress');
+                  if (userExists) {
+                    return S.of(context)!.userAlreadyExists;
+                  }
+                }
+                return null;
+              },
+              autofillHints: const [AutofillHints.username],
+              decoration: InputDecoration(label: Text(S.of(context)!.username)),
+            ),
+            SwitchListTile.adaptive(
+              value: _useApiToken,
+              onChanged: (value) {
+                setState(() => _useApiToken = value);
+                field.didChange(
+                  (field.value ?? LoginFormCredentials()).copyWith(
+                    password: value ? '' : field.value?.password,
+                    mfaCode: value ? '' : field.value?.mfaCode,
+                    apiToken: value ? field.value?.apiToken ?? '' : '',
+                  ),
+                );
+              },
+              title: Text(S.of(context)!.useApiTokenInsteadOfPassword),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            if (_useApiToken)
+              ObscuredInputTextFormField(
+                key: const ValueKey('login-api-token'),
+                focusNode: _passwordFocusNode,
+                label: S.of(context)!.apiToken,
+                hintText: S.of(context)!.apiTokenRemoteUserHint,
+                onChanged: (token) => field.didChange(
+                  (field.value ?? LoginFormCredentials()).copyWith(
+                    apiToken: token,
+                    password: '',
+                    mfaCode: '',
+                  ),
+                ),
+                onFieldSubmitted: (_) {
+                  widget.onFieldsSubmitted?.call();
+                },
+                validator: (value) {
+                  if (value?.trim().isEmpty ?? true) {
+                    return S.of(context)!.apiTokenMustNotBeEmpty;
+                  }
+                  return null;
+                },
+              )
+            else ...[
+              ObscuredInputTextFormField(
+                key: const ValueKey('login-password'),
+                focusNode: _passwordFocusNode,
+                label: S.of(context)!.password,
+                onChanged: (password) => field.didChange(
+                  (field.value ?? LoginFormCredentials()).copyWith(
+                    password: password,
+                    apiToken: '',
+                  ),
+                ),
+                onFieldSubmitted: (_) {
+                  _mfaFocusNode.requestFocus();
+                },
+                validator: (value) {
+                  if (value?.trim().isEmpty ?? true) {
+                    return S.of(context)!.passwordMustNotBeEmpty;
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                key: const ValueKey('login-mfa-code'),
+                controller: _mfaTextController,
+                focusNode: _mfaFocusNode,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                autofillHints: const [AutofillHints.oneTimeCode],
+                onChanged: (code) => field.didChange(
+                  (field.value ?? LoginFormCredentials()).copyWith(
+                    mfaCode: code,
+                    apiToken: '',
+                  ),
+                ),
+                onFieldSubmitted: (_) {
+                  widget.onFieldsSubmitted?.call();
+                },
+                decoration: InputDecoration(
+                  label: Text(S.of(context)!.mfaCodeOptional),
                 ),
               ),
-              onFieldSubmitted: (_) {
-                widget.onFieldsSubmitted?.call();
-              },
-              decoration: InputDecoration(
-                label: Text(S.of(context)!.mfaCodeOptional),
-              ),
-            ),
-          ],
-        ].map((child) => child.padded()).toList(),
-      ),
+            ],
+          ].map((child) => child.padded()).toList(),
+        );
+      },
+    );
+  }
+
+  void _clearMfaCode() {
+    _mfaTextController.clear();
+    final field = _field;
+    field?.didChange(
+      (field.value ?? LoginFormCredentials()).copyWith(mfaCode: ''),
     );
   }
 

@@ -42,6 +42,7 @@ class AddAccountPage extends StatefulWidget {
   final String submitText;
   final String titleText;
   final bool showLocalAccounts;
+  final String? versionOverride;
 
   final Widget? bottomLeftButton;
 
@@ -56,6 +57,7 @@ class AddAccountPage extends StatefulWidget {
     this.initialPassword,
     this.initialClientCertificate,
     this.bottomLeftButton,
+    this.versionOverride,
   });
 
   @override
@@ -64,6 +66,7 @@ class AddAccountPage extends StatefulWidget {
 
 class _AddAccountPageState extends State<AddAccountPage> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _credentialsController = UserCredentialsFormFieldController();
   bool _isCheckingConnection = false;
   ReachabilityStatus _reachabilityStatus = ReachabilityStatus.unknown;
   bool _certificateChanged = false;
@@ -97,137 +100,145 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     controller: _pageController,
                     allowImplicitScrolling: false,
                     children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          ServerAddressFormField(
-                            onChanged: (value) {
-                              setState(() {
-                                _reachabilityStatus =
-                                    ReachabilityStatus.unknown;
-                                _certificateChanged = false;
-                              });
-                            },
-                          ).paddedSymmetrically(horizontal: 12, vertical: 12),
-                          ClientCertificateFormField(
-                            initialBytes:
-                                widget.initialClientCertificate?.bytes,
-                            initialPassphrase:
-                                widget.initialClientCertificate?.passphrase,
-                          ).padded(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              //TODO: Move additional headers and client cert to separate page
-                              // IconButton.filledTonal(
-                              //   onPressed: () {
-                              //     Navigator.of(context).push(
-                              //       MaterialPageRoute(builder: (context) {
-                              //         return LoginSettingsPage();
-                              //       }),
-                              //     );
-                              //   },
-                              //   icon: Icon(Icons.settings),
-                              // ),
-                              SizedBox(width: 8),
-                              FilledButton.icon(
-                                key: TestKeys.login.continueButton,
-                                onPressed: () async {
-                                  final status = await _updateReachability();
-                                  if (!mounted) return;
-                                  if (status ==
-                                      ReachabilityStatus.untrustedCertificate) {
-                                    final shouldTrust =
-                                        await _showUntrustedCertificateDialog();
+                      SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            ServerAddressFormField(
+                              onChanged: (value) {
+                                setState(() {
+                                  _reachabilityStatus =
+                                      ReachabilityStatus.unknown;
+                                  _certificateChanged = false;
+                                });
+                              },
+                            ).paddedSymmetrically(horizontal: 12, vertical: 12),
+                            ClientCertificateFormField(
+                              initialBytes:
+                                  widget.initialClientCertificate?.bytes,
+                              initialPassphrase:
+                                  widget.initialClientCertificate?.passphrase,
+                            ).padded(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                //TODO: Move additional headers and client cert to separate page
+                                // IconButton.filledTonal(
+                                //   onPressed: () {
+                                //     Navigator.of(context).push(
+                                //       MaterialPageRoute(builder: (context) {
+                                //         return LoginSettingsPage();
+                                //       }),
+                                //     );
+                                //   },
+                                //   icon: Icon(Icons.settings),
+                                // ),
+                                SizedBox(width: 8),
+                                FilledButton.icon(
+                                  key: TestKeys.login.continueButton,
+                                  onPressed: () async {
+                                    final status = await _updateReachability();
                                     if (!mounted) return;
-                                    if (shouldTrust) {
-                                      await _trustCurrentServer();
-                                      final recheck =
-                                          await _updateReachability();
+                                    if (status ==
+                                        ReachabilityStatus
+                                            .untrustedCertificate) {
+                                      final shouldTrust =
+                                          await _showUntrustedCertificateDialog();
                                       if (!mounted) return;
-                                      if (recheck ==
-                                          ReachabilityStatus.reachable) {
-                                        Future.delayed(1.seconds, () {
-                                          _pageController.nextPage(
-                                            duration: Duration(
-                                              milliseconds: 300,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                          );
-                                        });
+                                      if (shouldTrust) {
+                                        await _trustCurrentServer();
+                                        final recheck =
+                                            await _updateReachability();
+                                        if (!mounted) return;
+                                        if (recheck ==
+                                            ReachabilityStatus.reachable) {
+                                          Future.delayed(1.seconds, () {
+                                            _pageController.nextPage(
+                                              duration: Duration(
+                                                milliseconds: 300,
+                                              ),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          });
+                                        }
                                       }
+                                      return;
                                     }
-                                    return;
-                                  }
-                                  if (status == ReachabilityStatus.reachable) {
-                                    Future.delayed(1.seconds, () {
-                                      _pageController.nextPage(
-                                        duration: Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut,
-                                      );
-                                    });
-                                  }
-                                },
-                                icon: _isCheckingConnection
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSecondary,
-                                        ),
-                                      )
-                                    : _reachabilityStatus ==
-                                          ReachabilityStatus.reachable
-                                    ? Icon(Icons.done)
-                                    : Icon(Icons.arrow_forward),
-                                label: Text(S.of(context)!.continueLabel),
-                              ),
-                            ],
-                          ).paddedSymmetrically(horizontal: 16, vertical: 8),
-                          _buildStatusIndicator().padded(),
-                        ],
+                                    if (status ==
+                                        ReachabilityStatus.reachable) {
+                                      Future.delayed(1.seconds, () {
+                                        _pageController.nextPage(
+                                          duration: Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      });
+                                    }
+                                  },
+                                  icon: _isCheckingConnection
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSecondary,
+                                          ),
+                                        )
+                                      : _reachabilityStatus ==
+                                            ReachabilityStatus.reachable
+                                      ? Icon(Icons.done)
+                                      : Icon(Icons.arrow_forward),
+                                  label: Text(S.of(context)!.continueLabel),
+                                ),
+                              ],
+                            ).paddedSymmetrically(horizontal: 16, vertical: 8),
+                            _buildStatusIndicator().padded(),
+                          ],
+                        ),
                       ),
-                      Column(
-                        children: [
-                          UserCredentialsFormField(
-                            formKey: _formKey,
-                            initialUsername: widget.initialUsername,
-                            initialPassword: widget.initialPassword,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () {
-                                  _pageController.previousPage(
-                                    duration: Duration(milliseconds: 300),
-                                    curve: Curves.easeInOut,
-                                  );
-                                },
-                                icon: Icon(Icons.arrow_back),
-                                label: Text(S.of(context)!.edit),
-                              ),
-                              FilledButton(
-                                key: TestKeys.login.loginButton,
-                                onPressed: () {
-                                  _onSubmit();
-                                },
-                                child: Text(S.of(context)!.signIn),
-                              ),
-                            ],
-                          ).padded(),
-                          Text(
-                            S.of(context)!.loginRequiredPermissionsHint,
-                            style: Theme.of(context).textTheme.bodySmall?.apply(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withAlpha(153),
+                      SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            UserCredentialsFormField(
+                              formKey: _formKey,
+                              controller: _credentialsController,
+                              initialUsername: widget.initialUsername,
+                              initialPassword: widget.initialPassword,
                             ),
-                          ).padded(16),
-                        ],
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () {
+                                    _pageController.previousPage(
+                                      duration: Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  },
+                                  icon: Icon(Icons.arrow_back),
+                                  label: Text(S.of(context)!.edit),
+                                ),
+                                FilledButton(
+                                  key: TestKeys.login.loginButton,
+                                  onPressed: () {
+                                    _onSubmit();
+                                  },
+                                  child: Text(S.of(context)!.signIn),
+                                ),
+                              ],
+                            ).padded(),
+                            Text(
+                              S.of(context)!.loginRequiredPermissionsHint,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.apply(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface.withAlpha(153),
+                                  ),
+                            ).padded(16),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -237,7 +248,11 @@ class _AddAccountPageState extends State<AddAccountPage> {
                     style: Theme.of(context).textTheme.labelLarge,
                     children: [
                       TextSpan(
-                        text: S.of(context)!.version(packageInfo.version),
+                        text: S
+                            .of(context)!
+                            .version(
+                              widget.versionOverride ?? packageInfo.version,
+                            ),
                       ),
                       WidgetSpan(child: SizedBox(width: 24)),
                       TextSpan(
@@ -494,6 +509,7 @@ class _AddAccountPageState extends State<AddAccountPage> {
 
       final credentials =
           form[UserCredentialsFormField.fkCredentials] as LoginFormCredentials;
+      _credentialsController.clearMfaCode();
       try {
         await widget.onSubmit(
           context,

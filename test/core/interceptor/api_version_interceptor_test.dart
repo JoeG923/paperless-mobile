@@ -34,8 +34,18 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('uses the default account API version without override', () async {
-    await _storeAccount(apiVersion: 9, serverApiVersion: 10);
+  test('uses API v10 by default when the server advertises API v10', () async {
+    await _storeAccount(apiVersion: 10, serverApiVersion: 10);
+    final request = await _recordRequest();
+
+    expect(
+      request.headers[Headers.acceptHeader],
+      'application/json; version=10',
+    );
+  });
+
+  test('uses API v9 by default when the server advertises API v9', () async {
+    await _storeAccount(apiVersion: 9, serverApiVersion: 9);
     final request = await _recordRequest();
 
     expect(
@@ -44,15 +54,18 @@ void main() {
     );
   });
 
-  test('uses explicit API v10 override when the server supports it', () async {
-    await _storeAccount(apiVersion: 9, serverApiVersion: 10);
-    final request = await _recordRequest(extra: paperlessApiVersionExtra(10));
+  test(
+    'ignores stale API v9 override when the server requires API v10',
+    () async {
+      await _storeAccount(apiVersion: 9, serverApiVersion: 10);
+      final request = await _recordRequest(extra: paperlessApiVersionExtra(9));
 
-    expect(
-      request.headers[Headers.acceptHeader],
-      'application/json; version=10',
-    );
-  });
+      expect(
+        request.headers[Headers.acceptHeader],
+        'application/json; version=10',
+      );
+    },
+  );
 
   test('clamps explicit API v10 override to server API v9', () async {
     await _storeAccount(apiVersion: 9, serverApiVersion: 9);
@@ -84,18 +97,30 @@ void main() {
     expect(request.headers[Headers.acceptHeader], 'application/problem+json');
   });
 
+  test('stores API v10 when a response advertises API v10', () async {
+    await _storeAccount(apiVersion: 9, serverApiVersion: 9);
+    await _recordRequest(responseApiVersion: 10);
+
+    final account = Hive.box<LocalUserAccount>(
+      HiveBoxes.localUserAccount,
+    ).get(_accountId)!;
+
+    expect(account.serverApiVersion, 10);
+    expect(account.apiVersion, 10);
+  });
+
   test(
-    'stores the raw server API version and default request version',
+    'stores raw future API versions and selects latest supported API',
     () async {
       await _storeAccount(apiVersion: 9, serverApiVersion: 9);
-      await _recordRequest(responseApiVersion: 10);
+      await _recordRequest(responseApiVersion: 12);
 
       final account = Hive.box<LocalUserAccount>(
         HiveBoxes.localUserAccount,
       ).get(_accountId)!;
 
-      expect(account.serverApiVersion, 10);
-      expect(account.apiVersion, 9);
+      expect(account.serverApiVersion, 12);
+      expect(account.apiVersion, 10);
     },
   );
 }

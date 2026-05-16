@@ -1,3 +1,5 @@
+export 'ai_chat_response.dart';
+export 'ai_document_suggestions.dart';
 export 'bulk_edit_model.dart';
 export 'custom_field_data_type.dart';
 export 'custom_field_model.dart';
@@ -13,6 +15,8 @@ export 'paged_search_result.dart';
 export 'paperless_api_exception.dart';
 export 'paperless_server_information_model.dart';
 export 'paperless_server_statistics_model.dart';
+export 'paperless_system_status_model.dart';
+export 'paperless_ui_settings_model.dart';
 export 'permissions/inherited_permissions.dart';
 export 'permissions/permissions.dart';
 export 'permissions/user_permission_extension.dart';

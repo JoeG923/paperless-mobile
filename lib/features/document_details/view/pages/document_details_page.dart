@@ -11,6 +11,8 @@ import 'package:paperless_mobile/core/repository/label_repository.dart';
 import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/core/widgets/state/pm_error_state.dart';
 import 'package:paperless_mobile/core/widgets/state/pm_loading_state.dart';
+import 'package:paperless_mobile/features/ai/model/ai_feature_status.dart';
+import 'package:paperless_mobile/features/ai_chat/view/ai_chat_page.dart';
 import 'package:paperless_mobile/features/document_details/cubit/document_details_cubit.dart';
 import 'package:paperless_mobile/features/document_details/view/widgets/document_content_widget.dart';
 import 'package:paperless_mobile/features/document_details/view/widgets/document_download_button.dart';
@@ -23,6 +25,7 @@ import 'package:paperless_mobile/generated/l10n/app_localizations.dart';
 import 'package:paperless_mobile/helpers/message_helpers.dart';
 import 'package:paperless_mobile/routing/routes/documents_route.dart';
 import 'package:paperless_mobile/theme.dart';
+import 'package:provider/provider.dart';
 
 class DocumentDetailsPage extends StatefulWidget {
   final int id;
@@ -46,22 +49,7 @@ class DocumentDetailsPage extends StatefulWidget {
   State<DocumentDetailsPage> createState() => _DocumentDetailsPageState();
 }
 
-class _DocumentDetailsPageState extends State<DocumentDetailsPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _DocumentDetailsPageState extends State<DocumentDetailsPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -77,39 +65,46 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
       ),
       child: BlocBuilder<DocumentDetailsCubit, DocumentDetailsState>(
         builder: (context, state) {
+          final aiStatus = context.watchAiFeatureStatusOrDisabled();
+          final showAi =
+              aiStatus.enabled && state.status == LoadingStatus.loaded;
           return Scaffold(
             extendBodyBehindAppBar: false,
-            body: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                _buildAppBar(context, state, innerBoxIsScrolled),
-              ],
-              body: Column(
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    tabs: [
-                      Tab(text: S.of(context)!.overview),
-                      Tab(text: S.of(context)!.content),
-                      Tab(
-                        text:
-                            state.status == LoadingStatus.loaded &&
-                                state.document!.notes.isNotEmpty
-                            ? '${S.of(context)!.notes(0)} (${state.document!.notes.length})'
-                            : S.of(context)!.notes(0),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildInfoTab(context, state),
-                        _buildContentTab(context, state),
-                        _buildNotesTab(context, state),
+            body: DefaultTabController(
+              length: showAi ? 4 : 3,
+              child: NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  _buildAppBar(context, state, innerBoxIsScrolled),
+                ],
+                body: Column(
+                  children: [
+                    TabBar(
+                      tabs: [
+                        Tab(text: S.of(context)!.overview),
+                        Tab(text: S.of(context)!.content),
+                        Tab(
+                          text:
+                              state.status == LoadingStatus.loaded &&
+                                  state.document!.notes.isNotEmpty
+                              ? '${S.of(context)!.notes(0)} (${state.document!.notes.length})'
+                              : S.of(context)!.notes(0),
+                        ),
+                        if (showAi) const Tab(text: 'AI'),
                       ],
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildInfoTab(context, state),
+                          _buildContentTab(context, state),
+                          _buildNotesTab(context, state),
+                          if (showAi)
+                            _buildAiTab(context, state.document!, aiStatus),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             bottomNavigationBar: _buildBottomActionBar(context, state),
@@ -315,6 +310,95 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
     };
   }
 
+  Widget _buildAiTab(
+    BuildContext context,
+    DocumentModel document,
+    AiFeatureStatus aiStatus,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final starterPrompts = const [
+      'Summarize this document',
+      'What dates matter?',
+      'What action is required?',
+    ];
+    return ListView(
+      padding: PmSpacing.pagePadding,
+      children: [
+        if (!aiStatus.isIndexHealthy)
+          Card(
+            color: scheme.errorContainer,
+            child: Padding(
+              padding: PmSpacing.cardPadding,
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: scheme.onErrorContainer),
+                  const SizedBox(width: PmSpacing.md),
+                  Expanded(
+                    child: Text(
+                      aiStatus.llmIndexError?.isNotEmpty == true
+                          ? aiStatus.llmIndexError!
+                          : 'AI index needs attention.',
+                      style: TextStyle(color: scheme.onErrorContainer),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        Card(
+          child: Padding(
+            padding: PmSpacing.cardPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ask this document',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: PmSpacing.md),
+                Wrap(
+                  spacing: PmSpacing.sm,
+                  runSpacing: PmSpacing.sm,
+                  children: [
+                    for (final prompt in starterPrompts)
+                      ActionChip(
+                        avatar: const Icon(
+                          Icons.auto_awesome_outlined,
+                          size: 18,
+                        ),
+                        label: Text(prompt),
+                        onPressed: () => _openDocumentChat(
+                          context,
+                          document,
+                          initialPrompt: prompt,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: PmSpacing.md),
+                FilledButton.icon(
+                  onPressed: () => _openDocumentChat(context, document),
+                  icon: const Icon(Icons.forum_outlined),
+                  label: const Text('Open chat'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: PmSpacing.md),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.tune_outlined),
+            title: const Text('Improve metadata'),
+            subtitle: const Text('Review AI suggestions before applying them.'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => EditDocumentRoute(document).push(context),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget? _buildBottomActionBar(
     BuildContext context,
     DocumentDetailsState state,
@@ -323,6 +407,7 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
 
     final isOnline = context.watchInternetConnection;
     final currentUser = context.watch<LocalUserAccount>();
+    final aiStatus = context.watchAiFeatureStatusOrDisabled();
     final canEdit = currentUser.paperlessUser.canEditDocuments && isOnline;
 
     return Material(
@@ -344,11 +429,45 @@ class _DocumentDetailsPageState extends State<DocumentDetailsPage>
               if (canEdit) const SizedBox(width: PmSpacing.md),
               DocumentShareButton(document: state.document, enabled: isOnline),
               const SizedBox(width: PmSpacing.xs),
+              if (aiStatus.enabled) ...[
+                IconButton(
+                  tooltip: 'Ask this document',
+                  icon: const Icon(Icons.auto_awesome_outlined),
+                  onPressed: isOnline
+                      ? () => _openDocumentChat(context, state.document!)
+                      : null,
+                ),
+                const SizedBox(width: PmSpacing.xs),
+              ],
               DocumentDownloadButton(
                 document: state.document,
                 enabled: isOnline,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openDocumentChat(
+    BuildContext context,
+    DocumentModel document, {
+    String? initialPrompt,
+  }) {
+    final aiStatus = context.readAiFeatureStatusOrDisabled();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Provider.value(
+          value: context.read<PaperlessDocumentsApi>(),
+          child: Provider.value(
+            value: aiStatus,
+            child: AiChatPage(
+              documentId: document.id,
+              title: 'Ask this document',
+              scopeLabel: document.title,
+              initialPrompt: initialPrompt,
+            ),
           ),
         ),
       ),

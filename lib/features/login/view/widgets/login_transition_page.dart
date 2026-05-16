@@ -19,31 +19,34 @@ class LoginTransitionPage extends StatelessWidget {
           systemNavigationBarColor: Theme.of(context).colorScheme.surface,
         ),
         child: Scaffold(
-          body: Stack(
-            alignment: Alignment.center,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Text(text).paddedOnly(bottom: 24),
-                  ),
-                ],
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: TextButton(
-                  child: Text(S.of(context)!.appLogs('')),
-                  onPressed: () {
-                    AppLogsRoute().push(context);
-                  },
+          body: SafeArea(
+            top: false,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(text).paddedOnly(bottom: 24),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ).padded(16),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: TextButton(
+                    child: Text(S.of(context)!.appLogs('')),
+                    onPressed: () {
+                      AppLogsRoute().push(context);
+                    },
+                  ),
+                ),
+              ],
+            ).padded(16),
+          ),
         ),
       ),
     );

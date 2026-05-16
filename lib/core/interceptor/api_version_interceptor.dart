@@ -42,8 +42,12 @@ class ApiVersionInterceptor extends Interceptor {
     if (account == null) {
       return null;
     }
-    final requestedApiVersion =
-        _requestedApiVersionFromExtra(optionsExtra) ?? account.apiVersion;
+    final selectedApiVersion = selectedApiVersionForServer(
+      account.serverApiVersion,
+    );
+    final requestedApiVersion = account.serverApiVersion >= 10
+        ? selectedApiVersion
+        : _requestedApiVersionFromExtra(optionsExtra) ?? account.apiVersion;
     return apiVersionClamp(
       requestedApiVersion,
       serverApiVersion: account.serverApiVersion,
@@ -60,9 +64,7 @@ class ApiVersionInterceptor extends Interceptor {
     if (account == null) {
       return;
     }
-    final normalized = defaultRequestApiVersionFor(
-      apiVersionClamp(apiVersion, serverApiVersion: apiVersion),
-    );
+    final normalized = selectedApiVersionForServer(apiVersion);
     if (account.apiVersion == normalized &&
         account.serverApiVersion == apiVersion) {
       return;

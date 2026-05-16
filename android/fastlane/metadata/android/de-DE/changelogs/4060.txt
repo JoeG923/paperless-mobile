@@ -1,0 +1,1 @@
+Version 4.0.0: Großes Update der alten öffentlichen App mit API-v8-Support. Neu: API v9 für Paperless-ngx v2, API v10 für Paperless-ngx v3 Beta, Material-3-UI, ML-Kit-Scanner, Upload-Vorlagen/Aufgaben, bessere TLS-Zertifikatsprüfung, Login/MFA-Fixes, Rechte-Fixes und optionale v3-KI.

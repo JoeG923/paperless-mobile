@@ -61,6 +61,7 @@ class DocumentListItem extends DocumentItem {
               ClipRRect(
                 borderRadius: PmRadii.rmd,
                 child: Container(
+                  width: 56,
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: scheme.outlineVariant,
@@ -70,16 +71,13 @@ class DocumentListItem extends DocumentItem {
                   ),
                   child: AspectRatio(
                     aspectRatio: _a4AspectRatio,
-                    child: SizedBox(
-                      width: 56,
-                      child: DocumentPreview(
-                        documentId: document.id,
-                        title: document.title,
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                        enableHero: enableHeroAnimation,
-                        borderRadius: PmRadii.md,
-                      ),
+                    child: DocumentPreview(
+                      documentId: document.id,
+                      title: document.title,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      enableHero: enableHeroAnimation,
+                      borderRadius: PmRadii.md,
                     ),
                   ),
                 ),

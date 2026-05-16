@@ -9,11 +9,8 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
   PaperlessApiFactoryImpl(this.sessionManager);
 
   @override
-  PaperlessDocumentsApi createDocumentsApi(
-    Dio dio, {
-    required int serverApiVersion,
-  }) {
-    return PaperlessDocumentsApiImpl(dio, apiVersion: serverApiVersion);
+  PaperlessDocumentsApi createDocumentsApi(Dio dio, {required int apiVersion}) {
+    return PaperlessDocumentsApiImpl(dio, apiVersion: apiVersion);
   }
 
   @override
@@ -54,6 +51,8 @@ class PaperlessApiFactoryImpl implements PaperlessApiFactory {
 
   @override
   PaperlessUserApi createUserApi(Dio dio, {required int apiVersion}) {
+    // Multi-user endpoints are available on all paperless-ngx versions that
+    // support the negotiated API versions used by this client.
     if (apiVersion >= 3) {
       return PaperlessUserApiV3Impl(dio);
     }

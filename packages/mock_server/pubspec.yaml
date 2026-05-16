@@ -1,5 +1,5 @@
 name: mock_server
-description: A new Flutter package project.
+description: Internal Paperless Mobile mock server for app and API tests.
 version: 0.0.1
 
 environment:

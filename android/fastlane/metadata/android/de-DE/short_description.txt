@@ -1,1 +1,1 @@
-Ein (fast) vollwertiger mobiler Paperless client.
+Ein mobiler Open-Source-Client für paperless-ngx.

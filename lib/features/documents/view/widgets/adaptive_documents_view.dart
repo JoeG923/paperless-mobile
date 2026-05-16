@@ -38,7 +38,6 @@ abstract class AdaptiveDocumentsView extends StatelessWidget {
   final ViewType viewType;
   final void Function(DocumentModel)? onTap;
   final void Function(DocumentModel)? onSelected;
-  final bool hasInternetConnection;
   final bool isLabelClickable;
   final void Function(int id)? onTagSelected;
   final void Function(int? id)? onCorrespondentSelected;
@@ -54,7 +53,6 @@ abstract class AdaptiveDocumentsView extends StatelessWidget {
     this.onTap,
     this.onSelected,
     this.viewType = ViewType.list,
-    required this.hasInternetConnection,
     required this.isLabelClickable,
     this.onTagSelected,
     this.onCorrespondentSelected,
@@ -76,7 +74,6 @@ abstract class AdaptiveDocumentsView extends StatelessWidget {
     this.onTagSelected,
     this.isLabelClickable = true,
     this.enableHeroAnimation = true,
-    required this.hasInternetConnection,
     this.viewType = ViewType.list,
     this.selectedDocumentIds = const [],
   }) : documents = state.documents,
@@ -88,7 +85,6 @@ class SliverAdaptiveDocumentsView extends AdaptiveDocumentsView {
   const SliverAdaptiveDocumentsView({
     super.key,
     required super.documents,
-    required super.hasInternetConnection,
     required super.isLabelClickable,
     super.onCorrespondentSelected,
     super.onDocumentTypeSelected,
@@ -211,7 +207,6 @@ class DefaultAdaptiveDocumentsView extends AdaptiveDocumentsView {
   const DefaultAdaptiveDocumentsView({
     super.key,
     required super.documents,
-    required super.hasInternetConnection,
     required super.isLabelClickable,
     required super.isLoading,
     required super.hasLoaded,

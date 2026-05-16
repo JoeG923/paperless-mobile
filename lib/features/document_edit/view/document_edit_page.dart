@@ -61,10 +61,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     _titleNotifier.value = initialTitle ?? '';
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Build
-  // ──────────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final currentUser = context.watch<LocalUserAccount>().paperlessUser;
@@ -116,10 +112,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
       },
     );
   }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // App bar
-  // ──────────────────────────────────────────────────────────────────────────
 
   SliverAppBar _buildSliverAppBar(BuildContext context, DocumentModel doc) {
     final scheme = Theme.of(context).colorScheme;
@@ -211,10 +203,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Sticky bottom action bar
-  // ──────────────────────────────────────────────────────────────────────────
-
   Widget _buildBottomBar(
     BuildContext context,
     DocumentModel doc,
@@ -254,10 +242,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Form sections
-  // ──────────────────────────────────────────────────────────────────────────
-
   List<Widget> _buildFormSections(
     BuildContext context,
     DocumentEditState state,
@@ -270,18 +254,16 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     const gap = SizedBox(height: PmSpacing.md);
 
     return [
-      // ── Identity ─────────────────────────────────────────────────────────
       FormSectionCard(
         title: 'Identity', // TODO(l10n)
         children: [
-          _buildTitleFormField(doc.title),
+          _buildTitleFormField(doc.title, suggestions),
           const SizedBox(height: PmSpacing.md),
           _buildCreatedAtFormField(doc.created, suggestions),
         ],
       ),
       gap,
 
-      // ── Classification ───────────────────────────────────────────────────
       if (currentUser.canViewCorrespondents ||
           currentUser.canViewDocumentTypes ||
           currentUser.canViewStoragePaths)
@@ -308,6 +290,14 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                 canCreateNewLabel: currentUser.canCreateCorrespondents,
                 suggestions: suggestions?.correspondents ?? [],
               ),
+            _buildNewLabelSuggestions(
+              type: LabelType.correspondent,
+              names: switch (suggestions) {
+                AiDocumentSuggestions s => s.suggestedCorrespondents,
+                _ => const <String>[],
+              },
+              canCreate: currentUser.canCreateCorrespondents,
+            ),
             if (currentUser.canViewCorrespondents &&
                 currentUser.canViewDocumentTypes)
               const SizedBox(height: PmSpacing.md),
@@ -331,6 +321,14 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                 allowSelectUnassigned: true,
                 suggestions: suggestions?.documentTypes ?? [],
               ),
+            _buildNewLabelSuggestions(
+              type: LabelType.documentType,
+              names: switch (suggestions) {
+                AiDocumentSuggestions s => s.suggestedDocumentTypes,
+                _ => const <String>[],
+              },
+              canCreate: currentUser.canCreateDocumentTypes,
+            ),
             if (currentUser.canViewDocumentTypes &&
                 currentUser.canViewStoragePaths)
               const SizedBox(height: PmSpacing.md),
@@ -352,7 +350,16 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
                 name: fkStoragePath,
                 prefixIcon: const Icon(Icons.folder_outlined),
                 allowSelectUnassigned: true,
+                suggestions: suggestions?.storagePaths ?? [],
               ),
+            _buildNewLabelSuggestions(
+              type: LabelType.storagePath,
+              names: switch (suggestions) {
+                AiDocumentSuggestions s => s.suggestedStoragePaths,
+                _ => const <String>[],
+              },
+              canCreate: currentUser.canCreateStoragePaths,
+            ),
           ],
         ),
       if (currentUser.canViewCorrespondents ||
@@ -360,7 +367,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
           currentUser.canViewStoragePaths)
         gap,
 
-      // ── Tags ─────────────────────────────────────────────────────────────
       if (currentUser.canViewTags)
         FormSectionCard(
           title: S.of(context)!.tags,
@@ -374,11 +380,18 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
               suggestions: suggestions?.tags ?? [],
               initialValue: IdsTagsQuery(include: doc.tags.toList()),
             ),
+            _buildNewLabelSuggestions(
+              type: LabelType.tag,
+              names: switch (suggestions) {
+                AiDocumentSuggestions s => s.suggestedTags,
+                _ => const <String>[],
+              },
+              canCreate: currentUser.canCreateTags,
+            ),
           ],
         ),
       if (currentUser.canViewTags) gap,
 
-      // ── Custom Fields ─────────────────────────────────────────────────────
       if (currentUser.canViewCustomFields &&
           doc.customFields.isNotEmpty &&
           customFieldDefinitions.isNotEmpty)
@@ -392,7 +405,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
           customFieldDefinitions.isNotEmpty)
         gap,
 
-      // ── Content ───────────────────────────────────────────────────────────
       FormSectionCard(
         title: S.of(context)!.content,
         children: [
@@ -412,28 +424,112 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     ];
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Individual field builders
-  // ──────────────────────────────────────────────────────────────────────────
+  Widget _buildTitleFormField(
+    String? initialTitle,
+    FieldSuggestions? suggestions,
+  ) {
+    final suggestedTitle = switch (suggestions) {
+      AiDocumentSuggestions s when s.title?.trim().isNotEmpty == true =>
+        s.title!.trim(),
+      _ => null,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FormBuilderTextField(
+          name: fkTitle,
+          initialValue: initialTitle,
+          onChanged: (value) => _titleNotifier.value = value ?? '',
+          decoration: InputDecoration(
+            labelText: S.of(context)!.title,
+            border: OutlineInputBorder(borderRadius: PmRadii.rmd),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.clear),
+              tooltip: S.of(context)!.clearAll,
+              onPressed: () {
+                _formKey.currentState?.fields[fkTitle]?.didChange(null);
+                _titleNotifier.value = '';
+              },
+            ),
+          ),
+        ),
+        if (suggestedTitle != null && suggestedTitle != initialTitle)
+          Padding(
+            padding: const EdgeInsets.only(top: PmSpacing.sm),
+            child: ActionChip(
+              avatar: const Icon(Icons.auto_awesome_outlined, size: 18),
+              label: Text('Use "$suggestedTitle"'),
+              onPressed: () {
+                _formKey.currentState?.fields[fkTitle]?.didChange(
+                  suggestedTitle,
+                );
+                _titleNotifier.value = suggestedTitle;
+              },
+            ),
+          ),
+      ],
+    );
+  }
 
-  Widget _buildTitleFormField(String? initialTitle) {
-    return FormBuilderTextField(
-      name: fkTitle,
-      initialValue: initialTitle,
-      onChanged: (value) => _titleNotifier.value = value ?? '',
-      decoration: InputDecoration(
-        labelText: S.of(context)!.title,
-        border: OutlineInputBorder(borderRadius: PmRadii.rmd),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.clear),
-          tooltip: S.of(context)!.clearAll,
-          onPressed: () {
-            _formKey.currentState?.fields[fkTitle]?.didChange(null);
-            _titleNotifier.value = '';
-          },
+  Widget _buildNewLabelSuggestions({
+    required LabelType type,
+    required Iterable<String> names,
+    required bool canCreate,
+  }) {
+    final cleanNames = names
+        .map((name) => name.trim())
+        .where((name) => name.isNotEmpty)
+        .toList(growable: false);
+    if (!canCreate || cleanNames.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: PmSpacing.sm),
+      child: SuggestionChipsRow<String>(
+        label: 'AI suggestions',
+        suggestions: cleanNames,
+        itemBuilder: (context, name) => ActionChip(
+          avatar: const Icon(Icons.add, size: 18),
+          label: Text('Create "$name"'),
+          onPressed: () => _createAndApplySuggestedLabel(type, name),
         ),
       ),
     );
+  }
+
+  Future<void> _createAndApplySuggestedLabel(
+    LabelType type,
+    String name,
+  ) async {
+    final created = await CreateLabelRoute(
+      type,
+      name: name,
+    ).push<Label>(context);
+    if (created == null || created.id == null) return;
+
+    switch (created) {
+      case Correspondent():
+        _formKey.currentState?.fields[fkCorrespondent]?.didChange(
+          SetIdQueryParameter(id: created.id!),
+        );
+      case DocumentType():
+        _formKey.currentState?.fields[fkDocumentType]?.didChange(
+          SetIdQueryParameter(id: created.id!),
+        );
+      case StoragePath():
+        _formKey.currentState?.fields[fkStoragePath]?.didChange(
+          SetIdQueryParameter(id: created.id!),
+        );
+      case Tag():
+        final tagsParam = _formKey.currentState?.getRawValue<TagsQuery?>(
+          fkTags,
+        );
+        final currentIds = switch (tagsParam) {
+          IdsTagsQuery(include: final ids) => ids,
+          _ => const <int>[],
+        };
+        _formKey.currentState?.fields[fkTags]?.didChange(
+          IdsTagsQuery(include: {...currentIds, created.id!}.toList()),
+        );
+    }
   }
 
   Widget _buildCreatedAtFormField(
@@ -618,10 +714,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
     );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Submit / dirty detection
-  // ──────────────────────────────────────────────────────────────────────────
-
   Future<void> _onSubmit(
     DocumentModel document,
     Map<int, CustomFieldModel> customFieldDefinitions,
@@ -697,10 +789,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
         (doc.content != content && isContentTouched) ||
         !_sameCustomFields(doc.customFields, customFields);
   }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Value extraction helpers
-  // ──────────────────────────────────────────────────────────────────────────
 
   (
     String? title,
@@ -779,10 +867,6 @@ class _DocumentEditPageState extends State<DocumentEditPage> {
         })
         .toList(growable: false);
   }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Custom field value normalisation
-  // ──────────────────────────────────────────────────────────────────────────
 
   Object? _normalizeCustomFieldValue(
     CustomFieldModel definition,

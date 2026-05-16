@@ -1,15 +1,7 @@
 # paperless_document_scanner
 
-A new Flutter plugin project.
+Internal Flutter plugin used by Paperless Mobile for document scanning.
 
-## Getting Started
-
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter development, view the
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
+The Android app currently uses Google ML Kit Document Scanner for the production
+scan flow. Keep this package aligned with app-level scanner tests before
+changing or removing it.

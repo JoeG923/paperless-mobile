@@ -47,7 +47,6 @@ class _LinkedDocumentsPageState extends State<LinkedDocumentsPage>
                   SliverAdaptiveDocumentsView(
                     viewType: state.viewType,
                     documents: state.documents,
-                    hasInternetConnection: connectivity.isConnected,
                     isLabelClickable: false,
                     isLoading: state.isLoading,
                     hasLoaded: state.hasLoaded,

@@ -15,13 +15,16 @@ class DocumentEditCubit extends Cubit<DocumentEditState> {
   final PaperlessDocumentsApi _docsApi;
   final LabelRepository _labelRepository;
   final DocumentChangedNotifier _notifier;
+  final bool _useAiSuggestions;
 
   DocumentEditCubit(
     this._labelRepository,
     this._docsApi,
     this._notifier, {
     required DocumentModel document,
+    bool useAiSuggestions = false,
   }) : _initialDocument = document,
+       _useAiSuggestions = useAiSuggestions,
        super(DocumentEditState(document: document)) {
     _notifier.addListener(
       this,
@@ -106,7 +109,9 @@ class DocumentEditCubit extends Cubit<DocumentEditState> {
       className: runtimeType.toString(),
       methodName: "loadFieldSuggestions",
     );
-    final suggestions = await _docsApi.findSuggestions(state.document);
+    final suggestions = _useAiSuggestions
+        ? await _docsApi.findAiSuggestions(state.document.id)
+        : await _docsApi.findSuggestions(state.document);
     logger.fi(
       "Found ${suggestions.suggestionsCount} suggestions for document ${state.document.id}.",
       className: runtimeType.toString(),

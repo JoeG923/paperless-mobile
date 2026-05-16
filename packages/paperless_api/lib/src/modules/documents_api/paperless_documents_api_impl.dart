@@ -387,6 +387,55 @@ class PaperlessDocumentsApiImpl implements PaperlessDocumentsApi {
   }
 
   @override
+  Future<AiDocumentSuggestions> findAiSuggestions(int documentId) async {
+    try {
+      final response = await client.get(
+        "/api/documents/$documentId/ai_suggestions/",
+        options: Options(validateStatus: (status) => status == 200),
+      );
+      return AiDocumentSuggestions.fromJson(
+        response.data,
+      ).forDocumentId(documentId);
+    } on DioException catch (exception) {
+      throw exception.unravel(
+        orElse: const PaperlessApiException(ErrorCode.suggestionsQueryError),
+      );
+    }
+  }
+
+  @override
+  Stream<AiChatResponse> streamChat({
+    int? documentId,
+    required String prompt,
+    CancelToken? cancelToken,
+  }) async* {
+    try {
+      final data = <String, Object?>{'q': prompt};
+      if (documentId != null) {
+        data['document_id'] = documentId;
+      }
+      final response = await client.post<ResponseBody>(
+        "/api/documents/chat/",
+        data: data,
+        cancelToken: cancelToken,
+        options: Options(
+          responseType: ResponseType.stream,
+          validateStatus: (status) => status == 200,
+        ),
+      );
+      final body = response.data;
+      if (body == null) return;
+      final buffer = StringBuffer();
+      await for (final chunk in body.stream) {
+        buffer.write(utf8.decode(chunk, allowMalformed: true));
+        yield AiChatResponse.parse(buffer.toString());
+      }
+    } on DioException catch (exception) {
+      throw exception.unravel(orElse: const PaperlessApiException.unknown());
+    }
+  }
+
+  @override
   Future<DocumentModel> find(int id, {bool fullPermissions = false}) async {
     debugPrint("Fetching data from /api/documents/$id/...");
     try {

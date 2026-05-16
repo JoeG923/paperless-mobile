@@ -67,7 +67,6 @@ class _SimilarDocumentsViewState extends State<SimilarDocumentsView>
             }
             return SliverAdaptiveDocumentsView(
               documents: state.documents,
-              hasInternetConnection: connectivity.isConnected,
               isLabelClickable: false,
               isLoading: state.isLoading,
               hasLoaded: state.hasLoaded,

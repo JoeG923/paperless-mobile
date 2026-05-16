@@ -3,6 +3,7 @@ import 'package:paperless_api/src/extensions/dio_exception_extension.dart';
 import 'package:paperless_api/src/models/paperless_api_exception.dart';
 import 'package:paperless_api/src/models/paperless_server_information_model.dart';
 import 'package:paperless_api/src/models/paperless_server_statistics_model.dart';
+import 'package:paperless_api/src/models/paperless_system_status_model.dart';
 import 'package:paperless_api/src/models/paperless_ui_settings_model.dart';
 
 import 'paperless_server_stats_api.dart';
@@ -78,6 +79,23 @@ class PaperlessServerStatsApiImpl implements PaperlessServerStatsApi {
     } on DioException catch (exception) {
       throw exception.unravel(
         orElse: const PaperlessApiException(ErrorCode.uiSettingsLoadFailed),
+      );
+    }
+  }
+
+  @override
+  Future<PaperlessSystemStatusModel> getSystemStatus() async {
+    try {
+      final response = await client.get(
+        "/api/status/",
+        options: Options(validateStatus: (status) => status == 200),
+      );
+      return PaperlessSystemStatusModel.fromJson(response.data);
+    } on DioException catch (exception) {
+      throw exception.unravel(
+        orElse: const PaperlessApiException(
+          ErrorCode.serverStatisticsLoadFailed,
+        ),
       );
     }
   }

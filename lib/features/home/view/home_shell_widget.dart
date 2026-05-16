@@ -15,6 +15,7 @@ import 'package:paperless_mobile/core/security/session_manager.dart';
 import 'package:paperless_mobile/core/service/dio_file_service.dart';
 import 'package:paperless_mobile/features/document_scan/cubit/document_scanner_cubit.dart';
 import 'package:paperless_mobile/features/documents/cubit/documents_cubit.dart';
+import 'package:paperless_mobile/features/ai/model/ai_feature_status.dart';
 import 'package:paperless_mobile/features/home/view/model/api_version.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
 import 'package:paperless_mobile/features/labels/cubit/label_cubit.dart';
@@ -80,7 +81,7 @@ class HomeShellWidget extends StatelessWidget {
                   create: (context) =>
                       paperlessProviderFactory.createDocumentsApi(
                         context.read<SessionManager>().client,
-                        serverApiVersion: currentLocalUser.serverApiVersion,
+                        apiVersion: paperlessApiVersion,
                       ),
                 ),
                 Provider(
@@ -109,6 +110,13 @@ class HomeShellWidget extends StatelessWidget {
                         context.read<SessionManager>().client,
                         apiVersion: paperlessApiVersion,
                       ),
+                ),
+                FutureProvider<AiFeatureStatus>(
+                  initialData: const AiFeatureStatus.disabled(),
+                  create: (context) => AiFeatureStatus.load(
+                    serverStatsApi: context.read<PaperlessServerStatsApi>(),
+                    apiVersion: paperlessApiVersion,
+                  ),
                 ),
                 Provider(
                   create: (context) => paperlessProviderFactory.createTasksApi(

@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:paperless_mobile/features/logging/data/log_redactor.dart';
 import 'package:paperless_mobile/features/logging/models/parsed_log_message.dart';
 import 'package:paperless_mobile/core/service/file_service.dart';
 import 'package:paperless_mobile/features/notifications/services/local_notification_service.dart';
@@ -61,7 +62,9 @@ class AppLogsCubit extends Cubit<AppLogsState> {
     DateTime date,
     List<DateTime> availableLogs,
   ) async {
-    final logs = await file.readAsLines();
+    final logs = (await file.readAsLines())
+        .map((line) => line.redactForLogs())
+        .toList();
     final parsedLogs = ParsedLogMessage.parse(logs).reversed.toList();
     emit(
       AppLogsStateLoaded(
@@ -83,7 +86,7 @@ class AppLogsCubit extends Cubit<AppLogsState> {
     if (!await file.exists()) {
       return;
     }
-    final content = await file.readAsString();
+    final content = (await file.readAsString()).redactForLogs();
     Clipboard.setData(ClipboardData(text: content));
   }
 
@@ -101,7 +104,10 @@ class AppLogsCubit extends Cubit<AppLogsState> {
     // }
     final logFile = _getLogfile(date);
     final parentDir = FileService.instance.downloadsDirectory;
-    final downloadedFile = await logFile.copy(p.join(parentDir.path, filename));
+    final downloadedFile = File(p.join(parentDir.path, filename));
+    await downloadedFile.writeAsString(
+      (await logFile.readAsString()).redactForLogs(),
+    );
     _localNotificationService.notifyFileDownload(filePath: downloadedFile.path);
   }
 

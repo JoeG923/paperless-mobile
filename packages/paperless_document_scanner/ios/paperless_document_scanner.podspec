@@ -5,9 +5,9 @@
 Pod::Spec.new do |s|
   s.name             = 'paperless_document_scanner'
   s.version          = '0.0.1'
-  s.summary          = 'A new Flutter plugin project.'
+  s.summary          = 'Internal document scanner plugin for Paperless Mobile.'
   s.description      = <<-DESC
-A new Flutter plugin project.
+Internal document scanner plugin for Paperless Mobile.
                        DESC
   s.homepage         = 'http://example.com'
   s.license          = { :file => '../LICENSE' }

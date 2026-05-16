@@ -320,7 +320,6 @@ class _DocumentSearchPageState extends State<DocumentSearchPage> {
           SliverAdaptiveDocumentsView(
             viewType: state.viewType,
             documents: state.documents,
-            hasInternetConnection: true,
             isLabelClickable: false,
             isLoading: state.isLoading,
             hasLoaded: state.hasLoaded,

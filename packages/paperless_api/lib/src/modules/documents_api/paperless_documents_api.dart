@@ -87,6 +87,13 @@ abstract class PaperlessDocumentsApi {
     void Function(double progress)? onProgressChanged,
   });
   Future<FieldSuggestions> findSuggestions(DocumentModel document);
+  Future<AiDocumentSuggestions> findAiSuggestions(int documentId);
+
+  Stream<AiChatResponse> streamChat({
+    int? documentId,
+    required String prompt,
+    CancelToken? cancelToken,
+  });
 
   Future<List<String>> autocomplete(String query, [int limit = 10]);
 

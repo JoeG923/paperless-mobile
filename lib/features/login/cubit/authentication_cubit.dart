@@ -97,13 +97,17 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         },
       );
     } on PaperlessApiException catch (_) {
-      emit(
-        AuthenticationErrorState(
-          serverUrl: serverUrl,
-          username: credentials.username!,
-          password: credentials.password ?? '',
-          clientCertificate: clientCertificate,
-        ),
+      _emitLoginErrorState(
+        serverUrl: serverUrl,
+        credentials: credentials,
+        clientCertificate: clientCertificate,
+      );
+      rethrow;
+    } on PaperlessFormValidationException catch (_) {
+      _emitLoginErrorState(
+        serverUrl: serverUrl,
+        credentials: credentials,
+        clientCertificate: clientCertificate,
       );
       rethrow;
     }
@@ -120,6 +124,26 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       'User $redactedId successfully logged in.',
       className: runtimeType.toString(),
       methodName: 'login',
+    );
+  }
+
+  void _emitLoginErrorState({
+    required String serverUrl,
+    required LoginFormCredentials credentials,
+    ClientCertificate? clientCertificate,
+  }) {
+    final username = credentials.username;
+    if (username == null) {
+      emit(const UnauthenticatedState());
+      return;
+    }
+    emit(
+      AuthenticationErrorState(
+        serverUrl: serverUrl,
+        username: username,
+        password: credentials.password ?? '',
+        clientCertificate: clientCertificate,
+      ),
     );
   }
 
@@ -594,7 +618,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
         settings: LocalUserSettings(),
         serverUrl: serverUrl,
         paperlessUser: serverUser,
-        apiVersion: defaultRequestApiVersionFor(apiVersion),
+        apiVersion: selectedApiVersionForServer(apiVersion),
         serverApiVersion: apiVersion,
       ),
     );
@@ -702,12 +726,11 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
       }
       if (apiVersion > latestSupportedApiVersion) {
         logger.fw(
-          "The server is running a newer API version ($apiVersion) than the app supports (v$latestSupportedApiVersion), falling back to latest supported version (v$latestSupportedApiVersion). "
+          "The server is running a newer API version ($apiVersion) than the app supports (v$latestSupportedApiVersion), selecting latest supported version (v$latestSupportedApiVersion) for requests. "
           "Warning: This might lead to unexpected behavior!",
           className: runtimeType.toString(),
           methodName: '_getApiVersion',
         );
-        apiVersion = latestSupportedApiVersion;
       }
       logger.fd(
         "Successfully retrieved API version ($apiVersion).",
@@ -743,7 +766,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
 
     localUserAccount.paperlessUser = updatedPaperlessUser;
     localUserAccount.serverApiVersion = apiVersion;
-    localUserAccount.apiVersion = defaultRequestApiVersionFor(apiVersion);
+    localUserAccount.apiVersion = selectedApiVersionForServer(apiVersion);
     await localUserAccount.save();
     logger.fd(
       "Successfully updated remote user object.",

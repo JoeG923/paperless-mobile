@@ -1,15 +1,20 @@
-Using this app requires access to running a Paperless-ng*x instance.
+An open-source Android client for paperless-ngx.
+
+Using this app requires access to a running paperless-ngx instance.
 
 * View and search documents
 * Add, delete or edit documents
 * Share, download, print and preview your documents
 * Manage correspondents, document types, tags and storage paths
-* Scan and upload documents with preset correspondent, document type, tags and creation date
+* Scan and upload documents with preset title, correspondent, document type, tags, storage path and creation date
+* Track server-side upload and processing tasks when available
 * Review and quickly process newly added documents in the inbox
+* Use optional Paperless-ngx v3 AI chat and metadata suggestions when enabled on your server
+* Compatible with Paperless-ngx v2 and v3 servers
 * Secure your data with biometric authentication
 * Support for mTLS (client certificates)
 * Seamless switching between different accounts and instances
 * Modern, intuitive UI built according to the Material Design 3 specification
-* Light and dark theme 
+* Light and dark theme
 * Support for dynamic color (Android 12+ only)
 * Available in English, German, French, Spanish, Catalan, Polish, Czech, Russian and Turkish language with more to come

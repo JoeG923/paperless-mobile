@@ -19,9 +19,14 @@ class LocalUserAccount extends HiveObject {
   @HiveField(7)
   UserModel paperlessUser;
 
+  /// API version this client should request for the account.
+  ///
+  /// This may be lower than [serverApiVersion] when a newer server advertises
+  /// an API version the app does not support yet.
   @HiveField(8, defaultValue: 2)
   int apiVersion;
 
+  /// Raw API version last advertised by the server response header.
   @HiveField(9)
   int serverApiVersion;
 

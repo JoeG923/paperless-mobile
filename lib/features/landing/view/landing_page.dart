@@ -11,6 +11,8 @@ import 'package:paperless_mobile/core/notifier/document_changed_notifier.dart';
 import 'package:paperless_mobile/core/service/connectivity_status_service.dart';
 import 'package:paperless_mobile/core/theme/design_tokens.dart';
 import 'package:paperless_mobile/features/app_drawer/view/app_drawer.dart';
+import 'package:paperless_mobile/features/ai/model/ai_feature_status.dart';
+import 'package:paperless_mobile/features/ai_chat/view/ai_chat_page.dart';
 import 'package:paperless_mobile/features/document_search/cubit/document_search_cubit.dart';
 import 'package:paperless_mobile/features/document_search/view/document_search_page.dart';
 import 'package:paperless_mobile/features/inbox/cubit/inbox_cubit.dart';
@@ -297,43 +299,59 @@ class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Scan
-        Expanded(
-          child: QuickActionTile(
-            icon: Icons.document_scanner_rounded,
-            label: S.of(context)!.scan,
-            containerColor: scheme.primaryContainer,
-            iconColor: scheme.onPrimaryContainer,
-            onTap: () => const ScannerRoute().go(context),
-          ),
-        ),
-        const SizedBox(width: PmSpacing.sm),
-        // Search uses OpenContainer for the same fade-through as the search bar.
-        if (user.canViewDocuments) ...[
-          Expanded(child: _SearchTile(outerContext: outerContext)),
-          const SizedBox(width: PmSpacing.sm),
-        ],
-        // Inbox
-        if (user.canViewInbox) ...[
-          Expanded(child: _InboxTile(scheme: scheme)),
-          const SizedBox(width: PmSpacing.sm),
-        ],
-        // Documents
-        if (user.canViewDocuments)
-          Expanded(
-            child: QuickActionTile(
-              icon: Icons.folder_rounded,
-              label: S.of(context)!.documents,
-              containerColor: scheme.tertiaryContainer,
-              iconColor: scheme.onTertiaryContainer,
-              onTap: () => DocumentsRoute().go(context),
+    final aiStatus = context.watchAiFeatureStatusOrDisabled();
+    final actions = <Widget>[
+      QuickActionTile(
+        icon: Icons.document_scanner_rounded,
+        label: S.of(context)!.scan,
+        containerColor: scheme.primaryContainer,
+        iconColor: scheme.onPrimaryContainer,
+        onTap: () => const ScannerRoute().go(context),
+      ),
+      if (user.canViewDocuments) _SearchTile(outerContext: outerContext),
+      if (aiStatus.enabled && user.canViewDocuments)
+        QuickActionTile(
+          icon: Icons.auto_awesome_outlined,
+          label: 'Ask',
+          containerColor: scheme.surfaceContainerHighest,
+          iconColor: scheme.onSurfaceVariant,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => Provider.value(
+                value: outerContext.read<PaperlessDocumentsApi>(),
+                child: Provider.value(
+                  value: aiStatus,
+                  child: const AiChatPage(
+                    title: 'Ask documents',
+                    scopeLabel: 'All visible documents',
+                  ),
+                ),
+              ),
             ),
           ),
-      ],
+        ),
+      if (user.canViewInbox) _InboxTile(scheme: scheme),
+      if (user.canViewDocuments)
+        QuickActionTile(
+          icon: Icons.folder_rounded,
+          label: S.of(context)!.documents,
+          containerColor: scheme.tertiaryContainer,
+          iconColor: scheme.onTertiaryContainer,
+          onTap: () => DocumentsRoute().go(context),
+        ),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < actions.length; i++) ...[
+            SizedBox(width: 92, child: actions[i]),
+            if (i < actions.length - 1) const SizedBox(width: PmSpacing.sm),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -148,6 +148,9 @@ class FakeCustomFieldsApi implements CustomFieldsApi {
 
 class FailingDocumentsApi implements PaperlessDocumentsApi {
   @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
+  @override
   Future<String?> create(
     Uint8List documentBytes, {
     required String filename,
@@ -270,6 +273,9 @@ class FailingDocumentsApi implements PaperlessDocumentsApi {
 }
 
 class CancellableDocumentsApi implements PaperlessDocumentsApi {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
   @override
   Future<String?> create(
     Uint8List documentBytes, {
